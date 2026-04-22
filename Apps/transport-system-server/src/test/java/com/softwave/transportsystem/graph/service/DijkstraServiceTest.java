@@ -205,7 +205,7 @@ class DijkstraServiceTest {
      * On failure the total distance must be zero.
      */
     @Test
-    void findShortestPath_failureResult_haZeroDistance() {
+    void findShortestPath_failureResult_hasZeroDistance() {
         ShortestPathResult result = dijkstraService.findShortestPath("1", "99");
 
         assertEquals(0.0, result.getTotalDistanceKm(), 0.0);
