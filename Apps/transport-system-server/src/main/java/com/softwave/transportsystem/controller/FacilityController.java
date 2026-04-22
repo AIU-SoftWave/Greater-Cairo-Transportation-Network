@@ -3,20 +3,14 @@ package com.softwave.transportsystem.controller;
 import com.softwave.transportsystem.model.Facility;
 import com.softwave.transportsystem.service.FacilityService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller for important facility data.
- *
- * Base path: /api/facilities
- *
- * Endpoints:
- *   GET  /api/facilities               – list all facilities
- *   GET  /api/facilities/{id}          – get one by ID (e.g. "F9")
- *   GET  /api/facilities?type=Medical  – filter by facility type
- */
 @RestController
 @RequestMapping("/api/facilities")
 public class FacilityController {
@@ -28,19 +22,14 @@ public class FacilityController {
     }
 
     @GetMapping
-    public List<Facility> getAll(
-            @RequestParam(required = false) String type) {
-
-        if (type != null && !type.isBlank()) {
-            return facilityService.getByType(type);
-        }
-        return facilityService.getAll();
+    public List<Facility> findAll(@RequestParam(required = false) String type) {
+        return facilityService.findAll(type);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Facility> getById(@PathVariable String id) {
-        return facilityService.getById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Facility> findById(@PathVariable String id) {
+        return facilityService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

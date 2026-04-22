@@ -1,19 +1,36 @@
 package com.softwave.transportsystem.model.Interfaces;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+
 /**
  * Shared base type for connections between two nodes.
  */
+@MappedSuperclass
 public abstract class AbstractEdge {
 
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "from_node_id", nullable = false)
     private AbstractNode fromNode;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "to_node_id", nullable = false)
     private AbstractNode toNode;
+
+    @Column(nullable = false)
     private double distanceKm;
+
+    @Column(nullable = false)
     private int capacityVph;
 
-    protected AbstractEdge() {}
+    protected AbstractEdge() {
+    }
 
     protected AbstractEdge(AbstractNode fromNode, AbstractNode toNode,
-                           double distanceKm, int capacityVph) {
+            double distanceKm, int capacityVph) {
         this.fromNode = fromNode;
         this.toNode = toNode;
         this.distanceKm = distanceKm;
@@ -36,8 +53,6 @@ public abstract class AbstractEdge {
         this.toNode = toNode;
     }
 
-
-
     public double getDistanceKm() {
         return distanceKm;
     }
@@ -54,21 +69,19 @@ public abstract class AbstractEdge {
         this.capacityVph = capacityVph;
     }
 
-
-    private String getFromId() {
+    protected String fromId() {
         return fromNode.getNodeId();
     }
 
-    private String getToId() {
+    protected String toId() {
         return toNode.getNodeId();
     }
 
-
     public boolean connects(String nodeId) {
-        return getFromId().equals(nodeId) || getToId().equals(nodeId);
+        return fromId().equalsIgnoreCase(nodeId) || toId().equalsIgnoreCase(nodeId);
     }
 
     public String asRoadId() {
-        return getFromId() + "-" + getToId();
+        return fromId() + "-" + toId();
     }
 }

@@ -1,14 +1,17 @@
 package com.softwave.transportsystem.model;
 
 import com.softwave.transportsystem.model.Interfaces.AbstractNode;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /**
  * Represents a neighborhood or district in the Greater Cairo area.
- * Data source: nodes.csv
  */
+@Entity
+@DiscriminatorValue("NEIGHBORHOOD")
 public class Neighborhood extends AbstractNode {
 
-    private int population;
+    private Integer population;
 
     public Neighborhood() {
     }
@@ -27,11 +30,11 @@ public class Neighborhood extends AbstractNode {
         setNodeId(String.valueOf(id));
     }
 
-    public int getPopulation() {
+    public Integer getPopulation() {
         return population;
     }
 
-    public void setPopulation(int population) {
+    public void setPopulation(Integer population) {
         this.population = population;
     }
 }

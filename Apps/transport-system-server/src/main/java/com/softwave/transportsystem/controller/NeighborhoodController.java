@@ -3,21 +3,14 @@ package com.softwave.transportsystem.controller;
 import com.softwave.transportsystem.model.Neighborhood;
 import com.softwave.transportsystem.service.NeighborhoodService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * REST controller for neighborhood / district data.
- *
- * Base path: /api/neighborhoods
- *
- * Endpoints:
- *   GET  /api/neighborhoods                    – list all 15 neighborhoods
- *   GET  /api/neighborhoods/{id}               – get one by numeric ID
- *   GET  /api/neighborhoods?type=Residential   – filter by land-use type
- *   GET  /api/neighborhoods/top-population     – sorted by population (desc)
- */
 @RestController
 @RequestMapping("/api/neighborhoods")
 public class NeighborhoodController {
@@ -29,24 +22,19 @@ public class NeighborhoodController {
     }
 
     @GetMapping
-    public List<Neighborhood> getAll(
-            @RequestParam(required = false) String type) {
-
-        if (type != null && !type.isBlank()) {
-            return neighborhoodService.getByType(type);
-        }
-        return neighborhoodService.getAll();
+    public List<Neighborhood> findAll(@RequestParam(required = false) String type) {
+        return neighborhoodService.findAll(type, false);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Neighborhood> getById(@PathVariable int id) {
-        return neighborhoodService.getById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Neighborhood> findById(@PathVariable int id) {
+        return neighborhoodService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/top-population")
-    public List<Neighborhood> getTopByPopulation() {
-        return neighborhoodService.getByPopulationDesc();
+    public List<Neighborhood> findTopByPopulation() {
+        return neighborhoodService.findAll(null, true);
     }
 }

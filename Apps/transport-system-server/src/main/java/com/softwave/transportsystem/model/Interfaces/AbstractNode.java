@@ -1,23 +1,44 @@
 package com.softwave.transportsystem.model.Interfaces;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 
 /**
  * Shared base type for graph endpoints such as neighborhoods and facilities.
- * Stores the common location and classification fields used across the model.
  */
+@Entity
+@Table(name = "nodes")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "node_kind")
 public abstract class AbstractNode {
 
+    @Id
+    @Column(name = "node_id", nullable = false, updatable = false)
     private String nodeId;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String type;
+
+    @Column(nullable = false)
     private double longitude;
+
+    @Column(nullable = false)
     private double latitude;
 
-    protected AbstractNode() {}
+    protected AbstractNode() {
+    }
 
     protected AbstractNode(String nodeId, String name, String type,
-                           double longitude, double latitude) {
+            double longitude, double latitude) {
         this.nodeId = nodeId;
         this.name = name;
         this.type = type;

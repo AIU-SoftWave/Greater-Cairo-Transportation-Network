@@ -1,24 +1,43 @@
 package com.softwave.transportsystem.model;
 
 import com.softwave.transportsystem.model.Interfaces.AbstractNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents one of Cairo's metro lines.
- * Data source: metro_lines.csv
- *
- * Fields:
- * lineId – Short identifier: "M1", "M2", "M3"
- * name – Descriptive name (e.g. "Line 1 (Helwan-New Marg)")
- * stations – Ordered list of nodes that the line passes through
- * dailyPassengers – Average number of passengers per day
  */
+@Entity
+@Table(name = "metro_lines")
 public class MetroLine {
 
+    @Id
+    @Column(nullable = false, updatable = false)
     private String lineId;
+
+    @Column(nullable = false)
     private String name;
-    private List<AbstractNode> stations;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "metro_line_stations",
+            joinColumns = @JoinColumn(name = "line_id"),
+            inverseJoinColumns = @JoinColumn(name = "node_id")
+    )
+    @OrderColumn(name = "station_order")
+    private List<AbstractNode> stations = new ArrayList<>();
+
+    @Column(nullable = false)
     private int dailyPassengers;
 
     public MetroLine() {
@@ -27,11 +46,9 @@ public class MetroLine {
     public MetroLine(String lineId, String name, List<AbstractNode> stations, int dailyPassengers) {
         this.lineId = lineId;
         this.name = name;
-        this.stations = List.copyOf(stations);
+        this.stations = new ArrayList<>(stations);
         this.dailyPassengers = dailyPassengers;
     }
-
-    // ── Getters & Setters ──────────────────────────────────────────────────────
 
     public String getLineId() {
         return lineId;
@@ -54,18 +71,18 @@ public class MetroLine {
     }
 
     public void setStations(List<AbstractNode> stations) {
-        this.stations = List.copyOf(stations);
+        this.stations = new ArrayList<>(stations);
     }
 
     public int getDailyPassengers() {
         return dailyPassengers;
     }
 
-    public void setDailyPassengers(int p) {
-        this.dailyPassengers = p;
+    public void setDailyPassengers(int dailyPassengers) {
+        this.dailyPassengers = dailyPassengers;
     }
 
     public boolean servesNode(String nodeId) {
-        return stations.stream().anyMatch(node -> node.getNodeId().equals(nodeId));
+        return stations.stream().anyMatch(node -> node.getNodeId().equalsIgnoreCase(nodeId));
     }
 }

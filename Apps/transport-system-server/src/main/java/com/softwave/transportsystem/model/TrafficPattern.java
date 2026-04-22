@@ -1,21 +1,29 @@
 package com.softwave.transportsystem.model;
 
-import com.softwave.transportsystem.model.Interfaces.AbstractEdge;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 /**
  * Captures time-of-day traffic volumes for a specific road segment.
- * Data source: traffic_patterns.csv
- *
- * The linked road matches the "FromID-ToID" format used in the CSV
- * (e.g. "1-3", "F1-5"). Four time slots are recorded:
- * morningPeakVph – 07:00–09:00 rush hour (vehicles per hour)
- * afternoonVph – 12:00–14:00 off-peak
- * eveningPeakVph – 16:00–19:00 rush hour
- * nightVph – 22:00–05:00 low traffic
  */
+@Entity
+@Table(name = "traffic_patterns")
 public class TrafficPattern {
 
-    private AbstractEdge road;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "road_id", nullable = false, unique = true)
+    private Road road;
+
     private int morningPeakVph;
     private int afternoonVph;
     private int eveningPeakVph;
@@ -24,7 +32,7 @@ public class TrafficPattern {
     public TrafficPattern() {
     }
 
-    public TrafficPattern(AbstractEdge road, int morningPeakVph, int afternoonVph,
+    public TrafficPattern(Road road, int morningPeakVph, int afternoonVph,
             int eveningPeakVph, int nightVph) {
         this.road = road;
         this.morningPeakVph = morningPeakVph;
@@ -33,13 +41,11 @@ public class TrafficPattern {
         this.nightVph = nightVph;
     }
 
-    // ── Getters & Setters ──────────────────────────────────────────────────────
-
-    public AbstractEdge getRoad() {
+    public Road getRoad() {
         return road;
     }
 
-    public void setRoad(AbstractEdge road) {
+    public void setRoad(Road road) {
         this.road = road;
     }
 
@@ -51,31 +57,31 @@ public class TrafficPattern {
         return morningPeakVph;
     }
 
-    public void setMorningPeakVph(int v) {
-        this.morningPeakVph = v;
+    public void setMorningPeakVph(int morningPeakVph) {
+        this.morningPeakVph = morningPeakVph;
     }
 
     public int getAfternoonVph() {
         return afternoonVph;
     }
 
-    public void setAfternoonVph(int v) {
-        this.afternoonVph = v;
+    public void setAfternoonVph(int afternoonVph) {
+        this.afternoonVph = afternoonVph;
     }
 
     public int getEveningPeakVph() {
         return eveningPeakVph;
     }
 
-    public void setEveningPeakVph(int v) {
-        this.eveningPeakVph = v;
+    public void setEveningPeakVph(int eveningPeakVph) {
+        this.eveningPeakVph = eveningPeakVph;
     }
 
     public int getNightVph() {
         return nightVph;
     }
 
-    public void setNightVph(int v) {
-        this.nightVph = v;
+    public void setNightVph(int nightVph) {
+        this.nightVph = nightVph;
     }
 }

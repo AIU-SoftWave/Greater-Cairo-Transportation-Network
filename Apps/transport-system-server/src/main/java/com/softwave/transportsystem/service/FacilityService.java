@@ -1,47 +1,29 @@
 package com.softwave.transportsystem.service;
 
 import com.softwave.transportsystem.model.Facility;
+import com.softwave.transportsystem.repository.FacilityRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Business logic for important facilities (hospitals, airports, etc.).
- *
- * Provides:
- *  - Listing all facilities
- *  - Finding a facility by its string ID (e.g. "F9")
- *  - Filtering facilities by category type
- */
 @Service
 public class FacilityService {
 
-    private final DataLoaderService data;
+    private final FacilityRepository facilityRepository;
 
-    public FacilityService(DataLoaderService data) {
-        this.data = data;
+    public FacilityService(FacilityRepository facilityRepository) {
+        this.facilityRepository = facilityRepository;
     }
 
-    /** Returns every facility. */
-    public List<Facility> getAll() {
-        return data.getFacilities();
+    public List<Facility> findAll(String type) {
+        if (type == null || type.isBlank()) {
+            return facilityRepository.findAll();
+        }
+        return facilityRepository.findByTypeIgnoreCase(type);
     }
 
-    /** Returns the facility with the given ID (e.g. "F1"), or empty. */
-    public Optional<Facility> getById(String id) {
-        return data.getFacilities().stream()
-            .filter(f -> f.getId().equalsIgnoreCase(id))
-            .findFirst();
-    }
-
-    /**
-     * Returns facilities filtered by type (case-insensitive).
-     * E.g. getByType("Medical") returns hospitals.
-     */
-    public List<Facility> getByType(String type) {
-        return data.getFacilities().stream()
-            .filter(f -> f.getType().equalsIgnoreCase(type))
-            .toList();
+    public Optional<Facility> findById(String id) {
+        return facilityRepository.findByNodeIdIgnoreCase(id);
     }
 }

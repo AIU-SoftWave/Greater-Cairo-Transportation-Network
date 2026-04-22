@@ -2,12 +2,22 @@ package com.softwave.transportsystem.model;
 
 import com.softwave.transportsystem.model.Interfaces.AbstractEdge;
 import com.softwave.transportsystem.model.Interfaces.AbstractNode;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
- * Represents a proposed (not yet built) road connection.
- * Data source: potential_roads.csv
+ * Represents a proposed road connection.
  */
+@Entity
+@Table(name = "potential_roads")
 public class PotentialRoad extends AbstractEdge {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private int constructionCostMEgp;
 

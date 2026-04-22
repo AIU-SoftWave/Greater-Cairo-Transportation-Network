@@ -1,21 +1,34 @@
 package com.softwave.transportsystem.model;
 
 import com.softwave.transportsystem.model.Interfaces.AbstractNode;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * Records observed public-transit passenger demand between two nodes.
- * Data source: transit_demand.csv
- *
- * Fields:
- * fromId – Origin node ID
- * toId – Destination node ID
- * dailyPassengers – Average daily passenger trips on this origin-destination
- * pair
  */
+@Entity
+@Table(name = "transit_demands")
 public class TransitDemand {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "from_node_id", nullable = false)
     private AbstractNode fromNode;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "to_node_id", nullable = false)
     private AbstractNode toNode;
+
     private int dailyPassengers;
 
     public TransitDemand() {
@@ -26,8 +39,6 @@ public class TransitDemand {
         this.toNode = toNode;
         this.dailyPassengers = dailyPassengers;
     }
-
-    // ── Getters & Setters ──────────────────────────────────────────────────────
 
     public AbstractNode getFromNode() {
         return fromNode;
@@ -45,23 +56,16 @@ public class TransitDemand {
         this.toNode = toNode;
     }
 
-    public String getFromId() {
-        return fromNode.getNodeId();
-    }
-
-    public String getToId() {
-        return toNode.getNodeId();
-    }
-
     public int getDailyPassengers() {
         return dailyPassengers;
     }
 
-    public void setDailyPassengers(int p) {
-        this.dailyPassengers = p;
+    public void setDailyPassengers(int dailyPassengers) {
+        this.dailyPassengers = dailyPassengers;
     }
 
     public boolean involves(String nodeId) {
-        return getFromId().equals(nodeId) || getToId().equals(nodeId);
+        return fromNode.getNodeId().equalsIgnoreCase(nodeId)
+                || toNode.getNodeId().equalsIgnoreCase(nodeId);
     }
 }

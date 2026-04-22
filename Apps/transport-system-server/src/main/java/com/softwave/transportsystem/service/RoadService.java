@@ -2,66 +2,38 @@ package com.softwave.transportsystem.service;
 
 import com.softwave.transportsystem.model.PotentialRoad;
 import com.softwave.transportsystem.model.Road;
+import com.softwave.transportsystem.repository.PotentialRoadRepository;
+import com.softwave.transportsystem.repository.RoadRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Business logic for road segments (both existing and potential).
- *
- * Provides:
- *  - Listing all existing roads
- *  - Listing all potential (new) roads
- *  - Filtering roads by condition score
- *  - Finding all roads connected to a given node
- */
 @Service
 public class RoadService {
 
-    private final DataLoaderService data;
+    private final RoadRepository roadRepository;
+    private final PotentialRoadRepository potentialRoadRepository;
 
-    public RoadService(DataLoaderService data) {
-        this.data = data;
+    public RoadService(RoadRepository roadRepository,
+            PotentialRoadRepository potentialRoadRepository) {
+        this.roadRepository = roadRepository;
+        this.potentialRoadRepository = potentialRoadRepository;
     }
 
-    /** Returns all existing road segments. */
-    public List<Road> getAllExisting() {
-        return data.getRoads();
+    public List<Road> findExisting(String nodeId, Integer maxCondition) {
+        if (maxCondition != null) {
+            return roadRepository.findByConditionLessThanEqual(maxCondition);
+        }
+        if (nodeId == null || nodeId.isBlank()) {
+            return roadRepository.findAll();
+        }
+        return roadRepository.findByFromNode_NodeIdIgnoreCaseOrToNode_NodeIdIgnoreCase(nodeId, nodeId);
     }
 
-    /** Returns all proposed (not yet built) road segments. */
-    public List<PotentialRoad> getAllPotential() {
-        return data.getPotentialRoads();
-    }
-
-    /**
-     * Returns existing roads whose condition score is at or below the given
-     * threshold.  A low score (1-4) indicates roads that need maintenance.
-     */
-    public List<Road> getPoorConditionRoads(int maxCondition) {
-        return data.getRoads().stream()
-            .filter(r -> r.getCondition() <= maxCondition)
-            .toList();
-    }
-
-    /**
-     * Returns all existing roads that start OR end at the given node ID.
-     * Useful for building adjacency lists for graph algorithms.
-     */
-    public List<Road> getRoadsForNode(String nodeId) {
-        return data.getRoads().stream()
-            .filter(r -> r.connects(nodeId))
-            .toList();
-    }
-
-    /**
-     * Returns potential roads sorted by construction cost ascending.
-     * Useful for greedy / MST approaches that minimise total spending.
-     */
-    public List<PotentialRoad> getPotentialSortedByCost() {
-        return data.getPotentialRoads().stream()
-            .sorted((a, b) -> Integer.compare(a.getConstructionCostMEgp(),
-                                              b.getConstructionCostMEgp()))
-            .toList();
+    public List<PotentialRoad> findPotential(boolean sortByCost) {
+        if (sortByCost) {
+            return potentialRoadRepository.findAllByOrderByConstructionCostMEgpAsc();
+        }
+        return potentialRoadRepository.findAll();
     }
 }
