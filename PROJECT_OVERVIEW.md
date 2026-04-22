@@ -10,6 +10,12 @@
 7. [Algorithm Roadmap](#7-algorithm-roadmap)
 8. [How to Run](#8-how-to-run)
 
+> **v2.0 – Modular Monolith**: the codebase was refactored from a flat-package MVC layout into a
+> **modular monolith**. Each domain module (`neighborhood`, `facility`, `road`, `traffic`, `transit`)
+> is self-contained with its own `model`, `repository`, `service`, and `controller` sub-packages.
+> Shared infrastructure lives in the `shared` module. All controllers expose only the minimal
+> **GET /all** and **GET /{id}** endpoints.
+
 ---
 
 ## 1. Project Purpose
@@ -39,9 +45,36 @@ Greater-Cairo-Transportation-Network/
         └── src/main/
             ├── java/com/softwave/transportsystem/
             │   ├── TransportSystemServerApplication.java   ← entry point
-            │   ├── model/          ← plain Java data objects (one per entity)
-            │   ├── service/        ← business logic (one per domain)
-            │   └── controller/     ← REST endpoints (one per domain)
+            │   ├── HomeController.java                     ← API directory
+            │   ├── shared/                  ← cross-cutting infrastructure
+            │   │   ├── model/               (AbstractNode, AbstractEdge)
+            │   │   ├── repository/          (NodeRepository)
+            │   │   └── seeder/              (CsvDatabaseSeeder)
+            │   ├── neighborhood/            ← Neighborhood module
+            │   │   ├── model/               (Neighborhood)
+            │   │   ├── repository/          (NeighborhoodRepository)
+            │   │   ├── service/             (NeighborhoodService)
+            │   │   └── controller/          (NeighborhoodController)
+            │   ├── facility/                ← Facility module
+            │   │   ├── model/               (Facility)
+            │   │   ├── repository/          (FacilityRepository)
+            │   │   ├── service/             (FacilityService)
+            │   │   └── controller/          (FacilityController)
+            │   ├── road/                    ← Road & PotentialRoad module
+            │   │   ├── model/               (Road, PotentialRoad)
+            │   │   ├── repository/          (RoadRepository, PotentialRoadRepository)
+            │   │   ├── service/             (RoadService)
+            │   │   └── controller/          (RoadController, PotentialRoadController)
+            │   ├── traffic/                 ← Traffic module
+            │   │   ├── model/               (TrafficPattern)
+            │   │   ├── repository/          (TrafficPatternRepository)
+            │   │   ├── service/             (TrafficService)
+            │   │   └── controller/          (TrafficController)
+            │   └── transit/                 ← Transit module
+            │       ├── model/               (MetroLine, BusRoute, TransitDemand)
+            │       ├── repository/          (MetroLineRepository, BusRouteRepository, TransitDemandRepository)
+            │       ├── service/             (MetroService, BusService, DemandService)
+            │       └── controller/          (MetroController, BusController, DemandController)
             └── resources/
                 ├── application.properties
                 └── static/data/    ← all CSV files (the data store)
@@ -59,42 +92,46 @@ Greater-Cairo-Transportation-Network/
 
 ## 3. Architecture
 
-The application follows the classic **MVC pattern** simplified for a REST API:
+The application follows a **Modular Monolith** pattern. Each domain module is self-contained
+and deployed as part of a single Spring Boot application while maintaining clear internal
+module boundaries.
 
 ```
 HTTP Request
      │
      ▼
 ┌─────────────┐   calls   ┌─────────────┐   reads   ┌──────────────────┐
-│  Controller │ ────────► │   Service   │ ────────► │ DataLoaderService│
-│ (REST layer)│           │(business    │           │ (CSV → memory)   │
+│  Controller │ ────────► │   Service   │ ────────► │   Repository     │
+│ (REST layer)│           │(business    │           │  (JPA / H2 DB)   │
 └─────────────┘           │  logic)     │           └──────────────────┘
-                          └─────────────┘                    │
-                                                             │ reads once at startup
-                                                             ▼
-                                                     ┌──────────────┐
-                                                     │  CSV files   │
-                                                     │ (static/data)│
-                                                     └──────────────┘
+                          └─────────────┘                    ▲
+                                                             │ seeded once at startup
+                                                             │
+                                                  ┌──────────────────┐
+                                                  │  CsvDatabaseSeeder│
+                                                  │  (CSV → H2 DB)   │
+                                                  └──────────────────┘
 ```
+
+### Module Breakdown
+
+| Module | Package | Contents |
+|---|---|---|
+| **shared** | `com.softwave.transportsystem.shared` | `AbstractNode`, `AbstractEdge`, `NodeRepository`, `CsvDatabaseSeeder` |
+| **neighborhood** | `com.softwave.transportsystem.neighborhood` | `Neighborhood`, `NeighborhoodRepository`, `NeighborhoodService`, `NeighborhoodController` |
+| **facility** | `com.softwave.transportsystem.facility` | `Facility`, `FacilityRepository`, `FacilityService`, `FacilityController` |
+| **road** | `com.softwave.transportsystem.road` | `Road`, `PotentialRoad`, `RoadRepository`, `PotentialRoadRepository`, `RoadService`, `RoadController`, `PotentialRoadController` |
+| **traffic** | `com.softwave.transportsystem.traffic` | `TrafficPattern`, `TrafficPatternRepository`, `TrafficService`, `TrafficController` |
+| **transit** | `com.softwave.transportsystem.transit` | `MetroLine`, `BusRoute`, `TransitDemand`, their repositories, `MetroService`, `BusService`, `DemandService`, `MetroController`, `BusController`, `DemandController` |
 
 ### Layer responsibilities
 
-| Layer | Classes | Responsibility |
-|---|---|---|
-| **Model** | `Neighborhood`, `Facility`, `Road`, `PotentialRoad`, `TrafficPattern`, `MetroLine`, `BusRoute`, `TransitDemand` | Plain Java objects that mirror the CSV columns. No behaviour, just data. |
-| **Service** | `DataLoaderService`, `NeighborhoodService`, `FacilityService`, `RoadService`, `TrafficService`, `TransitService` | All querying and filtering logic. Controllers never touch raw data directly. |
-| **Controller** | `HomeController`, `NeighborhoodController`, `FacilityController`, `RoadController`, `TrafficController`, `TransitController` | Maps HTTP requests to service calls, returns JSON via Spring's `@RestController`. |
-
-### Why no database?
-
-The dataset is small (< 200 rows across 8 CSV files) and **read-only** for the demo phase. Keeping data in CSV files:
-- makes the project easier to clone and run (no DB setup required),
-- lets students inspect and edit the data in any spreadsheet application, and
-- still demonstrates all SOLID principles without DB ceremony.
-
-`DataLoaderService` parses every CSV **once** at startup (`@PostConstruct`) and holds the results as `Collections.unmodifiableList` in memory.  
-Every other service receives `DataLoaderService` by **constructor injection** and queries the in-memory lists.
+| Layer | Responsibility |
+|---|---|
+| **Model** | Plain JPA entities that mirror the database tables. No behaviour, just data. |
+| **Repository** | Spring Data JPA interfaces. Each module owns its own repositories. |
+| **Service** | Business logic. Controllers never access repositories directly. |
+| **Controller** | Maps HTTP requests to service calls. Exposes only `GET /all` and `GET /{id}`. |
 
 ---
 
@@ -248,86 +285,99 @@ Start the server (`mvn spring-boot:run` from the `transport-system-server` direc
 
 ### 5.2 Neighborhoods `/api/neighborhoods`
 
-| Method | Path | Query params | Description |
-|---|---|---|---|
-| `GET` | `/api/neighborhoods` | `type` (optional) | All districts, or filter by type |
-| `GET` | `/api/neighborhoods/{id}` | – | Single district by numeric ID |
-| `GET` | `/api/neighborhoods/top-population` | – | All districts sorted by population ↓ |
-
-**Example**
-```
-GET /api/neighborhoods?type=Mixed
-```
-```json
-[
-  { "id": 2,  "name": "Nasr City",        "population": 500000, "type": "Mixed", ... },
-  { "id": 5,  "name": "Heliopolis",        "population": 200000, "type": "Mixed", ... },
-  ...
-]
-```
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/neighborhoods` | All districts |
+| `GET` | `/api/neighborhoods/{id}` | Single district by numeric ID |
 
 ---
 
 ### 5.3 Facilities `/api/facilities`
 
-| Method | Path | Query params | Description |
-|---|---|---|---|
-| `GET` | `/api/facilities` | `type` (optional) | All facilities, or filter by type |
-| `GET` | `/api/facilities/{id}` | – | Single facility (e.g. `/api/facilities/F9`) |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/facilities` | All facilities |
+| `GET` | `/api/facilities/{id}` | Single facility (e.g. `/api/facilities/F9`) |
 
 ---
 
 ### 5.4 Roads `/api/roads`
 
-| Method | Path | Query params | Description |
-|---|---|---|---|
-| `GET` | `/api/roads` | `node` (optional) | All existing roads, or only those touching a node |
-| `GET` | `/api/roads/poor-condition` | `maxCondition` (default 5) | Roads at or below the condition threshold |
-| `GET` | `/api/roads/potential` | – | All proposed new roads |
-| `GET` | `/api/roads/potential/by-cost` | – | Proposed roads sorted cheapest first |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/roads` | All existing roads |
+| `GET` | `/api/roads/{id}` | Single road by numeric ID |
 
 ---
 
-### 5.5 Traffic `/api/traffic`
+### 5.5 Potential Roads `/api/potential-roads`
 
-| Method | Path | Query params | Description |
-|---|---|---|---|
-| `GET` | `/api/traffic` | – | All time-of-day traffic patterns |
-| `GET` | `/api/traffic/{roadId}` | – | Pattern for one road (e.g. `/api/traffic/1-3`) |
-| `GET` | `/api/traffic/morning-congestion` | `minVph` (default 2500) | Roads exceeding the morning threshold |
-| `GET` | `/api/traffic/evening-congestion` | `minVph` (default 2500) | Roads exceeding the evening threshold |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/potential-roads` | All proposed new roads |
+| `GET` | `/api/potential-roads/{id}` | Single proposed road by numeric ID |
 
 ---
 
-### 5.6 Transit `/api/transit`
+### 5.6 Traffic `/api/traffic`
 
-| Method | Path | Query params | Description |
-|---|---|---|---|
-| `GET` | `/api/transit/metro` | – | All metro lines |
-| `GET` | `/api/transit/metro/{lineId}` | – | One metro line (e.g. `M2`) |
-| `GET` | `/api/transit/bus` | `node` (optional) | All bus routes, or routes serving a node |
-| `GET` | `/api/transit/bus/top-ridership` | – | Bus routes sorted by daily passengers ↓ |
-| `GET` | `/api/transit/bus/{routeId}` | – | One bus route (e.g. `B4`) |
-| `GET` | `/api/transit/demand` | `from`, `to` (optional) | OD demand, optionally filtered by origin or destination |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/traffic` | All time-of-day traffic patterns |
+| `GET` | `/api/traffic/{id}` | Single traffic pattern by numeric ID |
+
+---
+
+### 5.7 Metro `/api/metro`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/metro` | All metro lines |
+| `GET` | `/api/metro/{id}` | One metro line (e.g. `M2`) |
+
+---
+
+### 5.8 Bus `/api/bus`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/bus` | All bus routes |
+| `GET` | `/api/bus/{id}` | One bus route (e.g. `B4`) |
+
+---
+
+### 5.9 Transit Demand `/api/demand`
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/demand` | All OD demand records |
+| `GET` | `/api/demand/{id}` | Single OD demand record by numeric ID |
 
 ---
 
 ## 6. Design Decisions
 
+### Why Modular Monolith?
+A modular monolith keeps the **simplicity of a single deployable** while enforcing clear domain
+boundaries.  Each module owns its own stack (model → repository → service → controller) and
+communicates with other modules only through well-defined service APIs, not by reaching into
+another module's internals.  This makes the codebase easy to understand, test, and — if needed —
+migrate to separate microservices later.
+
 ### Why Spring Boot?
 Spring Boot auto-configures the web layer, JSON serialisation (Jackson), and the application lifecycle.  
 A team can get a working REST API running in minutes without writing any boilerplate HTTP server code.
 
-### Why no JPA / Hibernate?
-The project is a **demo** with a fixed, small dataset.  
-Introducing a database and ORM layer would add significant setup complexity (Docker, schema migrations, connection pools) that is not necessary to demonstrate the algorithms or the data model.  
-`DataLoaderService` serves the same role as a repository layer, but reads from CSV instead of SQL.
+### Why H2 + Flyway?
+The project seeds a small, fixed dataset into an embedded H2 database at startup via
+`CsvDatabaseSeeder`.  Flyway manages the schema migration so the DDL is version-controlled and
+repeatable.  No external database or Docker setup is required.
 
 ### Why SOLID?
 
 | Principle | How it is applied |
 |---|---|
-| **S** – Single Responsibility | Each class has exactly one job: models hold data, services contain logic, controllers handle HTTP. |
+| **S** – Single Responsibility | Each class has exactly one job: models hold data, repositories query data, services contain logic, controllers handle HTTP. |
 | **O** – Open/Closed | New algorithms can be added as new service methods without modifying existing ones. |
 | **L** – Liskov | All service classes are concrete; the Spring interfaces they implement (`@Service`) behave identically. |
 | **I** – Interface Segregation | Controllers only depend on the service they need, not a monolithic "god service". |
@@ -389,15 +439,30 @@ curl http://localhost:8080/
 # All neighborhoods
 curl http://localhost:8080/api/neighborhoods
 
-# Medical facilities
-curl "http://localhost:8080/api/facilities?type=Medical"
+# Neighborhood by ID
+curl http://localhost:8080/api/neighborhoods/1
 
-# Roads needing maintenance (condition ≤ 5)
-curl "http://localhost:8080/api/roads/poor-condition?maxCondition=5"
+# All facilities
+curl http://localhost:8080/api/facilities
 
-# Morning congestion (≥ 3000 vph)
-curl "http://localhost:8080/api/traffic/morning-congestion?minVph=3000"
+# Facility by ID
+curl http://localhost:8080/api/facilities/F9
 
-# Demand from the airport
-curl "http://localhost:8080/api/transit/demand?from=F1"
+# All existing roads
+curl http://localhost:8080/api/roads
+
+# All proposed roads
+curl http://localhost:8080/api/potential-roads
+
+# All traffic patterns
+curl http://localhost:8080/api/traffic
+
+# All metro lines
+curl http://localhost:8080/api/metro
+
+# All bus routes
+curl http://localhost:8080/api/bus
+
+# All transit demand records
+curl http://localhost:8080/api/demand
 ```
