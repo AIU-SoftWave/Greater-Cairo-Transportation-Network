@@ -119,9 +119,9 @@ All files live in `src/main/resources/static/data/`.
 
 | ID | Name | Population | Type | Longitude | Latitude |
 |---|---|---|---|---|---|
-| 1 | Maadi | 250 000 | Residential | 31.25 | 29.96 |
-| 3 | Downtown Cairo | 100 000 | Business | 31.24 | 30.04 |
-| 8 | Giza | 550 000 | Mixed | 31.21 | 29.99 |
+| 1 | Maadi | 250,000 | Residential | 31.25 | 29.96 |
+| 3 | Downtown Cairo | 100,000 | Business | 31.24 | 30.04 |
+| 8 | Giza | 550,000 | Mixed | 31.21 | 29.99 |
 
 > **Why do we store population and type?**  
 > MST algorithms that prioritise high-density connections need population data.  
@@ -187,7 +187,7 @@ Sorting by `Construction_Cost_Million_EGP` ascending gives a greedy cheapest-fir
 | `Night_vph` | integer | Volume 22:00–05:00 |
 
 > **Why four time slots?**  
-> Cairo's Dijkstra/A\* implementations need **time-varying edge weights**.  
+> Cairo's Dijkstra/A* implementations need **time-varying edge weights**.  
 > At peak hours, a road operating near its capacity receives a higher effective travel-time cost than the same road at night.  
 > The formula used is: `effective_cost = distance_km * (volume / capacity)` — the closer to saturation, the longer the expected delay.
 
@@ -345,7 +345,7 @@ The API provides all the data these algorithms need:
 | Algorithm | Input data | Purpose |
 |---|---|---|
 | **Dijkstra's** shortest path | `existing_roads` (weight = `distance_km`) | Standard route planning between any two nodes |
-| **A\*** emergency routing | `existing_roads` + lat/lng for heuristic | Fastest path for ambulances to reach hospitals |
+| **A*** emergency routing | `existing_roads` + lat/lng for heuristic | Fastest path for ambulances to reach hospitals |
 | **Time-varying Dijkstra** | `traffic_patterns` (weight = `distance × (volume/capacity)`) | Route planning that avoids peak-hour congestion |
 | **Kruskal's / Prim's MST** | `potential_roads` (weight = `construction_cost`) | Minimum-cost network connecting all areas |
 | **DP scheduling** | `bus_routes`, `metro_lines`, `transit_demand` | Optimal fleet / frequency allocation |
