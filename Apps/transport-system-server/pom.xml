@@ -5,68 +5,45 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.5</version>
+		<version>3.3.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.softwave</groupId>
 	<artifactId>transport-system-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>transport-system-server</name>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<description>Greater Cairo Transportation Network – REST API</description>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 
-		<dependency>
-			<groupId>jakarta.persistence</groupId>
-			<artifactId>jakarta.persistence-api</artifactId>
-			<version>3.2.0</version>
-		</dependency>
-
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<version>3.5.3</version>
-			<optional>true</optional>
-		</dependency>
-
-
+		<!-- Web MVC – REST controllers -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-			<version>3.5.3</version>
 		</dependency>
 
+		<!-- Hot-reload during development -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
 		</dependency>
 
+		<!-- CSV parsing (Apache Commons CSV) -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.11.0</version>
+		</dependency>
+
+		<!-- Tests -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-    <version>4.1.0-M4</version>
-</dependency>
 	</dependencies>
 
 	<build>
