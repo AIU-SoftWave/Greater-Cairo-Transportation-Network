@@ -71,7 +71,7 @@ public class TransitService {
      */
     public List<BusRoute> getBusRoutesForNode(String nodeId) {
         return data.getBusRoutes().stream()
-            .filter(br -> br.getStops().contains(nodeId))
+            .filter(br -> br.servesNode(nodeId))
             .toList();
     }
 

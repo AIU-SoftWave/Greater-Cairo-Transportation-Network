@@ -1,6 +1,7 @@
 package com.softwave.transportsystem.service;
 
 import com.softwave.transportsystem.model.*;
+import com.softwave.transportsystem.model.Interfaces.AbstractNode;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -34,6 +35,8 @@ public class DataLoaderService {
     private List<MetroLine>      metroLines      = new ArrayList<>();
     private List<BusRoute>       busRoutes       = new ArrayList<>();
     private List<TransitDemand>  transitDemands  = new ArrayList<>();
+    private Map<String, AbstractNode> nodesById   = new LinkedHashMap<>();
+    private Map<String, Road> roadsById           = new LinkedHashMap<>();
 
     /**
      * Called automatically by Spring after the bean is created.
@@ -43,7 +46,9 @@ public class DataLoaderService {
     public void loadAll() {
         neighborhoods   = loadNeighborhoods();
         facilities      = loadFacilities();
+        nodesById       = buildNodeIndex(neighborhoods, facilities);
         roads           = loadRoads();
+        roadsById       = buildRoadIndex(roads);
         potentialRoads  = loadPotentialRoads();
         trafficPatterns = loadTrafficPatterns();
         metroLines      = loadMetroLines();
@@ -61,6 +66,7 @@ public class DataLoaderService {
     public List<MetroLine>      getMetroLines()      { return Collections.unmodifiableList(metroLines); }
     public List<BusRoute>       getBusRoutes()       { return Collections.unmodifiableList(busRoutes); }
     public List<TransitDemand>  getTransitDemands()  { return Collections.unmodifiableList(transitDemands); }
+    public Collection<AbstractNode> getAllNodes()    { return Collections.unmodifiableCollection(nodesById.values()); }
 
     // ── Private CSV loaders ───────────────────────────────────────────────────
 
@@ -97,8 +103,8 @@ public class DataLoaderService {
         List<Road> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/existing_roads.csv")) {
             list.add(new Road(
-                r.get("FromID"),
-                r.get("ToID"),
+                resolveNode(r.get("FromID")),
+                resolveNode(r.get("ToID")),
                 Double.parseDouble(r.get("Distance_km")),
                 Integer.parseInt(r.get("Capacity_vph")),
                 Integer.parseInt(r.get("Condition"))
@@ -111,8 +117,8 @@ public class DataLoaderService {
         List<PotentialRoad> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/potential_roads.csv")) {
             list.add(new PotentialRoad(
-                r.get("FromID"),
-                r.get("ToID"),
+                resolveNode(r.get("FromID")),
+                resolveNode(r.get("ToID")),
                 Double.parseDouble(r.get("Distance_km")),
                 Integer.parseInt(r.get("Capacity_vph")),
                 Integer.parseInt(r.get("Construction_Cost_Million_EGP"))
@@ -124,8 +130,9 @@ public class DataLoaderService {
     private List<TrafficPattern> loadTrafficPatterns() {
         List<TrafficPattern> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/traffic_patterns.csv")) {
+            String roadId = r.get("RoadID");
             list.add(new TrafficPattern(
-                r.get("RoadID"),
+                resolveRoad(roadId),
                 Integer.parseInt(r.get("Morning_Peak_vph")),
                 Integer.parseInt(r.get("Afternoon_vph")),
                 Integer.parseInt(r.get("Evening_Peak_vph")),
@@ -138,7 +145,7 @@ public class DataLoaderService {
     private List<MetroLine> loadMetroLines() {
         List<MetroLine> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/metro_lines.csv")) {
-            List<String> stations = splitStops(r.get("Stations"));
+            List<AbstractNode> stations = resolveNodes(splitNodeIds(r.get("Stations")));
             list.add(new MetroLine(
                 r.get("LineID"),
                 r.get("Name"),
@@ -152,7 +159,7 @@ public class DataLoaderService {
     private List<BusRoute> loadBusRoutes() {
         List<BusRoute> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/bus_routes.csv")) {
-            List<String> stops = splitStops(r.get("Stops"));
+            List<AbstractNode> stops = resolveNodes(splitNodeIds(r.get("Stops")));
             list.add(new BusRoute(
                 r.get("RouteID"),
                 stops,
@@ -167,8 +174,8 @@ public class DataLoaderService {
         List<TransitDemand> list = new ArrayList<>();
         for (CSVRecord r : parseCsv("/static/data/transit_demand.csv")) {
             list.add(new TransitDemand(
-                r.get("FromID"),
-                r.get("ToID"),
+                resolveNode(r.get("FromID")),
+                resolveNode(r.get("ToID")),
                 Integer.parseInt(r.get("Daily_Passengers"))
             ));
         }
@@ -207,7 +214,7 @@ public class DataLoaderService {
      * the CSV) into a trimmed list of node ID strings.
      * Example: "12,1,3,F2,11" → ["12", "1", "3", "F2", "11"]
      */
-    private List<String> splitStops(String raw) {
+    private List<String> splitNodeIds(String raw) {
         List<String> result = new ArrayList<>();
         for (String token : raw.split(",")) {
             String trimmed = token.trim();
@@ -216,5 +223,41 @@ public class DataLoaderService {
             }
         }
         return result;
+    }
+
+    private Map<String, AbstractNode> buildNodeIndex(List<Neighborhood> neighborhoods,
+                                                     List<Facility> facilities) {
+        Map<String, AbstractNode> index = new LinkedHashMap<>();
+        neighborhoods.forEach(node -> index.put(node.getNodeId(), node));
+        facilities.forEach(node -> index.put(node.getNodeId(), node));
+        return Collections.unmodifiableMap(index);
+    }
+
+    private Map<String, Road> buildRoadIndex(List<Road> roads) {
+        Map<String, Road> index = new LinkedHashMap<>();
+        roads.forEach(road -> index.put(road.asRoadId(), road));
+        return Collections.unmodifiableMap(index);
+    }
+
+    private AbstractNode resolveNode(String nodeId) {
+        AbstractNode node = nodesById.get(nodeId);
+        if (node == null) {
+            throw new IllegalArgumentException("Unknown node ID referenced in CSV data: " + nodeId);
+        }
+        return node;
+    }
+
+    private List<AbstractNode> resolveNodes(List<String> nodeIds) {
+        return nodeIds.stream()
+            .map(this::resolveNode)
+            .toList();
+    }
+
+    private Road resolveRoad(String roadId) {
+        Road road = roadsById.get(roadId);
+        if (road == null) {
+            throw new IllegalArgumentException("Unknown road ID referenced in CSV data: " + roadId);
+        }
+        return road;
     }
 }

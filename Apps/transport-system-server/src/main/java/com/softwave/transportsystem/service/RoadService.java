@@ -50,7 +50,7 @@ public class RoadService {
      */
     public List<Road> getRoadsForNode(String nodeId) {
         return data.getRoads().stream()
-            .filter(r -> r.getFromId().equals(nodeId) || r.getToId().equals(nodeId))
+            .filter(r -> r.connects(nodeId))
             .toList();
     }
 
