@@ -52,6 +52,12 @@ public class HomeController {
         endpoints.put("GET /api/demand",               "List all OD demand records");
         endpoints.put("GET /api/demand/{id}",          "Get OD demand record by numeric ID");
 
+        // Graph Algorithms
+        endpoints.put("GET /api/graph/shortest-path?from={id}&to={id}",
+                "Dijkstra shortest path between two nodes (weight = distance_km)");
+        endpoints.put("GET /api/graph/mst",
+                "Kruskal Minimum Spanning Tree of the existing road network (weight = distance_km)");
+
         info.put("endpoints", endpoints);
         return info;
     }
