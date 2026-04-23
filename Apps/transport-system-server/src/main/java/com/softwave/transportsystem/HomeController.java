@@ -61,14 +61,15 @@ public class HomeController {
         endpoints.put("GET /api/graph/mst",
                 "[IMPLEMENTED] Kruskal Minimum Spanning Tree of existing roads (weight = distance_km)");
 
+        endpoints.put("GET /api/graph/astar?from={id}&to={id}",
+                "[IMPLEMENTED] A* emergency routing (heuristic = straight-line distance)");
+        endpoints.put("GET /api/graph/time-varying-shortest-path?from={id}&to={id}&timeSlot={slot}",
+                "[IMPLEMENTED] Time-varying Dijkstra (weight = distance * volume/capacity). timeSlot: MORNING|AFTERNOON|EVENING|NIGHT");
+        endpoints.put("GET /api/graph/prim-mst",
+                "[IMPLEMENTED] Prim's MST on potential road network (weight = construction_cost)");
+
         // --- Placeholder algorithm endpoints (not yet implemented) ---
 
-        endpoints.put("GET /api/graph/astar?from={id}&to={id}",
-                "[PLACEHOLDER] A* emergency routing (heuristic = straight-line distance)");
-        endpoints.put("GET /api/graph/time-varying-shortest-path?from={id}&to={id}&timeSlot={slot}",
-                "[PLACEHOLDER] Time-varying Dijkstra (weight = distance * volume/capacity). timeSlot: MORNING|AFTERNOON|EVENING|NIGHT");
-        endpoints.put("GET /api/graph/prim-mst",
-                "[PLACEHOLDER] Prim's MST on potential road network (weight = construction_cost)");
         endpoints.put("GET /api/traffic/signal-timing?timeSlot={slot}",
                 "[PLACEHOLDER] Greedy traffic-signal timing. timeSlot: MORNING|AFTERNOON|EVENING|NIGHT");
         endpoints.put("GET /api/roads/maintenance-plan?budget={millions}",

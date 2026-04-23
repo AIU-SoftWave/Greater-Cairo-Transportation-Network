@@ -1,7 +1,9 @@
-package com.softwave.transportsystem.graph.service;
+package com.softwave.transportsystem.graph.mst.service;
 
-import com.softwave.transportsystem.graph.model.GraphEdge;
-import com.softwave.transportsystem.graph.model.MstResult;
+import com.softwave.transportsystem.graph.mst.dto.MstResult;
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.model.GraphSnapshot;
+import com.softwave.transportsystem.graph.shared.service.GraphService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -43,8 +45,9 @@ import java.util.Set;
  *
  * <h3>Undirected graph</h3>
  * Each row of {@code existing_roads.csv} represents one undirected road.
- * {@link GraphService#buildEdgeList()} returns one {@link GraphEdge} per
- * physical road (no duplicates), which is the correct input for Kruskal's.
+ * {@link GraphService#buildGraphSnapshot()} exposes one canonical
+ * {@link GraphEdge} per physical road, which is the correct input for
+ * Kruskal's.
  *
  * <h3>Edge weight</h3>
  * {@code distance_km} is used as the spanning-tree weight, as specified in the
@@ -80,46 +83,58 @@ public class KruskalMstService {
      * @return {@link MstResult} with the MST edges and summary statistics
      */
     public MstResult computeMst() {
-        List<GraphEdge> allEdges = graphService.buildEdgeList();
+        GraphSnapshot snapshot = graphService.buildGraphSnapshot();
+        List<GraphEdge> allEdges = snapshot.getEdges();
+        Map<String, String> nodeNames = snapshot.getNodeNames();
 
-        // Collect every unique node ID that participates in at least one road
         Set<String> nodeIds = new LinkedHashSet<>();
         for (GraphEdge edge : allEdges) {
             nodeIds.add(edge.getFromId());
             nodeIds.add(edge.getToId());
         }
 
-        // Step 1 – sort edges by distance_km ascending (Kruskal's greedy criterion)
         List<GraphEdge> sorted = new ArrayList<>(allEdges);
         sorted.sort(Comparator.comparingDouble(GraphEdge::getDistanceKm));
 
-        // Step 2 – Union-Find for O(α) cycle detection
         UnionFind uf = new UnionFind(nodeIds);
 
         List<GraphEdge> mstEdges = new ArrayList<>();
         double totalDist = 0.0;
-        int target = nodeIds.size() - 1; // N-1 edges needed
+        int target = nodeIds.size() - 1;
 
         for (GraphEdge edge : sorted) {
             String rootFrom = uf.find(edge.getFromId());
             String rootTo = uf.find(edge.getToId());
 
             if (rootFrom.equals(rootTo)) {
-                // Same component – adding this edge would create a cycle; skip it
                 continue;
             }
 
-            // Different components – safe to include; merge them
             uf.union(rootFrom, rootTo);
             mstEdges.add(edge);
             totalDist += edge.getDistanceKm();
 
             if (mstEdges.size() == target) {
-                break; // Spanning tree complete
+                break;
             }
         }
 
-        return new MstResult(mstEdges, totalDist, nodeIds.size(), mstEdges.size());
+        List<GraphEdge> resultEdges = mstEdges.stream()
+                .map(edge -> new GraphEdge(
+                        edge.getFromId(),
+                        nodeNames.getOrDefault(edge.getFromId(), edge.getFromId()),
+                        edge.getToId(),
+                        nodeNames.getOrDefault(edge.getToId(), edge.getToId()),
+                        edge.getDistanceKm()))
+                .toList();
+
+        boolean connected = nodeIds.isEmpty() || mstEdges.size() == target;
+        String message = connected
+                ? "Minimum spanning tree computed successfully."
+                : "Road network is disconnected; returned the minimum spanning forest.";
+
+        return new MstResult(resultEdges, totalDist, nodeIds.size(), mstEdges.size(),
+                connected, message);
     }
 
     // ------------------------------------------------------------------ Union-Find
@@ -168,7 +183,6 @@ public class KruskalMstService {
          */
         String find(String node) {
             if (!parent.get(node).equals(node)) {
-                // Path compression: point directly at the root
                 parent.put(node, find(parent.get(node)));
             }
             return parent.get(node);
@@ -184,19 +198,17 @@ public class KruskalMstService {
          */
         void union(String rootA, String rootB) {
             if (rootA.equals(rootB)) {
-                return; // Already in the same component
+                return;
             }
 
             int rankA = rank.get(rootA);
             int rankB = rank.get(rootB);
 
-            // Attach smaller-rank tree under the larger-rank root
             if (rankA < rankB) {
                 parent.put(rootA, rootB);
             } else if (rankA > rankB) {
                 parent.put(rootB, rootA);
             } else {
-                // Equal ranks: pick one as the new root and increment its rank
                 parent.put(rootB, rootA);
                 rank.put(rootA, rankA + 1);
             }

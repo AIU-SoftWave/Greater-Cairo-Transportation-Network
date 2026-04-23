@@ -1,5 +1,6 @@
-package com.softwave.transportsystem.graph.model;
+package com.softwave.transportsystem.graph.shortestpath.dto;
 
+import com.softwave.transportsystem.graph.shared.dto.GraphNodeSummary;
 import java.util.List;
 
 /**
@@ -31,37 +32,6 @@ import java.util.List;
  */
 public class ShortestPathResult {
 
-    //  inner type
-
-    /**
-     * A single node visited along the shortest route.
-     * Carries both the raw node ID (as stored in the database) and its
-     * human-readable display name.
-     */
-    public static class PathStop {
-
-        /** Node ID, e.g. {@code "1"} for Maadi or {@code "F2"} for Ramses station. */
-        private final String id;
-
-        /** Human-readable district / facility name. */
-        private final String name;
-
-        public PathStop(String id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    // ------------------------------------------------------------------ fields
-
     /** {@code true} if a path was found between the requested endpoints. */
     private final boolean found;
 
@@ -69,7 +39,7 @@ public class ShortestPathResult {
      * Ordered list of nodes along the shortest route, starting at the source
      * and ending at the destination. Empty when {@link #found} is {@code false}.
      */
-    private final List<PathStop> stops;
+    private final List<GraphNodeSummary> stops;
 
     /** Total road distance in kilometres along the shortest route. */
     private final double totalDistanceKm;
@@ -80,18 +50,13 @@ public class ShortestPathResult {
      */
     private final String message;
 
-    // ------------------------------------------------------------------
-    // constructor
-
-    private ShortestPathResult(boolean found, List<PathStop> stops,
+    private ShortestPathResult(boolean found, List<GraphNodeSummary> stops,
             double totalDistanceKm, String message) {
         this.found = found;
         this.stops = stops;
         this.totalDistanceKm = totalDistanceKm;
         this.message = message;
     }
-
-    // ------------------------------------------------------------------ factories
 
     /**
      * Creates a successful result with the fully reconstructed path.
@@ -100,7 +65,7 @@ public class ShortestPathResult {
      * @param totalDistanceKm cumulative road distance along the route
      * @return successful {@code ShortestPathResult}
      */
-    public static ShortestPathResult found(List<PathStop> stops, double totalDistanceKm) {
+    public static ShortestPathResult found(List<GraphNodeSummary> stops, double totalDistanceKm) {
         return new ShortestPathResult(true, stops, totalDistanceKm, "Path found.");
     }
 
@@ -115,13 +80,22 @@ public class ShortestPathResult {
         return new ShortestPathResult(false, List.of(), 0.0, message);
     }
 
-    // ------------------------------------------------------------------ getters
+    /**
+     * Creates a consistent placeholder result for algorithms that are not yet
+     * implemented.
+     *
+     * @param message human-readable explanation
+     * @return failure-style {@code ShortestPathResult}
+     */
+    public static ShortestPathResult notImplemented(String message) {
+        return new ShortestPathResult(false, List.of(), 0.0, message);
+    }
 
     public boolean isFound() {
         return found;
     }
 
-    public List<PathStop> getStops() {
+    public List<GraphNodeSummary> getStops() {
         return stops;
     }
 

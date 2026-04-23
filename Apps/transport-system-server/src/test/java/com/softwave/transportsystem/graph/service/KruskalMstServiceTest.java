@@ -1,7 +1,9 @@
 package com.softwave.transportsystem.graph.service;
 
-import com.softwave.transportsystem.graph.model.GraphEdge;
-import com.softwave.transportsystem.graph.model.MstResult;
+import com.softwave.transportsystem.graph.mst.dto.MstResult;
+import com.softwave.transportsystem.graph.mst.service.KruskalMstService;
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.service.GraphService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

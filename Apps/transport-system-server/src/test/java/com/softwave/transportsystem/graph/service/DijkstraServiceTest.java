@@ -1,7 +1,9 @@
 package com.softwave.transportsystem.graph.service;
 
-import com.softwave.transportsystem.graph.model.GraphEdge;
-import com.softwave.transportsystem.graph.model.ShortestPathResult;
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.service.GraphService;
+import com.softwave.transportsystem.graph.shortestpath.dto.ShortestPathResult;
+import com.softwave.transportsystem.graph.shortestpath.service.DijkstraService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

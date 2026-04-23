@@ -1,5 +1,6 @@
-package com.softwave.transportsystem.graph.model;
+package com.softwave.transportsystem.graph.mst.dto;
 
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
 import java.util.List;
 
 /**
@@ -42,6 +43,12 @@ public class MstResult {
      */
     private final int edgeCount;
 
+    /** Whether the road network was fully connected. */
+    private final boolean connected;
+
+    /** Human-readable summary of the result. */
+    private final String message;
+
     /**
      * Constructs a fully populated MST result.
      *
@@ -51,11 +58,13 @@ public class MstResult {
      * @param edgeCount       number of edges in the MST
      */
     public MstResult(List<GraphEdge> edges, double totalDistanceKm,
-            int nodeCount, int edgeCount) {
+            int nodeCount, int edgeCount, boolean connected, String message) {
         this.edges = edges;
         this.totalDistanceKm = totalDistanceKm;
         this.nodeCount = nodeCount;
         this.edgeCount = edgeCount;
+        this.connected = connected;
+        this.message = message;
     }
 
     //  getters
@@ -74,5 +83,13 @@ public class MstResult {
 
     public int getEdgeCount() {
         return edgeCount;
+    }
+
+    public boolean isConnected() {
+        return connected;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

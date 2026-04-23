@@ -1,8 +1,10 @@
-package com.softwave.transportsystem.graph.service;
+package com.softwave.transportsystem.graph.shortestpath.service;
 
-import com.softwave.transportsystem.graph.model.GraphEdge;
-import com.softwave.transportsystem.graph.model.ShortestPathResult;
-import com.softwave.transportsystem.graph.model.ShortestPathResult.PathStop;
+import com.softwave.transportsystem.graph.shared.dto.GraphNodeSummary;
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.model.GraphSnapshot;
+import com.softwave.transportsystem.graph.shared.service.GraphService;
+import com.softwave.transportsystem.graph.shortestpath.dto.ShortestPathResult;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -44,7 +46,7 @@ import java.util.Set;
  * between any two nodes."
  *
  * <h3>Undirected graph</h3>
- * Roads are treated as undirected; {@link GraphService#buildAdjacencyMap()}
+ * Roads are treated as undirected; {@link GraphService#buildGraphSnapshot()}
  * materialises both directions of every road before this service is called.
  */
 @Service
@@ -80,23 +82,23 @@ public class DijkstraService {
      *         either node is unknown or no path connects them
      */
     public ShortestPathResult findShortestPath(String fromId, String toId) {
-        Map<String, List<GraphEdge>> adjacency = graphService.buildAdjacencyMap();
-        Map<String, String> nameMap = graphService.buildNodeNameMap();
+        GraphSnapshot snapshot = graphService.buildGraphSnapshot();
+        Map<String, List<GraphEdge>> adjacency = snapshot.getAdjacency();
+        Map<String, String> nameMap = snapshot.getNodeNames();
 
-        // Validate that both endpoints exist in the road network
-        if (!adjacency.containsKey(fromId)) {
+        // Validate against all known nodes, not only connected nodes.
+        if (!nameMap.containsKey(fromId)) {
             return ShortestPathResult.notFound(
-                    "Source node '" + fromId + "' was not found in the road network.");
+                    "Source node '" + fromId + "' was not found.");
         }
-        if (!adjacency.containsKey(toId)) {
+        if (!nameMap.containsKey(toId)) {
             return ShortestPathResult.notFound(
-                    "Destination node '" + toId + "' was not found in the road network.");
+                    "Destination node '" + toId + "' was not found.");
         }
 
-        // Short-circuit: source equals destination – zero-cost trivial path
         if (fromId.equals(toId)) {
             String name = nameMap.getOrDefault(fromId, fromId);
-            return ShortestPathResult.found(List.of(new PathStop(fromId, name)), 0.0);
+            return ShortestPathResult.found(List.of(new GraphNodeSummary(fromId, name)), 0.0);
         }
 
         return runDijkstra(adjacency, nameMap, fromId, toId);
@@ -105,7 +107,7 @@ public class DijkstraService {
     // internals
 
     /**
-     * Core Dijkstra loop. Assumes both endpoints exist in {@code adjacency}.
+     * Core Dijkstra loop. Assumes both endpoints exist in the node-name map.
      *
      * @param adjacency bidirectional adjacency map (node ID → outgoing edges)
      * @param nameMap   node ID → display name lookup
@@ -116,20 +118,13 @@ public class DijkstraService {
     private ShortestPathResult runDijkstra(Map<String, List<GraphEdge>> adjacency,
             Map<String, String> nameMap,
             String fromId, String toId) {
-        // dist[v] = best-known cumulative distance from source to v
         Map<String, Double> dist = new HashMap<>();
-        // prev[v] = the node we came from when we first reached v on the best path
         Map<String, String> predecessor = new HashMap<>();
-        // Nodes whose final shortest distance has been confirmed
         Set<String> visited = new HashSet<>();
 
-        // Initialise all known nodes to infinity
-        adjacency.keySet().forEach(id -> dist.put(id, Double.MAX_VALUE));
+        nameMap.keySet().forEach(id -> dist.put(id, Double.MAX_VALUE));
         dist.put(fromId, 0.0);
 
-        // Min-heap of (tentative distance, node ID) pairs
-        // The lazy-deletion approach: we push updated entries rather than
-        // modifying existing ones, then skip stale entries via `visited`.
         PriorityQueue<Map.Entry<Double, String>> pq = new PriorityQueue<>(
                 Map.Entry.comparingByKey());
         pq.offer(Map.entry(0.0, fromId));
@@ -139,17 +134,14 @@ public class DijkstraService {
             double currDist = entry.getKey();
             String current = entry.getValue();
 
-            // Skip stale heap entries
             if (visited.contains(current)) {
                 continue;
             }
-            // Early exit: destination confirmed
             if (current.equals(toId)) {
                 break;
             }
             visited.add(current);
 
-            // Relax outgoing edges
             for (GraphEdge edge : adjacency.getOrDefault(current, List.of())) {
                 String neighbor = edge.getToId();
                 double newDist = currDist + edge.getDistanceKm();
@@ -162,16 +154,13 @@ public class DijkstraService {
             }
         }
 
-        // Check whether the destination was reached
         double totalDist = dist.getOrDefault(toId, Double.MAX_VALUE);
         if (totalDist == Double.MAX_VALUE) {
             return ShortestPathResult.notFound(
-                    "No path found between '" + fromId + "' and '" + toId + "'."
-                            + " The nodes may be in disconnected parts of the network.");
+                    "No path found between '" + fromId + "' and '" + toId + "'.");
         }
 
-        // Reconstruct the ordered path by walking the predecessor chain
-        List<PathStop> stops = reconstructPath(predecessor, nameMap, fromId, toId);
+        List<GraphNodeSummary> stops = reconstructPath(predecessor, nameMap, toId);
         return ShortestPathResult.found(stops, totalDist);
     }
 
@@ -181,19 +170,18 @@ public class DijkstraService {
      *
      * @param predecessor map from each visited node to the node it was reached from
      * @param nameMap     node ID → display name
-     * @param fromId      source node ID (loop termination sentinel)
      * @param toId        destination node ID (starting point of back-trace)
-     * @return ordered list of {@link PathStop}s from source to destination
+     * @return ordered list of node summaries from source to destination
      */
-    private List<PathStop> reconstructPath(Map<String, String> predecessor,
+    private List<GraphNodeSummary> reconstructPath(Map<String, String> predecessor,
             Map<String, String> nameMap,
-            String fromId, String toId) {
-        LinkedList<PathStop> path = new LinkedList<>();
+            String toId) {
+        LinkedList<GraphNodeSummary> path = new LinkedList<>();
         String current = toId;
 
         while (current != null) {
             String name = nameMap.getOrDefault(current, current);
-            path.addFirst(new PathStop(current, name));
+            path.addFirst(new GraphNodeSummary(current, name));
             current = predecessor.get(current);
         }
 

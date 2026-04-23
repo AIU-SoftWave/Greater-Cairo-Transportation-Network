@@ -1,12 +1,15 @@
 package com.softwave.transportsystem.graph.controller;
 
-import com.softwave.transportsystem.graph.model.MstResult;
-import com.softwave.transportsystem.graph.model.ShortestPathResult;
-import com.softwave.transportsystem.graph.service.AStarService;
-import com.softwave.transportsystem.graph.service.DijkstraService;
-import com.softwave.transportsystem.graph.service.KruskalMstService;
-import com.softwave.transportsystem.graph.service.PrimMstService;
-import com.softwave.transportsystem.graph.service.TimeVaryingDijkstraService;
+import com.softwave.transportsystem.graph.astar.service.AStarService;
+import com.softwave.transportsystem.graph.mst.dto.MstResult;
+import com.softwave.transportsystem.graph.mst.dto.PotentialRoadMstResult;
+import com.softwave.transportsystem.graph.mst.service.KruskalMstService;
+import com.softwave.transportsystem.graph.mst.service.PrimMstService;
+import com.softwave.transportsystem.graph.shortestpath.dto.ShortestPathResult;
+import com.softwave.transportsystem.graph.shortestpath.service.DijkstraService;
+import com.softwave.transportsystem.graph.timevarying.dto.CongestedPathResult;
+import com.softwave.transportsystem.graph.timevarying.service.TimeVaryingDijkstraService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -90,8 +93,8 @@ public class GraphController {
      * </p>
      * <ul>
      * <li>{@code 200 OK} – path found; body contains stops and total distance.</li>
-     * <li>{@code 404 Not Found} – one or both node IDs are not in the road
-     * network, or the nodes belong to disconnected components.</li>
+     * <li>{@code 404 Not Found} – one or both node IDs are unknown, or the
+     * nodes belong to disconnected components.</li>
      * </ul>
      *
      * @param from source node ID (e.g. {@code "1"} or {@code "F2"})
@@ -104,7 +107,7 @@ public class GraphController {
             @RequestParam String to) {
         ShortestPathResult result = dijkstraService.findShortestPath(from, to);
         if (!result.isFound()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
         }
         return ResponseEntity.ok(result);
     }
@@ -130,53 +133,63 @@ public class GraphController {
     // ------------------------------------------------------------------ placeholders
 
     /**
-     * [PLACEHOLDER] A* emergency routing.
+     * A* emergency routing.
      *
-     * <p>Returns a "not implemented" string until a team member implements
-     * {@link AStarService#findEmergencyPath}.</p>
+     * <p>Uses straight-line distance as the heuristic and road distance as the
+     * actual path weight.</p>
      *
      * @param from source node ID
      * @param to   destination node ID (typically a medical facility)
-     * @return placeholder string
+     * @return placeholder path result
      */
     @GetMapping("/astar")
-    public ResponseEntity<String> aStarEmergencyPath(
+    public ResponseEntity<ShortestPathResult> aStarEmergencyPath(
             @RequestParam String from,
             @RequestParam String to) {
-        return ResponseEntity.ok(aStarService.findEmergencyPath(from, to));
+        ShortestPathResult result = aStarService.findEmergencyPath(from, to);
+        if (!result.isFound()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 
     /**
-     * [PLACEHOLDER] Time-varying (congestion-aware) Dijkstra shortest path.
+     * Time-varying (congestion-aware) Dijkstra shortest path.
      *
-     * <p>Returns a "not implemented" string until a team member implements
-     * {@link TimeVaryingDijkstraService#findCongestedPath}.</p>
+     * <p>Uses {@code distance_km * (volume_vph / capacity_vph)} as the edge
+     * cost for the requested time slot.</p>
      *
      * @param from     source node ID
      * @param to       destination node ID
      * @param timeSlot one of {@code MORNING}, {@code AFTERNOON},
      *                 {@code EVENING}, {@code NIGHT}
-     * @return placeholder string
+     * @return congestion-aware path result
      */
     @GetMapping("/time-varying-shortest-path")
-    public ResponseEntity<String> timeVaryingShortestPath(
+    public ResponseEntity<CongestedPathResult> timeVaryingShortestPath(
             @RequestParam String from,
             @RequestParam String to,
             @RequestParam String timeSlot) {
-        return ResponseEntity.ok(
-                timeVaryingDijkstraService.findCongestedPath(from, to, timeSlot));
+        CongestedPathResult result = timeVaryingDijkstraService.findCongestedPath(from, to, timeSlot);
+        if (!result.isValidRequest()) {
+            return ResponseEntity.badRequest().body(result);
+        }
+        if (!result.isFound()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 
     /**
-     * [PLACEHOLDER] Prim's MST on the potential road network.
+     * Prim's MST on the potential road network.
      *
-     * <p>Returns a "not implemented" string until a team member implements
-     * {@link PrimMstService#computeMst}.</p>
+     * <p>Uses {@code construction_cost_million_egp} as the edge weight and
+     * returns the MST or spanning forest of the proposed network.</p>
      *
-     * @return placeholder string
+     * @return minimum-cost proposed-road network result
      */
     @GetMapping("/prim-mst")
-    public ResponseEntity<String> primMinimumSpanningTree() {
-        return ResponseEntity.ok(primMstService.computeMst());
+    public PotentialRoadMstResult primMinimumSpanningTree() {
+        return primMstService.computeMst();
     }
 }

@@ -1,6 +1,7 @@
-package com.softwave.transportsystem.graph.service;
+package com.softwave.transportsystem.graph.shared.service;
 
-import com.softwave.transportsystem.graph.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.model.GraphEdge;
+import com.softwave.transportsystem.graph.shared.model.GraphSnapshot;
 import com.softwave.transportsystem.road.model.Road;
 import com.softwave.transportsystem.road.repository.RoadRepository;
 import com.softwave.transportsystem.shared.model.AbstractNode;
@@ -8,6 +9,7 @@ import com.softwave.transportsystem.shared.repository.NodeRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +22,10 @@ import java.util.Map;
  * Roads in {@code existing_roads.csv} are stored as directed rows (one row per
  * road segment), but the algorithm roadmap states they should be treated as
  * <em>undirected</em> for both MST and shortest-path computations.
- * {@link #buildAdjacencyMap()} therefore materialises <strong>both
- * directions</strong> of every road so that algorithms can traverse each edge
- * in either direction. {@link #buildEdgeList()} returns one edge per physical
- * road (the canonical from→to direction) for use by Kruskal's algorithm.
+ * {@link #buildGraphSnapshot()} therefore materialises <strong>both
+ * directions</strong> of every road in the adjacency map so algorithms can
+ * traverse each edge in either direction, while also exposing one canonical
+ * edge per physical road for MST use.
  *
  * <h3>No caching</h3>
  * Methods build structures fresh from the database on each call. The dataset
@@ -48,67 +50,65 @@ public class GraphService {
         this.nodeRepository = nodeRepository;
     }
 
-    //  public API
-
     /**
-     * Builds a <em>bidirectional</em> adjacency map from all persisted roads.
+     * Builds a consistent in-memory snapshot of the road graph.
      *
      * <p>
-     * Each physical road contributes two entries: one for the forward
-     * direction (from→to) and one for the reverse direction (to→from). This
-     * lets Dijkstra's algorithm traverse the road network as an undirected
-     * graph.
+     * The snapshot contains:
      * </p>
+     * <ul>
+     * <li>every known node name keyed by node ID, including isolated nodes</li>
+     * <li>a bidirectional adjacency map for shortest-path algorithms</li>
+     * <li>a canonical edge list with one edge per physical road for Kruskal's</li>
+     * </ul>
      *
-     * @return map from each node ID to the list of outgoing {@link GraphEdge}s
+     * @return immutable-style graph snapshot for algorithm services
      */
-    public Map<String, List<GraphEdge>> buildAdjacencyMap() {
-        Map<String, String> nameMap = buildNodeNameMap();
+    public GraphSnapshot buildGraphSnapshot() {
+        Map<String, String> nodeNames = buildNodeNameMap();
         Map<String, List<GraphEdge>> adjacency = new LinkedHashMap<>();
+        List<GraphEdge> edges = new ArrayList<>();
+
+        for (String nodeId : nodeNames.keySet()) {
+            adjacency.put(nodeId, new ArrayList<>());
+        }
 
         for (Road road : roadRepository.findAll()) {
             String fromId = road.getFromNode().getNodeId();
             String toId = road.getToNode().getNodeId();
-            String fromName = nameMap.getOrDefault(fromId, fromId);
-            String toName = nameMap.getOrDefault(toId, toId);
             double dist = road.getDistanceKm();
 
-            // Forward edge (as stored in the database)
             adjacency.computeIfAbsent(fromId, k -> new ArrayList<>())
-                    .add(new GraphEdge(fromId, fromName, toId, toName, dist));
+                    .add(new GraphEdge(fromId, toId, dist));
 
-            // Reverse edge (undirected treatment)
             adjacency.computeIfAbsent(toId, k -> new ArrayList<>())
-                    .add(new GraphEdge(toId, toName, fromId, fromName, dist));
+                    .add(new GraphEdge(toId, fromId, dist));
+
+            edges.add(new GraphEdge(fromId, toId, dist));
         }
 
-        return adjacency;
+        return new GraphSnapshot(
+                Collections.unmodifiableMap(nodeNames),
+                Collections.unmodifiableMap(adjacency),
+                List.copyOf(edges));
     }
 
     /**
-     * Collects the unique set of undirected edges from all persisted roads.
+     * Backward-compatible access to the bidirectional adjacency map.
      *
-     * <p>
-     * Each physical road produces exactly one {@link GraphEdge} entry (the
-     * canonical from→to direction stored in the database). This list is the
-     * correct input for Kruskal's MST, which needs each edge exactly once.
-     * </p>
+     * @return node ID to outgoing edges
+     */
+    public Map<String, List<GraphEdge>> buildAdjacencyMap() {
+        return buildGraphSnapshot().getAdjacency();
+    }
+
+    /**
+     * Backward-compatible access to the canonical road edge list.
      *
-     * @return list of unique edges suitable for Kruskal's algorithm
+     * @return one edge per persisted physical road
      */
     public List<GraphEdge> buildEdgeList() {
-        Map<String, String> nameMap = buildNodeNameMap();
-        List<GraphEdge> edges = new ArrayList<>();
-
-        for (Road road : roadRepository.findAll()) {
-            String fromId = road.getFromNode().getNodeId();
-            String toId = road.getToNode().getNodeId();
-            String fromName = nameMap.getOrDefault(fromId, fromId);
-            String toName = nameMap.getOrDefault(toId, toId);
-            edges.add(new GraphEdge(fromId, fromName, toId, toName, road.getDistanceKm()));
-        }
-
-        return edges;
+        return buildGraphSnapshot().getEdges();
     }
 
     /**
@@ -127,5 +127,18 @@ public class GraphService {
             nameMap.put(node.getNodeId(), node.getName());
         }
         return nameMap;
+    }
+
+    /**
+     * Returns all known nodes keyed by their node ID.
+     *
+     * @return node-ID to node entity mapping
+     */
+    public Map<String, AbstractNode> buildNodeMap() {
+        Map<String, AbstractNode> nodeMap = new LinkedHashMap<>();
+        for (AbstractNode node : nodeRepository.findAll()) {
+            nodeMap.put(node.getNodeId(), node);
+        }
+        return nodeMap;
     }
 }
