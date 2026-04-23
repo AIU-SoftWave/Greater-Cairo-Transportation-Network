@@ -1,0 +1,11 @@
+@TransportationApi_HostAddress = http://localhost:5259
+
+GET {{TransportationApi_HostAddress}}/api/locations/
+Accept: application/json
+
+###
+
+GET {{TransportationApi_HostAddress}}/api/roads/
+Accept: application/json
+
+###
