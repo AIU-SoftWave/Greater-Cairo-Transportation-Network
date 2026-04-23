@@ -22,11 +22,11 @@ import java.util.Map;
  * <em>undirected</em> for both MST and shortest-path computations.
  * {@link #buildAdjacencyMap()} therefore materialises <strong>both
  * directions</strong> of every road so that algorithms can traverse each edge
- * in either direction.  {@link #buildEdgeList()} returns one edge per physical
+ * in either direction. {@link #buildEdgeList()} returns one edge per physical
  * road (the canonical from→to direction) for use by Kruskal's algorithm.
  *
  * <h3>No caching</h3>
- * Methods build structures fresh from the database on each call.  The dataset
+ * Methods build structures fresh from the database on each call. The dataset
  * is small (≈ 28 roads, ≈ 19 nodes) so the overhead is negligible; avoiding a
  * server-level cache also means the graph always reflects the current DB state.
  */
@@ -40,22 +40,25 @@ public class GraphService {
      * Constructs the service with its required repositories.
      *
      * @param roadRepository provides all persisted road edges
-     * @param nodeRepository provides all persisted nodes (neighborhoods + facilities)
+     * @param nodeRepository provides all persisted nodes (neighborhoods +
+     *                       facilities)
      */
     public GraphService(RoadRepository roadRepository, NodeRepository nodeRepository) {
         this.roadRepository = roadRepository;
         this.nodeRepository = nodeRepository;
     }
 
-    // ------------------------------------------------------------------ public API
+    //  public API
 
     /**
      * Builds a <em>bidirectional</em> adjacency map from all persisted roads.
      *
-     * <p>Each physical road contributes two entries: one for the forward
-     * direction (from→to) and one for the reverse direction (to→from).  This
+     * <p>
+     * Each physical road contributes two entries: one for the forward
+     * direction (from→to) and one for the reverse direction (to→from). This
      * lets Dijkstra's algorithm traverse the road network as an undirected
-     * graph.</p>
+     * graph.
+     * </p>
      *
      * @return map from each node ID to the list of outgoing {@link GraphEdge}s
      */
@@ -64,19 +67,19 @@ public class GraphService {
         Map<String, List<GraphEdge>> adjacency = new LinkedHashMap<>();
 
         for (Road road : roadRepository.findAll()) {
-            String fromId   = road.getFromNode().getNodeId();
-            String toId     = road.getToNode().getNodeId();
+            String fromId = road.getFromNode().getNodeId();
+            String toId = road.getToNode().getNodeId();
             String fromName = nameMap.getOrDefault(fromId, fromId);
-            String toName   = nameMap.getOrDefault(toId, toId);
-            double dist     = road.getDistanceKm();
+            String toName = nameMap.getOrDefault(toId, toId);
+            double dist = road.getDistanceKm();
 
             // Forward edge (as stored in the database)
             adjacency.computeIfAbsent(fromId, k -> new ArrayList<>())
-                     .add(new GraphEdge(fromId, fromName, toId, toName, dist));
+                    .add(new GraphEdge(fromId, fromName, toId, toName, dist));
 
             // Reverse edge (undirected treatment)
             adjacency.computeIfAbsent(toId, k -> new ArrayList<>())
-                     .add(new GraphEdge(toId, toName, fromId, fromName, dist));
+                    .add(new GraphEdge(toId, toName, fromId, fromName, dist));
         }
 
         return adjacency;
@@ -85,9 +88,11 @@ public class GraphService {
     /**
      * Collects the unique set of undirected edges from all persisted roads.
      *
-     * <p>Each physical road produces exactly one {@link GraphEdge} entry (the
-     * canonical from→to direction stored in the database).  This list is the
-     * correct input for Kruskal's MST, which needs each edge exactly once.</p>
+     * <p>
+     * Each physical road produces exactly one {@link GraphEdge} entry (the
+     * canonical from→to direction stored in the database). This list is the
+     * correct input for Kruskal's MST, which needs each edge exactly once.
+     * </p>
      *
      * @return list of unique edges suitable for Kruskal's algorithm
      */
@@ -96,10 +101,10 @@ public class GraphService {
         List<GraphEdge> edges = new ArrayList<>();
 
         for (Road road : roadRepository.findAll()) {
-            String fromId   = road.getFromNode().getNodeId();
-            String toId     = road.getToNode().getNodeId();
+            String fromId = road.getFromNode().getNodeId();
+            String toId = road.getToNode().getNodeId();
             String fromName = nameMap.getOrDefault(fromId, fromId);
-            String toName   = nameMap.getOrDefault(toId, toId);
+            String toName = nameMap.getOrDefault(toId, toId);
             edges.add(new GraphEdge(fromId, fromName, toId, toName, road.getDistanceKm()));
         }
 
@@ -109,8 +114,10 @@ public class GraphService {
     /**
      * Returns a map from every known node ID to that node's human-readable name.
      *
-     * <p>The map covers all neighborhoods and facilities, including those not
-     * yet connected to any road.</p>
+     * <p>
+     * The map covers all neighborhoods and facilities, including those not
+     * yet connected to any road.
+     * </p>
      *
      * @return node-ID → display-name mapping
      */

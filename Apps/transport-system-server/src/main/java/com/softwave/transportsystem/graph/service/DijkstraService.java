@@ -20,22 +20,22 @@ import java.util.Set;
  *
  * <h3>Algorithm summary</h3>
  * <ol>
- *   <li>Initialise every node's tentative distance to {@code ∞} except the
- *       source, which starts at {@code 0}.</li>
- *   <li>Use a min-heap (priority queue) keyed on tentative distance to always
- *       relax the nearest un-visited node first.</li>
- *   <li>When the destination node is dequeued, the shortest path has been
- *       found.  The actual route is reconstructed by following the predecessor
- *       map backwards from the destination to the source and reversing the
- *       list.</li>
- *   <li>If the priority queue empties before reaching the destination, the two
- *       nodes are in different connected components and no path exists.</li>
+ * <li>Initialise every node's tentative distance to {@code ∞} except the
+ * source, which starts at {@code 0}.</li>
+ * <li>Use a min-heap (priority queue) keyed on tentative distance to always
+ * relax the nearest un-visited node first.</li>
+ * <li>When the destination node is dequeued, the shortest path has been
+ * found. The actual route is reconstructed by following the predecessor
+ * map backwards from the destination to the source and reversing the
+ * list.</li>
+ * <li>If the priority queue empties before reaching the destination, the two
+ * nodes are in different connected components and no path exists.</li>
  * </ol>
  *
  * <h3>Lazy-deletion optimisation</h3>
  * Rather than updating existing heap entries when a shorter path is found, a
  * new entry is pushed with the improved distance and stale entries are
- * discarded when dequeued using a {@code visited} set.  This gives
+ * discarded when dequeued using a {@code visited} set. This gives
  * O((V + E) log V) time complexity.
  *
  * <h3>Edge weight</h3>
@@ -61,15 +61,17 @@ public class DijkstraService {
         this.graphService = graphService;
     }
 
-    // ------------------------------------------------------------------ public API
+    // public API
 
     /**
      * Finds the shortest road-distance path between {@code fromId} and
      * {@code toId} using Dijkstra's algorithm.
      *
-     * <p>Node IDs follow the same convention as the CSV data: numeric strings
+     * <p>
+     * Node IDs follow the same convention as the CSV data: numeric strings
      * for neighborhoods (e.g. {@code "1"}, {@code "13"}) and facility-prefixed
-     * strings for facilities (e.g. {@code "F1"}, {@code "F9"}).</p>
+     * strings for facilities (e.g. {@code "F1"}, {@code "F9"}).
+     * </p>
      *
      * @param fromId the starting node ID
      * @param toId   the destination node ID
@@ -79,7 +81,7 @@ public class DijkstraService {
      */
     public ShortestPathResult findShortestPath(String fromId, String toId) {
         Map<String, List<GraphEdge>> adjacency = graphService.buildAdjacencyMap();
-        Map<String, String>          nameMap   = graphService.buildNodeNameMap();
+        Map<String, String> nameMap = graphService.buildNodeNameMap();
 
         // Validate that both endpoints exist in the road network
         if (!adjacency.containsKey(fromId)) {
@@ -100,10 +102,10 @@ public class DijkstraService {
         return runDijkstra(adjacency, nameMap, fromId, toId);
     }
 
-    // ------------------------------------------------------------------ internals
+    // internals
 
     /**
-     * Core Dijkstra loop.  Assumes both endpoints exist in {@code adjacency}.
+     * Core Dijkstra loop. Assumes both endpoints exist in {@code adjacency}.
      *
      * @param adjacency bidirectional adjacency map (node ID → outgoing edges)
      * @param nameMap   node ID → display name lookup
@@ -112,14 +114,14 @@ public class DijkstraService {
      * @return populated {@link ShortestPathResult}
      */
     private ShortestPathResult runDijkstra(Map<String, List<GraphEdge>> adjacency,
-                                           Map<String, String>          nameMap,
-                                           String fromId, String toId) {
+            Map<String, String> nameMap,
+            String fromId, String toId) {
         // dist[v] = best-known cumulative distance from source to v
-        Map<String, Double> dist        = new HashMap<>();
+        Map<String, Double> dist = new HashMap<>();
         // prev[v] = the node we came from when we first reached v on the best path
         Map<String, String> predecessor = new HashMap<>();
         // Nodes whose final shortest distance has been confirmed
-        Set<String>         visited     = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         // Initialise all known nodes to infinity
         adjacency.keySet().forEach(id -> dist.put(id, Double.MAX_VALUE));
@@ -133,9 +135,9 @@ public class DijkstraService {
         pq.offer(Map.entry(0.0, fromId));
 
         while (!pq.isEmpty()) {
-            Map.Entry<Double, String> entry   = pq.poll();
-            double                    currDist = entry.getKey();
-            String                    current  = entry.getValue();
+            Map.Entry<Double, String> entry = pq.poll();
+            double currDist = entry.getKey();
+            String current = entry.getValue();
 
             // Skip stale heap entries
             if (visited.contains(current)) {
@@ -150,7 +152,7 @@ public class DijkstraService {
             // Relax outgoing edges
             for (GraphEdge edge : adjacency.getOrDefault(current, List.of())) {
                 String neighbor = edge.getToId();
-                double newDist  = currDist + edge.getDistanceKm();
+                double newDist = currDist + edge.getDistanceKm();
 
                 if (newDist < dist.getOrDefault(neighbor, Double.MAX_VALUE)) {
                     dist.put(neighbor, newDist);
@@ -165,7 +167,7 @@ public class DijkstraService {
         if (totalDist == Double.MAX_VALUE) {
             return ShortestPathResult.notFound(
                     "No path found between '" + fromId + "' and '" + toId + "'."
-                    + " The nodes may be in disconnected parts of the network.");
+                            + " The nodes may be in disconnected parts of the network.");
         }
 
         // Reconstruct the ordered path by walking the predecessor chain
@@ -184,10 +186,10 @@ public class DijkstraService {
      * @return ordered list of {@link PathStop}s from source to destination
      */
     private List<PathStop> reconstructPath(Map<String, String> predecessor,
-                                           Map<String, String> nameMap,
-                                           String fromId, String toId) {
-        LinkedList<PathStop> path    = new LinkedList<>();
-        String               current = toId;
+            Map<String, String> nameMap,
+            String fromId, String toId) {
+        LinkedList<PathStop> path = new LinkedList<>();
+        String current = toId;
 
         while (current != null) {
             String name = nameMap.getOrDefault(current, current);

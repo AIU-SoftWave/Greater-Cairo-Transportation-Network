@@ -9,12 +9,14 @@ import java.util.List;
  * <h3>Semantics</h3>
  * The MST connects every node that participates in at least one road in
  * {@code existing_roads.csv} using the <em>minimum total road distance</em>
- * ({@code distance_km}) as the edge weight.  Because roads are treated as
+ * ({@code distance_km}) as the edge weight. Because roads are treated as
  * undirected, the result is a spanning tree of the undirected road graph.
  *
- * <p>For a connected graph with <em>N</em> nodes, the MST contains exactly
+ * <p>
+ * For a connected graph with <em>N</em> nodes, the MST contains exactly
  * <em>N&minus;1</em> edges, which is reflected by
- * {@link #getEdgeCount()} == {@link #getNodeCount()} - 1.</p>
+ * {@link #getEdgeCount()} == {@link #getNodeCount()} - 1.
+ * </p>
  *
  * <h3>Usage</h3>
  * The MST reveals the minimum total road-length backbone that keeps every
@@ -35,7 +37,9 @@ public class MstResult {
     /** Number of unique nodes (graph vertices) present in the road network. */
     private final int nodeCount;
 
-    /** Number of edges selected for the MST (should equal {@code nodeCount - 1}). */
+    /**
+     * Number of edges selected for the MST (should equal {@code nodeCount - 1}).
+     */
     private final int edgeCount;
 
     /**
@@ -47,17 +51,28 @@ public class MstResult {
      * @param edgeCount       number of edges in the MST
      */
     public MstResult(List<GraphEdge> edges, double totalDistanceKm,
-                     int nodeCount,         int edgeCount) {
-        this.edges           = edges;
+            int nodeCount, int edgeCount) {
+        this.edges = edges;
         this.totalDistanceKm = totalDistanceKm;
-        this.nodeCount       = nodeCount;
-        this.edgeCount       = edgeCount;
+        this.nodeCount = nodeCount;
+        this.edgeCount = edgeCount;
     }
 
-    // ------------------------------------------------------------------ getters
+    //  getters
 
-    public List<GraphEdge> getEdges()          { return edges; }
-    public double          getTotalDistanceKm(){ return totalDistanceKm; }
-    public int             getNodeCount()      { return nodeCount; }
-    public int             getEdgeCount()      { return edgeCount; }
+    public List<GraphEdge> getEdges() {
+        return edges;
+    }
+
+    public double getTotalDistanceKm() {
+        return totalDistanceKm;
+    }
+
+    public int getNodeCount() {
+        return nodeCount;
+    }
+
+    public int getEdgeCount() {
+        return edgeCount;
+    }
 }

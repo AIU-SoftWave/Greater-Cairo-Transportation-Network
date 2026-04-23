@@ -9,27 +9,29 @@ import java.util.List;
  * <h3>Success case</h3>
  * When {@link #isFound()} is {@code true}:
  * <ul>
- *   <li>{@link #getStops()} contains the ordered sequence of nodes from the
- *       source to the destination (inclusive of both endpoints).</li>
- *   <li>{@link #getTotalDistanceKm()} holds the sum of all road distances
- *       along the chosen route.</li>
+ * <li>{@link #getStops()} contains the ordered sequence of nodes from the
+ * source to the destination (inclusive of both endpoints).</li>
+ * <li>{@link #getTotalDistanceKm()} holds the sum of all road distances
+ * along the chosen route.</li>
  * </ul>
  *
  * <h3>Failure case</h3>
  * When {@link #isFound()} is {@code false}:
  * <ul>
- *   <li>{@link #getStops()} is an empty list.</li>
- *   <li>{@link #getTotalDistanceKm()} is {@code 0.0}.</li>
- *   <li>{@link #getMessage()} explains the reason (unknown node ID, no
- *       connecting path, etc.).</li>
+ * <li>{@link #getStops()} is an empty list.</li>
+ * <li>{@link #getTotalDistanceKm()} is {@code 0.0}.</li>
+ * <li>{@link #getMessage()} explains the reason (unknown node ID, no
+ * connecting path, etc.).</li>
  * </ul>
  *
- * <p>Instances are created exclusively through the static factory methods
- * {@link #found} and {@link #notFound}.</p>
+ * <p>
+ * Instances are created exclusively through the static factory methods
+ * {@link #found} and {@link #notFound}.
+ * </p>
  */
 public class ShortestPathResult {
 
-    // ------------------------------------------------------------------ inner type
+    //  inner type
 
     /**
      * A single node visited along the shortest route.
@@ -45,18 +47,23 @@ public class ShortestPathResult {
         private final String name;
 
         public PathStop(String id, String name) {
-            this.id   = id;
+            this.id = id;
             this.name = name;
         }
 
-        public String getId()   { return id; }
-        public String getName() { return name; }
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     // ------------------------------------------------------------------ fields
 
     /** {@code true} if a path was found between the requested endpoints. */
-    private final boolean       found;
+    private final boolean found;
 
     /**
      * Ordered list of nodes along the shortest route, starting at the source
@@ -65,22 +72,23 @@ public class ShortestPathResult {
     private final List<PathStop> stops;
 
     /** Total road distance in kilometres along the shortest route. */
-    private final double        totalDistanceKm;
+    private final double totalDistanceKm;
 
     /**
      * Informational message. Always {@code "Path found."} on success; contains
      * an explanation on failure.
      */
-    private final String        message;
+    private final String message;
 
-    // ------------------------------------------------------------------ constructor
+    // ------------------------------------------------------------------
+    // constructor
 
     private ShortestPathResult(boolean found, List<PathStop> stops,
-                               double totalDistanceKm, String message) {
-        this.found           = found;
-        this.stops           = stops;
+            double totalDistanceKm, String message) {
+        this.found = found;
+        this.stops = stops;
         this.totalDistanceKm = totalDistanceKm;
-        this.message         = message;
+        this.message = message;
     }
 
     // ------------------------------------------------------------------ factories
@@ -88,7 +96,7 @@ public class ShortestPathResult {
     /**
      * Creates a successful result with the fully reconstructed path.
      *
-     * @param stops          ordered nodes from source to destination
+     * @param stops           ordered nodes from source to destination
      * @param totalDistanceKm cumulative road distance along the route
      * @return successful {@code ShortestPathResult}
      */
@@ -109,8 +117,19 @@ public class ShortestPathResult {
 
     // ------------------------------------------------------------------ getters
 
-    public boolean       isFound()            { return found; }
-    public List<PathStop> getStops()          { return stops; }
-    public double        getTotalDistanceKm() { return totalDistanceKm; }
-    public String        getMessage()         { return message; }
+    public boolean isFound() {
+        return found;
+    }
+
+    public List<PathStop> getStops() {
+        return stops;
+    }
+
+    public double getTotalDistanceKm() {
+        return totalDistanceKm;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 }

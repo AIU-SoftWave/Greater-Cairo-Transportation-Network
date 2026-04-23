@@ -18,20 +18,21 @@ import java.util.Set;
  *
  * <h3>Algorithm summary</h3>
  * <ol>
- *   <li>Collect every unique node ID that appears as an endpoint in at least
- *       one road.</li>
- *   <li>Sort all road edges by {@code distance_km} in ascending order.</li>
- *   <li>Iterate through the sorted edges.  For each edge, use the
- *       Union-Find (Disjoint Set Union) structure to check whether the two
- *       endpoints already belong to the same component:
- *       <ul>
- *         <li>If they do, adding this edge would create a cycle – skip it.</li>
- *         <li>If they do not, merge the two components and include this edge
- *             in the MST.</li>
- *       </ul></li>
- *   <li>Stop as soon as N-1 edges have been selected (where N is the number
- *       of unique nodes), because a spanning tree of N nodes has exactly
- *       N-1 edges.</li>
+ * <li>Collect every unique node ID that appears as an endpoint in at least
+ * one road.</li>
+ * <li>Sort all road edges by {@code distance_km} in ascending order.</li>
+ * <li>Iterate through the sorted edges. For each edge, use the
+ * Union-Find (Disjoint Set Union) structure to check whether the two
+ * endpoints already belong to the same component:
+ * <ul>
+ * <li>If they do, adding this edge would create a cycle – skip it.</li>
+ * <li>If they do not, merge the two components and include this edge
+ * in the MST.</li>
+ * </ul>
+ * </li>
+ * <li>Stop as soon as N-1 edges have been selected (where N is the number
+ * of unique nodes), because a spanning tree of N nodes has exactly
+ * N-1 edges.</li>
  * </ol>
  *
  * <h3>Union-Find optimisations</h3>
@@ -68,11 +69,13 @@ public class KruskalMstService {
     /**
      * Computes the Minimum Spanning Tree of the existing road network.
      *
-     * <p>The result contains the N-1 spanning-tree edges selected by Kruskal's
-     * algorithm together with their cumulative {@code distance_km}.  If the
+     * <p>
+     * The result contains the N-1 spanning-tree edges selected by Kruskal's
+     * algorithm together with their cumulative {@code distance_km}. If the
      * road network is disconnected the algorithm returns the spanning forest
      * (one spanning tree per connected component), so the edge count may be
-     * less than N-1.</p>
+     * less than N-1.
+     * </p>
      *
      * @return {@link MstResult} with the MST edges and summary statistics
      */
@@ -93,13 +96,13 @@ public class KruskalMstService {
         // Step 2 – Union-Find for O(α) cycle detection
         UnionFind uf = new UnionFind(nodeIds);
 
-        List<GraphEdge> mstEdges  = new ArrayList<>();
-        double          totalDist = 0.0;
-        int             target    = nodeIds.size() - 1; // N-1 edges needed
+        List<GraphEdge> mstEdges = new ArrayList<>();
+        double totalDist = 0.0;
+        int target = nodeIds.size() - 1; // N-1 edges needed
 
         for (GraphEdge edge : sorted) {
             String rootFrom = uf.find(edge.getFromId());
-            String rootTo   = uf.find(edge.getToId());
+            String rootTo = uf.find(edge.getToId());
 
             if (rootFrom.equals(rootTo)) {
                 // Same component – adding this edge would create a cycle; skip it
@@ -126,11 +129,11 @@ public class KruskalMstService {
      * union by rank.
      *
      * <ul>
-     *   <li><b>Path compression</b> – on every {@link #find} call, each node on
-     *       the path to the root is re-pointed directly at the root, flattening
-     *       the tree for future lookups.</li>
-     *   <li><b>Union by rank</b> – the smaller-rank tree is always attached
-     *       beneath the larger-rank root, keeping trees shallow.</li>
+     * <li><b>Path compression</b> – on every {@link #find} call, each node on
+     * the path to the root is re-pointed directly at the root, flattening
+     * the tree for future lookups.</li>
+     * <li><b>Union by rank</b> – the smaller-rank tree is always attached
+     * beneath the larger-rank root, keeping trees shallow.</li>
      * </ul>
      *
      * Combined, these optimisations yield an amortised nearly-O(1) cost per
@@ -139,10 +142,10 @@ public class KruskalMstService {
     private static class UnionFind {
 
         /** Each node starts as its own parent (singleton component). */
-        private final Map<String, String>  parent = new HashMap<>();
+        private final Map<String, String> parent = new HashMap<>();
 
         /** Upper-bound on the height of each component tree. */
-        private final Map<String, Integer> rank   = new HashMap<>();
+        private final Map<String, Integer> rank = new HashMap<>();
 
         /**
          * Initialises one singleton component per node in {@code nodes}.
@@ -173,7 +176,7 @@ public class KruskalMstService {
 
         /**
          * Merges the two components represented by {@code rootA} and
-         * {@code rootB}.  Callers must pass the roots returned by
+         * {@code rootB}. Callers must pass the roots returned by
          * {@link #find}, not arbitrary node IDs.
          *
          * @param rootA root of the first component
