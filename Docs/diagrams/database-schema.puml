@@ -1,0 +1,96 @@
+@startuml database-schema
+skinparam linetype ortho
+hide circle
+title Greater Cairo Transportation Network – Database Schema (H2)
+
+entity "nodes" as nodes {
+  * node_id : VARCHAR(255)  <<PK>>
+  --
+  * node_kind : VARCHAR(31)   <<discriminator: NEIGHBORHOOD | FACILITY>>
+  * name : VARCHAR(255)
+  * type : VARCHAR(255)
+  * longitude : DOUBLE
+  * latitude : DOUBLE
+  population : INTEGER        <<nullable – only for NEIGHBORHOOD>>
+}
+
+entity "roads" as roads {
+  * id : BIGINT  <<PK, auto>>
+  --
+  * from_node_id : VARCHAR(255)  <<FK→nodes>>
+  * to_node_id : VARCHAR(255)    <<FK→nodes>>
+  * distance_km : DOUBLE
+  * capacity_vph : INTEGER
+  * condition : INTEGER          <<1-10>>
+}
+
+entity "potential_roads" as pot_roads {
+  * id : BIGINT  <<PK, auto>>
+  --
+  * from_node_id : VARCHAR(255)   <<FK→nodes>>
+  * to_node_id : VARCHAR(255)     <<FK→nodes>>
+  * distance_km : DOUBLE
+  * capacity_vph : INTEGER
+  * construction_costmegp : INTEGER
+}
+
+entity "traffic_patterns" as traffic {
+  * id : BIGINT  <<PK, auto>>
+  --
+  * road_id : BIGINT  <<FK→roads, UNIQUE>>
+  * morning_peak_vph : INTEGER
+  * afternoon_vph : INTEGER
+  * evening_peak_vph : INTEGER
+  * night_vph : INTEGER
+}
+
+entity "metro_lines" as metro {
+  * line_id : VARCHAR(255)  <<PK>>
+  --
+  * name : VARCHAR(255)
+  * daily_passengers : INTEGER
+}
+
+entity "metro_line_stations" as metro_st {
+  * line_id : VARCHAR(255)    <<FK→metro_lines>>
+  * station_order : INTEGER
+  --
+  * node_id : VARCHAR(255)    <<FK→nodes>>
+}
+
+entity "bus_routes" as bus {
+  * route_id : VARCHAR(255)  <<PK>>
+  --
+  * buses_assigned : INTEGER
+  * daily_passengers : INTEGER
+}
+
+entity "bus_route_stops" as bus_stops {
+  * route_id : VARCHAR(255)   <<FK→bus_routes>>
+  * stop_order : INTEGER
+  --
+  * node_id : VARCHAR(255)    <<FK→nodes>>
+}
+
+entity "transit_demands" as demand {
+  * id : BIGINT  <<PK, auto>>
+  --
+  * from_node_id : VARCHAR(255)  <<FK→nodes>>
+  * to_node_id : VARCHAR(255)    <<FK→nodes>>
+  * daily_passengers : INTEGER
+}
+
+' ── Relationships ──
+nodes       ||--o{ roads         : "from_node_id"
+nodes       ||--o{ roads         : "to_node_id"
+nodes       ||--o{ pot_roads     : "from_node_id"
+nodes       ||--o{ pot_roads     : "to_node_id"
+roads       ||--|| traffic       : "road_id"
+metro       ||--o{ metro_st      : "line_id"
+nodes       ||--o{ metro_st      : "node_id"
+bus         ||--o{ bus_stops     : "route_id"
+nodes       ||--o{ bus_stops     : "node_id"
+nodes       ||--o{ demand        : "from_node_id"
+nodes       ||--o{ demand        : "to_node_id"
+
+@enduml

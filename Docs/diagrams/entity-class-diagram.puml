@@ -1,0 +1,186 @@
+@startuml entity-class-diagram
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+title Greater Cairo Transportation Network – Entity Class Diagram
+
+' ──────────────────────────────────────────────
+' shared module
+' ──────────────────────────────────────────────
+package "shared" #DDEEEE {
+
+  abstract class AbstractNode {
+    # nodeId : String  <<PK>>
+    # name : String
+    # type : String
+    # longitude : double
+    # latitude : double
+    --
+    + getName() : String
+    + getType() : String
+    + getLongitude() : double
+    + getLatitude() : double
+  }
+
+  abstract class AbstractEdge {
+    # distanceKm : double
+    # capacityVph : int
+    --
+    + getFromNode() : AbstractNode
+    + getToNode() : AbstractNode
+    + getDistanceKm() : double
+    + getCapacityVph() : int
+    + connects(nodeId : String) : boolean
+    + asRoadId() : String
+  }
+
+  AbstractEdge o--> "fromNode" AbstractNode
+  AbstractEdge o--> "toNode" AbstractNode
+}
+
+' ──────────────────────────────────────────────
+' neighborhood module
+' ──────────────────────────────────────────────
+package "neighborhood" #EEEEDD {
+  class Neighborhood {
+    + population : Integer
+    --
+    + getId() : int
+    + getPopulation() : Integer
+  }
+  Neighborhood -u-|> AbstractNode
+}
+
+' ──────────────────────────────────────────────
+' facility module
+' ──────────────────────────────────────────────
+package "facility" #EEDDEE {
+  class Facility {
+    --
+    + getId() : String
+  }
+  Facility -u-|> AbstractNode
+}
+
+' ──────────────────────────────────────────────
+' road module
+' ──────────────────────────────────────────────
+package "road" #DDEEDD {
+  class Road {
+    + id : Long  <<PK, auto>>
+    + condition : int
+    --
+    + getId() : Long
+    + getCondition() : int
+  }
+  Road -u-|> AbstractEdge
+
+  class PotentialRoad {
+    + id : Long  <<PK, auto>>
+    + constructionCostMEgp : int
+    --
+    + getId() : Long
+    + getConstructionCostMEgp() : int
+  }
+  PotentialRoad -u-|> AbstractEdge
+}
+
+' ──────────────────────────────────────────────
+' traffic module
+' ──────────────────────────────────────────────
+package "traffic" #FFEEDD {
+  class TrafficPattern {
+    + id : Long  <<PK, auto>>
+    + morningPeakVph : int
+    + afternoonVph : int
+    + eveningPeakVph : int
+    + nightVph : int
+    --
+    + getId() : Long
+    + getRoadId() : String
+    + getMorningPeakVph() : int
+    + getAfternoonVph() : int
+    + getEveningPeakVph() : int
+    + getNightVph() : int
+  }
+  TrafficPattern o--> "road 1" Road
+}
+
+' ──────────────────────────────────────────────
+' transit module
+' ──────────────────────────────────────────────
+package "transit" #EEEEFF {
+  class MetroLine {
+    + lineId : String  <<PK>>
+    + name : String
+    + dailyPassengers : int
+    --
+    + getLineId() : String
+    + getStations() : List<AbstractNode>
+    + getDailyPassengers() : int
+  }
+  MetroLine o--> "stations 1..*" AbstractNode
+
+  class BusRoute {
+    + routeId : String  <<PK>>
+    + busesAssigned : int
+    + dailyPassengers : int
+    --
+    + getRouteId() : String
+    + getStops() : List<AbstractNode>
+    + getBusesAssigned() : int
+    + getDailyPassengers() : int
+  }
+  BusRoute o--> "stops 1..*" AbstractNode
+
+  class TransitDemand {
+    + id : Long  <<PK, auto>>
+    + dailyPassengers : int
+    --
+    + getId() : Long
+    + getFromNode() : AbstractNode
+    + getToNode() : AbstractNode
+    + getDailyPassengers() : int
+  }
+  TransitDemand o--> "fromNode" AbstractNode
+  TransitDemand o--> "toNode" AbstractNode
+}
+
+' ──────────────────────────────────────────────
+' graph (algorithm result value objects)
+' ──────────────────────────────────────────────
+package "graph.model" #FFEEEE {
+  class GraphEdge <<value object>> {
+    + fromId : String
+    + fromName : String
+    + toId : String
+    + toName : String
+    + distanceKm : double
+  }
+
+  class ShortestPathResult <<value object>> {
+    + found : boolean
+    + totalDistanceKm : double
+    + message : String
+    --
+    + getStops() : List<PathStop>
+    {static} found(...) : ShortestPathResult
+    {static} notFound(msg) : ShortestPathResult
+  }
+
+  class "ShortestPathResult.PathStop" <<value object>> {
+    + id : String
+    + name : String
+  }
+  ShortestPathResult *-- "stops *" "ShortestPathResult.PathStop"
+
+  class MstResult <<value object>> {
+    + totalDistanceKm : double
+    + nodeCount : int
+    + edgeCount : int
+    --
+    + getEdges() : List<GraphEdge>
+  }
+  MstResult *-- "edges *" GraphEdge
+}
+
+@enduml

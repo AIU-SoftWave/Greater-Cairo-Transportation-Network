@@ -2,8 +2,11 @@ package com.softwave.transportsystem.graph.controller;
 
 import com.softwave.transportsystem.graph.model.MstResult;
 import com.softwave.transportsystem.graph.model.ShortestPathResult;
+import com.softwave.transportsystem.graph.service.AStarService;
 import com.softwave.transportsystem.graph.service.DijkstraService;
 import com.softwave.transportsystem.graph.service.KruskalMstService;
+import com.softwave.transportsystem.graph.service.PrimMstService;
+import com.softwave.transportsystem.graph.service.TimeVaryingDijkstraService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,25 +14,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes the two core graph-algorithm endpoints:
+ * REST controller that exposes all graph-algorithm endpoints.
  *
+ * <h3>Implemented algorithms</h3>
  * <ul>
  * <li>{@code GET /api/graph/shortest-path?from=&lt;id&gt;&amp;to=&lt;id&gt;}
- * – Dijkstra's shortest path between any two nodes using
- * {@code distance_km} as the edge weight.</li>
+ * – Dijkstra's shortest path (weight = {@code distance_km}).</li>
  * <li>{@code GET /api/graph/mst}
- * – Kruskal's Minimum Spanning Tree of the existing road network using
- * {@code distance_km} as the edge weight.</li>
+ * – Kruskal's MST of the existing road network.</li>
+ * </ul>
+ *
+ * <h3>Placeholder algorithms (not yet implemented)</h3>
+ * <ul>
+ * <li>{@code GET /api/graph/astar?from=&lt;id&gt;&amp;to=&lt;id&gt;}
+ * – A* emergency routing.</li>
+ * <li>{@code GET /api/graph/time-varying-shortest-path?from=&lt;id&gt;&amp;to=&lt;id&gt;&amp;timeSlot=&lt;slot&gt;}
+ * – Congestion-aware shortest path.</li>
+ * <li>{@code GET /api/graph/prim-mst}
+ * – Prim's MST on the potential road network.</li>
  * </ul>
  *
  * <h3>Node ID format</h3>
- * Node IDs follow the same convention as the CSV data:
- * <ul>
- * <li>Numeric strings for neighborhoods, e.g. {@code "1"} (Maadi),
- * {@code "13"} (New Administrative Capital).</li>
- * <li>{@code "F"}-prefixed strings for facilities, e.g. {@code "F1"}
- * (Cairo Airport), {@code "F9"} (Qasr El Aini Hospital).</li>
- * </ul>
+ * Numeric strings for neighborhoods (e.g. {@code "1"} = Maadi) and
+ * {@code "F"}-prefixed strings for facilities (e.g. {@code "F9"} = hospital).
  */
 @RestController
 @RequestMapping("/api/graph")
@@ -37,17 +44,29 @@ public class GraphController {
 
     private final DijkstraService dijkstraService;
     private final KruskalMstService kruskalMstService;
+    private final AStarService aStarService;
+    private final TimeVaryingDijkstraService timeVaryingDijkstraService;
+    private final PrimMstService primMstService;
 
     /**
-     * Constructs the controller with its algorithm-service dependencies.
+     * Constructs the controller with all graph-algorithm service dependencies.
      *
-     * @param dijkstraService   service that runs Dijkstra's algorithm
-     * @param kruskalMstService service that runs Kruskal's MST algorithm
+     * @param dijkstraService            service that runs Dijkstra's algorithm
+     * @param kruskalMstService          service that runs Kruskal's MST algorithm
+     * @param aStarService               placeholder for A* emergency routing
+     * @param timeVaryingDijkstraService placeholder for congestion-aware routing
+     * @param primMstService             placeholder for Prim's MST algorithm
      */
     public GraphController(DijkstraService dijkstraService,
-            KruskalMstService kruskalMstService) {
+            KruskalMstService kruskalMstService,
+            AStarService aStarService,
+            TimeVaryingDijkstraService timeVaryingDijkstraService,
+            PrimMstService primMstService) {
         this.dijkstraService = dijkstraService;
         this.kruskalMstService = kruskalMstService;
+        this.aStarService = aStarService;
+        this.timeVaryingDijkstraService = timeVaryingDijkstraService;
+        this.primMstService = primMstService;
     }
 
     // endpoints
@@ -106,5 +125,58 @@ public class GraphController {
     @GetMapping("/mst")
     public MstResult minimumSpanningTree() {
         return kruskalMstService.computeMst();
+    }
+
+    // ------------------------------------------------------------------ placeholders
+
+    /**
+     * [PLACEHOLDER] A* emergency routing.
+     *
+     * <p>Returns a "not implemented" string until a team member implements
+     * {@link AStarService#findEmergencyPath}.</p>
+     *
+     * @param from source node ID
+     * @param to   destination node ID (typically a medical facility)
+     * @return placeholder string
+     */
+    @GetMapping("/astar")
+    public ResponseEntity<String> aStarEmergencyPath(
+            @RequestParam String from,
+            @RequestParam String to) {
+        return ResponseEntity.ok(aStarService.findEmergencyPath(from, to));
+    }
+
+    /**
+     * [PLACEHOLDER] Time-varying (congestion-aware) Dijkstra shortest path.
+     *
+     * <p>Returns a "not implemented" string until a team member implements
+     * {@link TimeVaryingDijkstraService#findCongestedPath}.</p>
+     *
+     * @param from     source node ID
+     * @param to       destination node ID
+     * @param timeSlot one of {@code MORNING}, {@code AFTERNOON},
+     *                 {@code EVENING}, {@code NIGHT}
+     * @return placeholder string
+     */
+    @GetMapping("/time-varying-shortest-path")
+    public ResponseEntity<String> timeVaryingShortestPath(
+            @RequestParam String from,
+            @RequestParam String to,
+            @RequestParam String timeSlot) {
+        return ResponseEntity.ok(
+                timeVaryingDijkstraService.findCongestedPath(from, to, timeSlot));
+    }
+
+    /**
+     * [PLACEHOLDER] Prim's MST on the potential road network.
+     *
+     * <p>Returns a "not implemented" string until a team member implements
+     * {@link PrimMstService#computeMst}.</p>
+     *
+     * @return placeholder string
+     */
+    @GetMapping("/prim-mst")
+    public ResponseEntity<String> primMinimumSpanningTree() {
+        return ResponseEntity.ok(primMstService.computeMst());
     }
 }
