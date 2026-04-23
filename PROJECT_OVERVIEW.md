@@ -333,7 +333,7 @@ Start the server (`mvn spring-boot:run`) then open `http://localhost:8080/`.
 | # | Algorithm | Endpoint | Status | Owner |
 |---|---|---|---|---|
 | 1 | **Dijkstra's Shortest Path** | `GET /api/graph/shortest-path` | ✅ Implemented | SoftWave core team |
-| 2 | **A\* Emergency Routing** | `GET /api/graph/astar` | ⬜ Placeholder | _assign to student_ |
+| 2 | **A* Emergency Routing** | `GET /api/graph/astar` | ⬜ Placeholder | _assign to student_ |
 | 3 | **Time-Varying Dijkstra** | `GET /api/graph/time-varying-shortest-path` | ⬜ Placeholder | _assign to student_ |
 
 ### 6.2 Minimum Spanning Tree Algorithms
