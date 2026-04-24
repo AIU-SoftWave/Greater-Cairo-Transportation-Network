@@ -8,17 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CairoTransportation.Services.Algorithms.MaintenancePlanning;
 
+/// <summary>
+/// Service for generating optimal maintenance plans using 0/1 Knapsack Dynamic Programming.
+/// Selects roads to maximize total priority score within a given budget.
+/// </summary>
 public class MaintenancePlanningService(TransportationDbContext dbContext) : IMaintenancePlanningService
 {
-    private sealed record MaintenanceCandidate(
-        long RoadId,
-        string? FromLocation,
-        string? ToLocation,
-        double? CurrentCondition,
-        double? EstimatedCost,
-        int? Priority,
-        double ValueScore);  // Computed priority score for DP
-
     public async Task<AlgorithmResponseDto<MaintenancePlanningResultDto>> GenerateMaintenancePlanAsync(double budget)
     {
         AlgorithmExecutionMetrics metrics = new();
@@ -28,183 +23,180 @@ public class MaintenancePlanningService(TransportationDbContext dbContext) : IMa
             return CreateFailureResponse("Budget must be greater than zero.", metrics, budget);
         }
 
-        // Load all candidate roads for maintenance (have maintenance records with cost and priority)
-        List<MaintenanceCandidate> candidates = await LoadMaintenanceCandidatesAsync();
+        // Load candidates with their computed value scores
+        List<Candidate> candidates = await LoadCandidatesAsync();
         metrics.MarkExpanded();
 
         if (candidates.Count == 0)
         {
-            return CreateSuccessResponse(
-                new MaintenancePlanningResultDto
-                {
-                    Budget = budget,
-                    TotalCost = 0,
-                    RemainingBudget = budget,
-                    TotalPriorityScore = 0,
-                    SelectedRoadCount = 0,
-                    TotalCandidateRoads = 0,
-                    ExpectedConditionImprovement = 0,
-                    SelectedRoads = [],
-                    NotSelectedRoads = []
-                },
-                "No maintenance candidate roads found in database.",
-                metrics);
+            return CreateEmptyResponse(budget, metrics);
         }
 
-        // Convert budget to integer cents to avoid floating point issues in DP
-        // Max budget handling: cap at reasonable amount to prevent excessive memory
-        int maxBudgetCents = (int)Math.Min(budget * 100, 10_000_000);  // Max 100k budget in cents
+        // Cap budget at total cost of all candidates (no need for larger DP table)
+        int totalCost = candidates.Sum(c => c.Cost);
+        int effectiveBudget = (int)Math.Min(budget, totalCost * 1.1);
 
-        // 0/1 Knapsack DP: dp[b] = max value achievable with budget b
-        // Using 1D array optimization
-        int[] dp = new int[maxBudgetCents + 1];
-        int[] selected = new int[maxBudgetCents + 1];  // Tracks which item was last selected
+        int n = candidates.Count;
+        int B = effectiveBudget;
 
-        for (int i = 0; i < candidates.Count; i++)
+        // 0/1 Knapsack DP: dp[i, b] = max value using first i items with budget b
+        int[,] dp = new int[n + 1, B + 1];
+
+        // Build DP table
+        for (int i = 1; i <= n; i++)
         {
-            MaintenanceCandidate candidate = candidates[i];
-            if (!candidate.EstimatedCost.HasValue || candidate.EstimatedCost.Value <= 0)
+            Candidate item = candidates[i - 1];
+            for (int b = 0; b <= B; b++)
             {
-                continue;
-            }
+                // Don't take item i
+                dp[i, b] = dp[i - 1, b];
 
-            int costCents = (int)(candidate.EstimatedCost.Value * 100);
-            int value = candidate.ValueScore > 0 ? (int)candidate.ValueScore : 1;
-
-            // Standard 0/1 knapsack: iterate backwards to avoid reusing same item
-            for (int b = maxBudgetCents; b >= costCents; b--)
-            {
-                if (dp[b - costCents] + value > dp[b])
+                // Take item i if it fits and improves value
+                if (item.Cost <= b)
                 {
-                    dp[b] = dp[b - costCents] + value;
-                    selected[b] = i + 1;  // Store 1-based index
+                    int valueWithItem = dp[i - 1, b - item.Cost] + item.Value;
+                    if (valueWithItem > dp[i, b])
+                    {
+                        dp[i, b] = valueWithItem;
+                    }
                 }
             }
-
-            metrics.MarkDiscovered(candidate.RoadId.ToString());
+            metrics.MarkDiscovered(item.RoadId.ToString());
         }
 
         metrics.MarkExpanded();
 
         // Backtrack to find selected items
-        HashSet<int> selectedIndices = [];
-        int remainingBudget = maxBudgetCents;
-        while (remainingBudget > 0 && selected[remainingBudget] > 0)
-        {
-            int itemIndex = selected[remainingBudget] - 1;  // Convert back to 0-based
-            if (selectedIndices.Contains(itemIndex))
-            {
-                break;  // Safety: prevent infinite loop
-            }
+        HashSet<long> selectedIds = [];
+        int remaining = B;
 
-            selectedIndices.Add(itemIndex);
-            MaintenanceCandidate candidate = candidates[itemIndex];
-            int costCents = (int)(candidate.EstimatedCost!.Value * 100);
-            remainingBudget -= costCents;
+        for (int i = n; i > 0 && remaining > 0; i--)
+        {
+            // If value changed, item i was selected
+            if (dp[i, remaining] != dp[i - 1, remaining])
+            {
+                Candidate item = candidates[i - 1];
+                selectedIds.Add(item.RoadId);
+                remaining -= item.Cost;
+            }
         }
 
         metrics.MarkExpanded();
 
         // Build result
-        double totalCost = 0;
-        int totalPriority = 0;
-        double totalConditionImprovement = 0;
-        List<MaintenanceRoadDto> selectedRoads = [];
-        List<MaintenanceRoadDto> notSelectedRoads = [];
-
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            MaintenanceCandidate c = candidates[i];
-            bool isSelected = selectedIndices.Contains(i);
-
-            // Estimate new condition: assume maintenance brings condition to 100
-            // or improves by 30% of gap, whichever is reasonable
-            double currentCond = c.CurrentCondition ?? 50;
-            double newCondition = Math.Min(100, currentCond + (100 - currentCond) * 0.5);
-
-            if (isSelected)
-            {
-                totalCost += c.EstimatedCost!.Value;
-                totalPriority += c.Priority ?? 0;
-                totalConditionImprovement += newCondition - currentCond;
-
-                selectedRoads.Add(new MaintenanceRoadDto
-                {
-                    RoadId = c.RoadId,
-                    FromLocation = c.FromLocation,
-                    ToLocation = c.ToLocation,
-                    CurrentCondition = currentCond,
-                    EstimatedCost = c.EstimatedCost,
-                    Priority = c.Priority,
-                    ExpectedNewCondition = newCondition,
-                    Reason = "Selected by 0/1 Knapsack optimization for max priority within budget"
-                });
-            }
-            else
-            {
-                notSelectedRoads.Add(new MaintenanceRoadDto
-                {
-                    RoadId = c.RoadId,
-                    FromLocation = c.FromLocation,
-                    ToLocation = c.ToLocation,
-                    CurrentCondition = currentCond,
-                    EstimatedCost = c.EstimatedCost,
-                    Priority = c.Priority,
-                    ExpectedNewCondition = newCondition,
-                    Reason = c.EstimatedCost.HasValue && c.EstimatedCost.Value > budget
-                        ? "Cost exceeds total budget"
-                        : "Not selected - lower priority/cost ratio than alternatives"
-                });
-            }
-        }
-
-        MaintenancePlanningResultDto result = new()
-        {
-            Budget = budget,
-            TotalCost = totalCost,
-            RemainingBudget = budget - totalCost,
-            TotalPriorityScore = totalPriority,
-            SelectedRoadCount = selectedRoads.Count,
-            TotalCandidateRoads = candidates.Count,
-            ExpectedConditionImprovement = totalConditionImprovement,
-            SelectedRoads = selectedRoads.OrderByDescending(x => x.Priority).ToList(),
-            NotSelectedRoads = notSelectedRoads.OrderByDescending(x => x.Priority).ToList()
-        };
-
-        string message = selectedRoads.Count > 0
-            ? $"Maintenance plan generated: {selectedRoads.Count} roads selected with total priority score {totalPriority} within budget {budget:C}."
+        MaintenancePlanningResultDto result = BuildResult(candidates, selectedIds, budget);
+        string message = result.SelectedRoadCount > 0
+            ? $"Maintenance plan generated: {result.SelectedRoadCount} roads selected with total priority score {result.TotalPriorityScore}."
             : "No roads could be selected within the given budget.";
 
         return CreateSuccessResponse(result, message, metrics);
     }
 
-    private async Task<List<MaintenanceCandidate>> LoadMaintenanceCandidatesAsync()
+    /// <summary>
+    /// Internal model for DP computation.
+    /// </summary>
+    private record Candidate(long RoadId, string? From, string? To, double? Condition, int Cost, int Priority, int Value);
+
+    private async Task<List<Candidate>> LoadCandidatesAsync()
     {
-        IQueryable<MaintenanceCandidate> query = from maintenance in dbContext.RoadMaintenances.AsNoTracking()
-                                                 join road in dbContext.Roads.AsNoTracking() on maintenance.RoadId equals road.Id
-                                                 join fromLoc in dbContext.Locations.AsNoTracking() on road.FromLocationId equals fromLoc.Id
-                                                 join toLoc in dbContext.Locations.AsNoTracking() on road.ToLocationId equals toLoc.Id
-                                                 where maintenance.EstimatedCost.HasValue && maintenance.EstimatedCost.Value > 0
-                                                       && maintenance.Priority.HasValue && maintenance.Priority.Value > 0
-                                                 select new MaintenanceCandidate(
-                                                     road.Id,
-                                                     fromLoc.Name,
-                                                     toLoc.Name,
-                                                     road.Condition,
-                                                     maintenance.EstimatedCost,
-                                                     maintenance.Priority,
-                                                     // Value score: priority * (1 + urgency from condition)
-                                                     // Lower condition = higher urgency multiplier
-                                                     (maintenance.Priority ?? 1) * (1 + (100 - (road.Condition ?? 50)) / 100.0)
-                                                 );
+        IQueryable<Candidate> query =
+            from m in dbContext.RoadMaintenances.AsNoTracking()
+            join r in dbContext.Roads.AsNoTracking() on m.RoadId equals r.Id
+            join f in dbContext.Locations.AsNoTracking() on r.FromLocationId equals f.Id
+            join t in dbContext.Locations.AsNoTracking() on r.ToLocationId equals t.Id
+            where m.EstimatedCost > 0 && m.Priority > 0
+            let value = (int)((m.Priority ?? 1) * (1 + (100 - (r.Condition ?? 50)) / 100.0))
+            select new Candidate(
+                r.Id,
+                f.Name,
+                t.Name,
+                r.Condition,
+                (int)m.EstimatedCost!,
+                m.Priority ?? 1,
+                value
+            );
 
         return await query.ToListAsync();
     }
 
+    private static MaintenancePlanningResultDto BuildResult(
+        List<Candidate> candidates,
+        HashSet<long> selectedIds,
+        double budget)
+    {
+        double totalCost = 0;
+        int totalPriority = 0;
+        double totalImprovement = 0;
+        List<MaintenanceRoadDto> selected = [];
+        List<MaintenanceRoadDto> notSelected = [];
+
+        foreach (Candidate c in candidates)
+        {
+            bool isSelected = selectedIds.Contains(c.RoadId);
+            double currentCond = c.Condition ?? 50;
+            double newCond = Math.Min(100, currentCond + (100 - currentCond) * 0.5);
+
+            MaintenanceRoadDto dto = new()
+            {
+                RoadId = c.RoadId,
+                FromLocation = c.From,
+                ToLocation = c.To,
+                CurrentCondition = currentCond,
+                EstimatedCost = c.Cost,
+                Priority = c.Priority,
+                ExpectedNewCondition = newCond,
+                Reason = isSelected
+                    ? "Selected by 0/1 Knapsack optimization"
+                    : c.Cost > budget ? "Cost exceeds total budget" : "Lower priority/cost ratio"
+            };
+
+            if (isSelected)
+            {
+                totalCost += c.Cost;
+                totalPriority += c.Priority;
+                totalImprovement += newCond - currentCond;
+                selected.Add(dto);
+            }
+            else
+            {
+                notSelected.Add(dto);
+            }
+        }
+
+        return new MaintenancePlanningResultDto
+        {
+            Budget = budget,
+            TotalCost = totalCost,
+            RemainingBudget = budget - totalCost,
+            TotalPriorityScore = totalPriority,
+            SelectedRoadCount = selected.Count,
+            TotalCandidateRoads = candidates.Count,
+            ExpectedConditionImprovement = totalImprovement,
+            SelectedRoads = selected.OrderByDescending(x => x.Priority).ToList(),
+            NotSelectedRoads = notSelected.OrderByDescending(x => x.Priority).ToList()
+        };
+    }
+
+    private static AlgorithmResponseDto<MaintenancePlanningResultDto> CreateEmptyResponse(
+        double budget, AlgorithmExecutionMetrics metrics) =>
+        CreateSuccessResponse(
+            new MaintenancePlanningResultDto
+            {
+                Budget = budget,
+                TotalCost = 0,
+                RemainingBudget = budget,
+                TotalPriorityScore = 0,
+                SelectedRoadCount = 0,
+                TotalCandidateRoads = 0,
+                ExpectedConditionImprovement = 0,
+                SelectedRoads = new List<MaintenanceRoadDto>(),
+                NotSelectedRoads = new List<MaintenanceRoadDto>()
+            },
+            "No maintenance candidate roads found in database.",
+            metrics);
+
     private static AlgorithmResponseDto<MaintenancePlanningResultDto> CreateSuccessResponse(
-        MaintenancePlanningResultDto result,
-        string message,
-        AlgorithmExecutionMetrics metrics) =>
+        MaintenancePlanningResultDto result, string message, AlgorithmExecutionMetrics metrics) =>
         new()
         {
             AlgorithmName = "Maintenance Planning (0/1 Knapsack DP)",
@@ -215,24 +207,13 @@ public class MaintenancePlanningService(TransportationDbContext dbContext) : IMa
         };
 
     private static AlgorithmResponseDto<MaintenancePlanningResultDto> CreateFailureResponse(
-        string message,
-        AlgorithmExecutionMetrics metrics,
-        double budget) =>
+        string message, AlgorithmExecutionMetrics metrics, double budget) =>
         new()
         {
             AlgorithmName = "Maintenance Planning (0/1 Knapsack DP)",
             Success = false,
             Message = message,
             Trace = metrics.Complete(),
-            Data = new MaintenancePlanningResultDto
-            {
-                Budget = budget,
-                TotalCost = 0,
-                RemainingBudget = 0,
-                TotalPriorityScore = 0,
-                SelectedRoadCount = 0,
-                TotalCandidateRoads = 0,
-                ExpectedConditionImprovement = 0
-            }
+            Data = new MaintenancePlanningResultDto { Budget = budget }
         };
 }

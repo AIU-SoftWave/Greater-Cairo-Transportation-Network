@@ -24,6 +24,30 @@ public class MaintenancePlanningController(IMaintenancePlanningService maintenan
     [HttpGet]
     public async Task<IActionResult> GetMaintenancePlan([FromQuery] double budget)
     {
+        // Validate budget is a valid number
+        if (double.IsNaN(budget) || double.IsInfinity(budget))
+        {
+            return BadRequest(new AlgorithmResponseDto<MaintenancePlanningResultDto>
+            {
+                AlgorithmName = "Maintenance Planning",
+                Success = false,
+                Message = "Budget must be a valid finite number.",
+                Data = new MaintenancePlanningResultDto
+                {
+                    Budget = 0,
+                    TotalCost = 0,
+                    RemainingBudget = 0,
+                    TotalPriorityScore = 0,
+                    SelectedRoadCount = 0,
+                    TotalCandidateRoads = 0,
+                    ExpectedConditionImprovement = 0,
+                    SelectedRoads = [],
+                    NotSelectedRoads = []
+                }
+            });
+        }
+
+        // Validate budget is positive
         if (budget <= 0)
         {
             return BadRequest(new AlgorithmResponseDto<MaintenancePlanningResultDto>
@@ -31,6 +55,30 @@ public class MaintenancePlanningController(IMaintenancePlanningService maintenan
                 AlgorithmName = "Maintenance Planning",
                 Success = false,
                 Message = "Budget must be greater than zero.",
+                Data = new MaintenancePlanningResultDto
+                {
+                    Budget = budget,
+                    TotalCost = 0,
+                    RemainingBudget = 0,
+                    TotalPriorityScore = 0,
+                    SelectedRoadCount = 0,
+                    TotalCandidateRoads = 0,
+                    ExpectedConditionImprovement = 0,
+                    SelectedRoads = [],
+                    NotSelectedRoads = []
+                }
+            });
+        }
+
+        // Validate budget doesn't exceed maximum (prevent excessive memory usage)
+        const double maxBudget = 1_000_000_000_000;  // 1 trillion
+        if (budget > maxBudget)
+        {
+            return BadRequest(new AlgorithmResponseDto<MaintenancePlanningResultDto>
+            {
+                AlgorithmName = "Maintenance Planning",
+                Success = false,
+                Message = $"Budget exceeds maximum allowed value of {maxBudget:C}. Please use a smaller budget.",
                 Data = new MaintenancePlanningResultDto
                 {
                     Budget = budget,
