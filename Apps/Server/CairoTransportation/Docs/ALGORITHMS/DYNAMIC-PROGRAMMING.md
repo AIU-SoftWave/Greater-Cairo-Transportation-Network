@@ -111,25 +111,127 @@ Note: Budget is capped at 1.1× total candidate cost to prevent excessive memory
 
 ---
 
-## Planned Algorithms
+## Additional DP Algorithm
 
-### Transit Scheduling (Not Yet Implemented)
+### Transit Scheduling Service (Resource Allocation)
 
-**Concept:** Optimize bus/metro frequency across routes given vehicle constraints and passenger demand.
+**Endpoint:** `GET /api/algorithms/transit-schedule?vehicles=50`
 
-**Algorithm:** DP Resource Allocation or Network Flow
+**Algorithm:** Resource Allocation Dynamic Programming
 
-**Data:**
+**Problem:** Given a fleet of vehicles, distribute them across transit routes to maximize passenger demand coverage.
 
-- `transport_routes` — route structure
-- `route_stops` — stop sequences
-- `transport_demand` — passenger demand between locations
+**Data Used:**
 
-**Output:**
+- `transport_routes` table: `id`, `type`, `daily_passengers`, `vehicles_assigned`
+- `route_stops` table: route stop sequences
 
-- Vehicle assignments per route
-- Frequency (trips per hour) per route
-- Total capacity vs. demand analysis
+**How It Works:**
+
+### Step 1: Read Data from Database
+
+Query the `transport_routes` table:
+
+| RouteId | Type  | DailyPassengers | VehiclesAssigned |
+| ------- | ----- | --------------- | ---------------- |
+| M1      | metro | 25000           | 10               |
+| M2      | metro | 15000           | 5                |
+| B12     | bus   | 8000            | 4                |
+| B15     | bus   | 5000            | 2                |
+
+### Step 2: Compute Efficiency Score
+
+```
+value_per_vehicle = daily_passengers / vehicles_assigned
+```
+
+| RouteId | Efficiency (passengers/vehicle) |
+| ------- | ------------------------------- |
+| M2      | 15000 / 5 = **3000** ← Highest  |
+| M1      | 25000 / 10 = **2500**           |
+| B15     | 5000 / 2 = **2500**             |
+| B12     | 8000 / 4 = **2000** ← Lowest    |
+
+**Note:** Route type (metro/bus) doesn't affect the algorithm - only efficiency matters.
+
+### Step 3: Run Resource Allocation DP
+
+Input: `?vehicles=15`
+
+The DP tries all combinations to maximize total passengers served:
+
+```
+dp[i, v] = max demand using first i routes with v vehicles
+
+For each route:
+  For each vehicle count:
+    Try assigning 0, 1, 2, ... k vehicles
+    Pick the allocation that maximizes total passengers
+```
+
+**Optimal allocation for 15 vehicles:**
+
+- M2 gets 5 vehicles (highest efficiency) → serves 15000 passengers
+- M1 gets 5 vehicles → serves 12500 passengers
+- B15 gets 3 vehicles → serves 7500 passengers
+- B12 gets 2 vehicles → serves 4000 passengers
+- **Total: 15 vehicles serving 39,000 passengers**
+
+### Step 4: Calculate Frequency
+
+```
+estimated_frequency = 120 / assigned_vehicles
+```
+
+Example: M2 with 5 vehicles → 120/5 = **24 minutes between trips**
+
+### Step 5: Return Allocation Plan
+
+**Complexity:**
+
+- Time: O(n × V × K) where n = routes, V = total vehicles, K = max vehicles per route
+- Space: O(n × V)
+
+**Example Response:**
+
+```json
+{
+  "algorithmName": "Transit Scheduling (Resource Allocation DP)",
+  "success": true,
+  "message": "Transit schedule optimized: 5 routes active with 20 vehicles, serving ~50000 passengers.",
+  "data": {
+    "totalVehicles": 50,
+    "assignedVehicles": 20,
+    "remainingVehicles": 30,
+    "totalDemand": 80000,
+    "estimatedPassengersServed": 50000,
+    "coverageRatio": 0.625,
+    "totalRoutes": 8,
+    "activeRoutes": 5,
+    "routeAllocations": [
+      {
+        "routeId": "M1",
+        "routeType": "metro",
+        "assignedVehicles": 8,
+        "dailyPassengers": 25000,
+        "estimatedFrequencyMinutes": 15,
+        "estimatedServed": 25000,
+        "efficiencyScore": 3125,
+        "reason": "Allocated 8 vehicles based on demand 25000 passengers"
+      }
+    ]
+  }
+}
+```
+
+**Files:**
+
+| File                                                                           | Purpose                               |
+| ------------------------------------------------------------------------------ | ------------------------------------- |
+| `Services/Algorithms/TransitScheduling/TransitSchedulingService.cs`            | Resource Allocation DP implementation |
+| `Services/Algorithms/TransitScheduling/Contracts/ITransitSchedulingService.cs` | Service interface                     |
+| `Services/Algorithms/TransitScheduling/DTOs/TransitSchedulingResultDto.cs`     | Response DTOs                         |
+| `Controllers/TransitSchedulingController.cs`                                   | API endpoint                          |
 
 ---
 

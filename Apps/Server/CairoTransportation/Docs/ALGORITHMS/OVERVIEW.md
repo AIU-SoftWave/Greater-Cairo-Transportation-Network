@@ -50,6 +50,7 @@ It is the input to the optimization algorithms.
 - **MST** - cheapest network design connecting all locations
 - **Time-Varying Dijkstra** - traffic-aware routing with period-based multipliers
 - **Maintenance Planning (DP)** - optimal road repair selection using 0/1 Knapsack
+- **Transit Scheduling (DP)** - optimal vehicle allocation across routes using Resource Allocation DP
 
 ## When to use them
 
@@ -60,13 +61,15 @@ It is the input to the optimization algorithms.
 | **MST**                   | Network expansion planning, cheapest connectivity          |
 | **Time-Varying Dijkstra** | Rush hour routing, traffic-aware pathfinding               |
 | **Maintenance Planning**  | Budget-constrained road repair optimization                |
+| **Transit Scheduling**    | Fleet optimization, vehicle allocation across routes       |
 
 ## API endpoints
 
-| Endpoint                                              | Algorithm             | Purpose                        |
-| ----------------------------------------------------- | --------------------- | ------------------------------ |
-| `GET /api/algorithms/shortest-path?from=X&to=Y`       | Dijkstra              | Shortest path by distance      |
-| `GET /api/algorithms/a-star?from=X&to=Y`              | A\*                   | Heuristic-guided shortest path |
-| `GET /api/algorithms/mst`                             | MST (Prim's)          | Cheapest network design        |
-| `GET /api/algorithms/time-route?from=X&to=Y&period=Z` | Time-Varying Dijkstra | Traffic-aware routing          |
-| `GET /api/algorithms/maintenance-plan?budget=X`       | 0/1 Knapsack DP       | Optimal repair selection       |
+| Endpoint                                              | Algorithm              | Purpose                        |
+| ----------------------------------------------------- | ---------------------- | ------------------------------ |
+| `GET /api/algorithms/shortest-path?from=X&to=Y`       | Dijkstra               | Shortest path by distance      |
+| `GET /api/algorithms/a-star?from=X&to=Y`              | A\*                    | Heuristic-guided shortest path |
+| `GET /api/algorithms/mst`                             | MST (Prim's)           | Cheapest network design        |
+| `GET /api/algorithms/time-route?from=X&to=Y&period=Z` | Time-Varying Dijkstra  | Traffic-aware routing          |
+| `GET /api/algorithms/maintenance-plan?budget=X`       | 0/1 Knapsack DP        | Optimal repair selection       |
+| `GET /api/algorithms/transit-schedule?vehicles=X`     | Resource Allocation DP | Optimal vehicle allocation     |

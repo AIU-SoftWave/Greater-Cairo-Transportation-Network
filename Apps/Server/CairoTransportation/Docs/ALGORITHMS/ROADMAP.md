@@ -43,10 +43,10 @@
 - Uses `ITrafficService` for period multipliers and traffic flow
 - Endpoint: `GET /api/algorithms/time-route`
 
-## Phase 4: Advanced Algorithms
+## Phase 4: Advanced Algorithms ✅ DONE
 
 - **Dynamic Programming** - Maintenance planning (0/1 Knapsack) ✅ DONE
-- **Dynamic Programming** - Transit scheduling (planned)
+- **Dynamic Programming** - Transit scheduling (Resource Allocation DP) ✅ DONE
 - **Greedy Methods** - Traffic signal optimization (planned)
 - **Greedy Methods** - Emergency priority routing (planned)
 
@@ -83,10 +83,9 @@ The graph service will evolve incrementally:
 
 **Just Completed:**
 
-- Maintenance Planning Service with 0/1 Knapsack DP (simplified 2D implementation)
-- Endpoint: `GET /api/algorithms/maintenance-plan?budget=10000000`
-- Input validation (NaN, negative, max limit checks)
-- Clean single-responsibility architecture (~220 lines)
+- Transit Scheduling Service with Resource Allocation DP
+- Endpoint: `GET /api/algorithms/transit-schedule?vehicles=50`
+- Allocates vehicles across routes to maximize demand coverage
 
 **Implemented So Far:**
 
@@ -95,12 +94,12 @@ The graph service will evolve incrementally:
 3. ✅ MST (Prim's) - cheapest network design
 4. ✅ Time-Varying Dijkstra - traffic-aware routing
 5. ✅ Maintenance Planning (0/1 Knapsack) - budget optimization
+6. ✅ Transit Scheduling (Resource Allocation DP) - vehicle/fleet optimization
 
 **Next Steps:**
 
-1. Transit Scheduling (DP) - optimize bus/metro frequency across routes
-2. Traffic Signal Service (Greedy) - real-time signal timing optimization
-3. Emergency Priority Service (Greedy) - emergency vehicle priority routing
+1. Traffic Signal Service (Greedy) - real-time signal timing optimization
+2. Emergency Priority Service (Greedy) - emergency vehicle priority routing
 
 ---
 
