@@ -1,0 +1,34 @@
+@startuml
+skinparam componentStyle rectangle
+
+package "Algorithms" {
+  [MST]
+  [Dijkstra]
+  [A*]
+  [Time-Dependent Routing]
+  [Dynamic Programming]
+  [Greedy Control]
+}
+
+package "Data Inputs" {
+  [locations]
+  [roads]
+  [traffic_flow]
+  [transport_routes]
+  [route_stops]
+  [transport_demand]
+  [road_maintenance]
+}
+
+[locations] --> [MST]
+[roads] --> [MST]
+[roads] --> [Dijkstra]
+[roads] --> [A*]
+[traffic_flow] --> [Time-Dependent Routing]
+[transport_routes] --> [Dynamic Programming]
+[route_stops] --> [Dynamic Programming]
+[transport_demand] --> [Dynamic Programming]
+[traffic_flow] --> [Greedy Control]
+[road_maintenance] --> [Greedy Control]
+
+@enduml
