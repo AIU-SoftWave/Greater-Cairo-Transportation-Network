@@ -1,63 +1,119 @@
 # Project Goals and Status
 
-## Current goal
-Build a smart city transportation optimization system for Greater Cairo.
+## Current Goal
+Build a smart city transportation optimization system for Greater Cairo with algorithmic solutions for network design, routing, and traffic management.
 
-## What is already done
-- ASP.NET Core API
-- EF Core models and DbContext
-- SQLite database
-- automatic migrations
-- database seeding
-- routes for data access
-- Swagger/OpenAPI
-- clean JSON responses
+## What is Already Done ✅
 
-## What still needs to be done
-- MST algorithm
-- shortest path algorithms
-- emergency routing
-- traffic-aware routing
-- dynamic programming solutions
-- greedy optimization
-- demo and reporting support
+### Infrastructure
+- ASP.NET Core 10 Web API
+- EF Core 9 with SQLite
+- Automatic migrations on startup
+- One-time database seeding from SQL
+- Layered architecture (Controllers → Services → DbContext)
+- Swagger/OpenAPI with browser redirect
 
-## Why this folder exists
-This folder keeps the project-level story in one place.
-It helps you track what is done and what still needs to be implemented.
+### Data Layer
+- Fully mapped models: Location, Road, TrafficFlow, TransportRoute, RouteStop, TransportDemand, RoadMaintenance
+- Clean JSON responses (navigation properties hidden)
+- Data access services for locations, roads, traffic, routes
 
-## Suggested future files
-- `STATUS.md`
-- `MILESTONES.md`
-- `REPORT-OUTLINE.md`
+### API Endpoints
+- GET all/by-id for locations
+- GET all/by-id/by-from-location for roads
+- GET maintenance info for roads
+- GET traffic by road or period
+- GET routes and stops
 
-## Editing note
-Update this folder whenever the project direction changes.
+### Algorithm Foundation
+- **Basic Graph Service** providing:
+  - Simple, minimal interface: `GetGraphAsync()`
+  - Graph data structures (nodes, edges, adjacency lists, indexes)
+  - O(1) lookups for efficient algorithm execution
+  - Essential metadata (distance, capacity, condition, maintenance)
+  - **Philosophy**: Extend incrementally as algorithms require new features
 
----
+## What Still Needs Implementation 🚀
 
-## Technical report reminder
+### Phase 3: Core Algorithms (START HERE)
 
-When you write the report, focus on:
-- architecture
-- schema design
-- algorithm choices
-- complexity analysis
-- performance evaluation
-- challenges and future work
+1. **MST** - Road network design
+   - Use: Basic `GetGraphAsync()`
+   - Graph service extension: Optional (if expansion analysis needed)
 
----
+2. **Shortest Path (Dijkstra)** - Route planning
+   - Use: Basic `GetGraphAsync()`
+   - Graph service extension: Optional (if traffic variant needed)
 
-## Diagrams
-See the visual reference material here:
-- [Diagrams](../DIAGRAMS/README.md)
+3. **A* Pathfinding** - Smart route planning
+   - Use: Basic `GetGraphAsync()`
+   - Graph service extension: Optional (if custom heuristics needed)
 
-# Future Work Notes
+4. **Time-Dependent Routing** - Traffic-aware paths
+   - Triggers: `GetGraphWithTrafficAsync(period)` extension
+   - Use: Traffic flow data per period
 
-Upon reaching the initial goals, future work may include:
-- Expanding the system to other cities
-- Incorporating additional data sources (e.g., real-time traffic, public transport schedules)
-- User personalization features
-- Mobile application development
-- Enhanced reporting and analytics capabilities
+### Phase 4: Advanced Algorithms
+- Dynamic Programming - transit scheduling
+- Greedy Methods - maintenance prioritization
+
+### Phase 5: Reporting and Demo
+- Result DTOs for algorithm outputs
+- Demo scenarios
+- Performance measurements
+
+## Architecture Overview
+
+```
+API Controllers
+    ↓
+Algorithm Services (MST, Dijkstra, etc.) ← ADD HERE FIRST
+    ↓
+IGraphService ← EXTEND ONLY WHEN ALGORITHM NEEDS IT
+    ↓
+EF Core DbContext
+    ↓
+SQLite Database
+```
+
+## Implementation Strategy
+
+**Do not try to build a perfect, universal graph service upfront.**
+
+Instead:
+1. ✅ Build basic graph service (DONE)
+2. 🚀 Implement MST algorithm using basic graph
+3. 🚀 Implement Dijkstra using basic graph
+4. 🚀 If time-dependent routing is needed → extend graph service with traffic methods
+5. 🚀 Repeat: algorithm drives feature additions to graph service
+
+This approach keeps code simple, focused, and testable.
+
+## Documentation
+See visual reference material:
+- [Diagrams and ERD](../DIAGRAMS/README.md)
+- [Implementation Roadmap](../ALGORITHMS/ROADMAP.md)
+- [Graph Service](../ALGORITHMS/GRAPH-SERVICE.md)
+- [Graph Service Quick Reference](../ALGORITHMS/GRAPH-SERVICE-QUICK-REF.md)
+
+## Next Steps
+
+**Immediately after this:**
+1. Create MST algorithm service
+2. Test with graph service
+3. Evaluate if graph service extension is needed
+4. Move to next algorithm
+
+**Do not:**
+- Add features to graph service that no algorithm uses yet
+- Create complex abstractions upfront
+- Optimize prematurely
+
+## Future Work Notes
+
+After initial algorithms are complete:
+- Real-time traffic data integration
+- Expand to additional cities
+- Advanced analytics and predictive modeling
+- Mobile app for route recommendations
 - Integration with smart city infrastructure

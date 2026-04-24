@@ -18,6 +18,8 @@ These pages explain how the current data can support those algorithms.
 ## Pages
 - [Overview](OVERVIEW.md)
 - [Graph Data Behavior](GRAPH-DATA.md)
+- [**Graph Service** (NEW - Shared foundation for all algorithms)](GRAPH-SERVICE.md)
+- [**Graph Service Quick Reference** (Developer guide with examples)](GRAPH-SERVICE-QUICK-REF.md)
 - [MST](MST.md)
 - [Shortest Path](SHORTEST-PATH.md)
 - [Dynamic Programming](DYNAMIC-PROGRAMMING.md)

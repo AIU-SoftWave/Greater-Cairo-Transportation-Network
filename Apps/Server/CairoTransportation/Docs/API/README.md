@@ -14,6 +14,7 @@ The API layer:
 
 - [Controllers](#controllers)
 - [Endpoints](#endpoints)
+- [Graph Endpoint (NEW)](#graph-endpoint-new)
 - [Swagger and OpenAPI](#swagger-and-openapi)
 - [Response shape](#response-shape)
 - [Diagrams](../DIAGRAMS/README.md)
@@ -30,6 +31,7 @@ Current controllers:
 - `RoadsController`
 - `TrafficController`
 - `RoutesController`
+- `GraphController` (NEW - Algorithm foundation)
 
 ### Controller responsibilities
 - accept route parameters
@@ -74,6 +76,23 @@ It receives the request and sends the work to the correct service.
 
 ### Beginner explanation
 Each endpoint is a URL that returns a piece of transportation data.
+
+---
+
+## Graph Endpoint (NEW)
+
+The graph endpoint is special: it returns the entire transportation network structure needed by algorithms.
+
+- **Endpoint**: `GET /api/graph`
+- **Returns**: Complete graph with nodes, edges, adjacency lists, and indexes
+- **Use**: Algorithms retrieve this once to get all network data
+
+[Full documentation](GRAPH-ENDPOINT.md)
+
+### Why separate from individual data endpoints?
+
+Individual endpoints (`/api/locations`, `/api/roads`, etc.) return structured data for browsing.
+The graph endpoint returns an algorithm-friendly structure optimized for computation.
 
 ---
 

@@ -1,5 +1,6 @@
 using CairoTransportation.Data;
 using CairoTransportation.Services;
+using CairoTransportation.Services.Graph;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 builder.Services.AddScoped<IRoadService, RoadService>();
 builder.Services.AddScoped<ITrafficService, TrafficService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
+builder.Services.AddScoped<IGraphService, GraphService>();
 
 WebApplication app = builder.Build();
 

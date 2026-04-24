@@ -1,0 +1,108 @@
+@startuml graph-service-architecture
+
+!define BGCOLOR #E8F4F8
+!define ACCENT #2E86AB
+
+skinparam backgroundColor BGCOLOR
+skinparam note {
+    BackgroundColor #FFF9E6
+    BorderColor #CC8800
+}
+
+package "Algorithm Layer" {
+    [MST Service] as mst
+    [Dijkstra Service] as dijkstra
+    [A* Service] as astar
+    [Time-Aware Service] as timeaware
+    [DP Service] as dp
+    [Greedy Service] as greedy
+}
+
+package "Graph Service Layer" {
+    interface "IGraphService" as igraph {
+        GetGraphAsync()
+        GetGraphWithTrafficAsync(period)
+        GetGraphWithPlannedRoadsAsync()
+        GetSubgraphByBoundsAsync(bounds)
+        GetCriticalSubgraphAsync()
+        GetNodeAsync(id)
+        GetOutgoingEdgesAsync(id)
+        GetIncomingEdgesAsync(id)
+        GetEdgeAsync(from, to)
+    }
+
+    class GraphService {
+        - dbContext
+        - BuildGraphAsync()
+        - ConvertRoadsToEdgesAsync()
+    }
+
+    class Graph {
+        - Nodes: List<GraphNode>
+        - Edges: List<GraphEdge>
+        - AdjacencyList: Dict<id, List<edgeIds>>
+        - NodeIndex: Dict<id, GraphNode>
+        - EdgeIndex: Dict<id, GraphEdge>
+    }
+
+    class GraphNode {
+        - Id: string
+        - Name: string
+        - X, Y: double
+        - Population, IsCritical
+    }
+
+    class GraphEdge {
+        - Id, FromNodeId, ToNodeId
+        - Distance, Capacity, Condition
+        - IsExisting, ConstructionCost
+        - CurrentTraffic, MaintenancePriority
+    }
+}
+
+package "Data Layer" {
+    [LocationService] as locServ
+    [RoadService] as roadServ
+    [TrafficService] as traffServ
+    database "SQLite DB" as db
+}
+
+mst --> igraph
+dijkstra --> igraph
+astar --> igraph
+timeaware --> igraph
+dp --> igraph
+greedy --> igraph
+
+igraph <|.. GraphService
+
+GraphService --> Graph
+Graph *-- GraphNode
+Graph *-- GraphEdge
+
+GraphService --> locServ
+GraphService --> roadServ
+GraphService --> traffServ
+
+locServ --> db
+roadServ --> db
+traffServ --> db
+
+note on link : All algorithms\ndepend on shared\ngraph service
+
+note right of GraphService
+    Efficient assembly of:
+    - Nodes from locations
+    - Edges from roads
+    - Metadata from maintenance
+    - Traffic from periods
+end note
+
+note right of Graph
+    O(1) lookups via:
+    - AdjacencyList for neighbors
+    - NodeIndex for nodes
+    - EdgeIndex for edges
+end note
+
+@enduml

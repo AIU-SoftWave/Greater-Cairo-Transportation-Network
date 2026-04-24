@@ -19,6 +19,9 @@
 - `GET /api/routes/{id}`
 - `GET /api/routes/{id}/stops`
 
+## Graph (NEW - Algorithm Foundation)
+- `GET /api/graph` - Returns complete transportation network graph (nodes, edges, adjacency lists, indexes)
+
 ## Response conventions
 - `200 OK` when data is found
 - `404 Not Found` when a single entity does not exist
@@ -26,3 +29,4 @@
 
 ## Notes
 The endpoints are intentionally simple so they can later be reused by the algorithm modules.
+The `/api/graph` endpoint provides the foundation for algorithm implementations by returning the complete network structure.
