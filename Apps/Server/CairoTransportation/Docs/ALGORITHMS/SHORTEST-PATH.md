@@ -39,14 +39,29 @@ If a road is marked `is_two_way = true`, the graph service exposes both travel d
 
 ## A*
 
-A* is useful for emergency routing.
+A* is the next shortest-path implementation.
 Use it when:
-- you want a faster path search
-- you have a heuristic such as geographic distance to the goal
-- the destination is a medical or critical facility
+- you want a route search that prefers moving toward the destination
+- you have coordinates for the nodes
+- you want an emergency-friendly or target-directed search
 
 ### Behavior in this project
-A* can prioritize roads that move the route closer to the target while still respecting traffic and road quality.
+A* uses the same basic graph as Dijkstra, but it adds a heuristic based on node coordinates.
+That helps it focus the search toward the destination faster.
+
+### Current implementation
+- Service: `IAStarService` / `AStarService`
+- Endpoint: `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID`
+- Result: rich DTO with path nodes, path roads, total distance, and success flag
+
+### DTO shape
+- `FromNodeId`
+- `ToNodeId`
+- `Found`
+- `TotalDistance`
+- `Message`
+- `PathNodes`
+- `PathRoads`
 
 ## Time-dependent shortest path
 
@@ -64,7 +79,7 @@ That means the best route can change depending on the time of day.
 
 ### Planned services
 - `DijkstraService` ✅ implemented
-- `AStarService`
+- `AStarService` ✅ implemented
 - `TimeAwareRouteService`
 
 ### What each service should do
@@ -78,8 +93,9 @@ That means the best route can change depending on the time of day.
 - travel-time estimate
 - explanation for emergency or traffic-aware decisions
 
-## Current endpoint
+## Current endpoints
 - `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
+- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID`
 
 ## Expected outputs
 - path as a list of locations or roads

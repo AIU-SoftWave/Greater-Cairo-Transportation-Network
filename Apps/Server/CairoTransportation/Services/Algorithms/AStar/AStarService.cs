@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
-using CairoTransportation.Services.Algorithms.Dijkstra.DTOs;
+using CairoTransportation.Services.Algorithms.AStar.Contracts;
+using CairoTransportation.Services.Algorithms.AStar.DTOs;
 using CairoTransportation.Services.Graph;
 
-namespace CairoTransportation.Services.Algorithms.Dijkstra;
+namespace CairoTransportation.Services.Algorithms.AStar;
 
-public class DijkstraService(IGraphService graphService) : IDijkstraService
+public class AStarService(IGraphService graphService) : IAStarService
 {
     public async Task<ShortestPathResultDto> FindShortestPathAsync(string fromNodeId, string toNodeId)
     {
@@ -59,27 +59,27 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             };
         }
 
-        var distances = new Dictionary<string, double>();
-        var previousNode = new Dictionary<string, string>();
-        var previousRoad = new Dictionary<string, long>();
-        var visited = new HashSet<string>();
+        var gScore = new Dictionary<string, double>();
+        var cameFromNode = new Dictionary<string, string>();
+        var cameFromRoad = new Dictionary<string, long>();
+        var openSet = new PriorityQueue<string, double>();
+        var closedSet = new HashSet<string>();
         var discovered = new HashSet<string> { fromNodeId };
-        var queue = new PriorityQueue<string, double>();
         int expandedNodes = 0;
 
         foreach (GraphNode node in graph.Nodes)
         {
-            distances[node.Id] = double.PositiveInfinity;
+            gScore[node.Id] = double.PositiveInfinity;
         }
 
-        distances[fromNodeId] = 0;
-        queue.Enqueue(fromNodeId, 0);
+        gScore[fromNodeId] = 0;
+        openSet.Enqueue(fromNodeId, Heuristic(graph, fromNodeId, toNodeId));
 
-        while (queue.Count > 0)
+        while (openSet.Count > 0)
         {
-            string currentNodeId = queue.Dequeue();
+            string currentNodeId = openSet.Dequeue();
 
-            if (!visited.Add(currentNodeId))
+            if (!closedSet.Add(currentNodeId))
             {
                 continue;
             }
@@ -104,26 +104,28 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
                 }
 
                 string neighborNodeId = edge.ToNodeId;
-                if (!graph.NodeIndex.ContainsKey(neighborNodeId))
+                if (!graph.NodeIndex.ContainsKey(neighborNodeId) || closedSet.Contains(neighborNodeId))
                 {
                     continue;
                 }
 
-                double newDistance = distances[currentNodeId] + edge.Distance;
-                if (newDistance >= distances[neighborNodeId])
+                double tentativeGScore = gScore[currentNodeId] + edge.Distance;
+                if (tentativeGScore >= gScore[neighborNodeId])
                 {
                     continue;
                 }
 
-                distances[neighborNodeId] = newDistance;
-                previousNode[neighborNodeId] = currentNodeId;
-                previousRoad[neighborNodeId] = edge.Id;
-                queue.Enqueue(neighborNodeId, newDistance);
+                cameFromNode[neighborNodeId] = currentNodeId;
+                cameFromRoad[neighborNodeId] = edge.Id;
+                gScore[neighborNodeId] = tentativeGScore;
+
+                double fScore = tentativeGScore + Heuristic(graph, neighborNodeId, toNodeId);
+                openSet.Enqueue(neighborNodeId, fScore);
                 discovered.Add(neighborNodeId);
             }
         }
 
-        if (!double.IsFinite(distances[toNodeId]))
+        if (!double.IsFinite(gScore[toNodeId]))
         {
             stopwatch.Stop();
             return new ShortestPathResultDto
@@ -143,9 +145,9 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
         string current = toNodeId;
 
         nodePath.Add(current);
-        while (previousNode.TryGetValue(current, out string? prevNode))
+        while (cameFromNode.TryGetValue(current, out string? prevNode))
         {
-            roadPath.Add(previousRoad[current]);
+            roadPath.Add(cameFromRoad[current]);
             nodePath.Add(prevNode);
             current = prevNode;
         }
@@ -167,14 +169,29 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             FromNodeId = fromNodeId,
             ToNodeId = toNodeId,
             Found = true,
-            TotalDistance = distances[toNodeId],
+            TotalDistance = gScore[toNodeId],
             VisitedNodes = discovered.Count,
             ExpandedNodes = expandedNodes,
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
             PathNodes = pathNodes,
             PathRoads = pathRoads,
-            Message = "Shortest path found using Dijkstra's algorithm."
+            Message = "Shortest path found using A* search."
         };
+    }
+
+    private static double Heuristic(CairoTransportation.Services.Graph.Graph graph, string fromNodeId, string toNodeId)
+    {
+        GraphNode from = graph.NodeIndex[fromNodeId];
+        GraphNode to = graph.NodeIndex[toNodeId];
+
+        if (from.X is null || from.Y is null || to.X is null || to.Y is null)
+        {
+            return 0;
+        }
+
+        double dx = from.X.Value - to.X.Value;
+        double dy = from.Y.Value - to.Y.Value;
+        return Math.Sqrt(dx * dx + dy * dy);
     }
 
     private static ShortestPathNodeDto MapNode(GraphNode node) => new()

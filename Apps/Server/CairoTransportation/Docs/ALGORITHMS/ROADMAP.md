@@ -22,15 +22,15 @@
 - Endpoint: `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
 - Uses the basic graph and edge distance as the weight
 
-### 3.2 MST / Road Network Design
+### 3.2 A* Pathfinding ✅ DONE
+- Implemented as `IAStarService` / `AStarService`
+- Endpoint: `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID`
+- Uses the basic graph and coordinate heuristic
+
+### 3.3 MST / Road Network Design
 - Implement Kruskal's or Prim's algorithm
 - Use basic `GetGraphAsync()`
 - *If needed for expansion analysis: extend graph service with `GetGraphWithPlannedRoadsAsync()`*
-
-### 3.3 A* Pathfinding
-- Implement A* using node coordinates
-- Use basic `GetGraphAsync()`
-- *If needed: extend with custom heuristics*
 
 ### 3.4 Time-Dependent Routing
 - Extend graph service with `GetGraphWithTrafficAsync(period)` when needed
@@ -71,13 +71,12 @@ The graph service will evolve incrementally:
 ## Current Status
 
 **Just Completed:**
-- Two-way road support added to the data model and graph service
+- A* pathfinding service and endpoint
 
 **Next Steps:**
-1. Build A* pathfinding service
-2. Build MST algorithm service
-3. Evaluate if traffic features needed → conditionally triggers graph service extension
-4. Continue with remaining algorithms
+1. Build MST algorithm service
+2. Evaluate if traffic features needed → conditionally triggers graph service extension
+3. Continue with remaining algorithms
 
 ---
 
@@ -85,4 +84,4 @@ The graph service will evolve incrementally:
 This roadmap reflects the incremental approach:
 - Simple and complete in each phase
 - Algorithms drive feature additions to graph service
-- No speculative features added upfront
+- No speculative features added upfront- No speculative features added upfront
