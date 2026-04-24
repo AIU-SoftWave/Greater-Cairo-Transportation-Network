@@ -47,7 +47,7 @@
 
 - **Dynamic Programming** - Maintenance planning (0/1 Knapsack) ✅ DONE
 - **Dynamic Programming** - Transit scheduling (Resource Allocation DP) ✅ DONE
-- **Greedy Methods** - Traffic signal optimization (planned)
+- **Greedy Methods** - Traffic signal optimization ✅ DONE
 - **Greedy Methods** - Emergency priority routing (planned)
 
 ## Phase 5: Reporting and Demo
@@ -83,9 +83,9 @@ The graph service will evolve incrementally:
 
 **Just Completed:**
 
-- Transit Scheduling Service with Resource Allocation DP
-- Endpoint: `GET /api/algorithms/transit-schedule?vehicles=50`
-- Allocates vehicles across routes to maximize demand coverage
+- Traffic Signal Service with Greedy algorithm
+- Endpoint: `GET /api/algorithms/traffic-signals?period=MORNING`
+- Prioritizes congested roads for immediate signal timing relief
 
 **Implemented So Far:**
 
@@ -95,11 +95,12 @@ The graph service will evolve incrementally:
 4. ✅ Time-Varying Dijkstra - traffic-aware routing
 5. ✅ Maintenance Planning (0/1 Knapsack) - budget optimization
 6. ✅ Transit Scheduling (Resource Allocation DP) - vehicle/fleet optimization
+7. ✅ Traffic Signal (Greedy) - congestion-based signal timing
 
 **Next Steps:**
 
-1. Traffic Signal Service (Greedy) - real-time signal timing optimization
-2. Emergency Priority Service (Greedy) - emergency vehicle priority routing
+1. Emergency Priority Service (Greedy) - emergency vehicle priority routing
+2. Phase 5: Reporting and Demo - result visualization and benchmarks
 
 ---
 

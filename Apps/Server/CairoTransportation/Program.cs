@@ -10,6 +10,8 @@ using CairoTransportation.Services.Algorithms.Mst;
 using CairoTransportation.Services.Algorithms.TransitScheduling;
 using CairoTransportation.Services.Algorithms.TransitScheduling.Contracts;
 using CairoTransportation.Services.Algorithms.Mst.Contracts;
+using CairoTransportation.Services.Algorithms.TrafficSignal;
+using CairoTransportation.Services.Algorithms.TrafficSignal.Contracts;
 using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra;
 using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra.Contracts;
 using CairoTransportation.Services.Graph;
@@ -35,6 +37,7 @@ builder.Services.AddScoped<IMstService, MstService>();
 builder.Services.AddScoped<ITimeVaryingDijkstraService, TimeVaryingDijkstraService>();
 builder.Services.AddScoped<IMaintenancePlanningService, MaintenancePlanningService>();
 builder.Services.AddScoped<ITransitSchedulingService, TransitSchedulingService>();
+builder.Services.AddScoped<ITrafficSignalService, TrafficSignalService>();
 
 WebApplication app = builder.Build();
 

@@ -51,6 +51,7 @@ It is the input to the optimization algorithms.
 - **Time-Varying Dijkstra** - traffic-aware routing with period-based multipliers
 - **Maintenance Planning (DP)** - optimal road repair selection using 0/1 Knapsack
 - **Transit Scheduling (DP)** - optimal vehicle allocation across routes using Resource Allocation DP
+- **Traffic Signal (Greedy)** - real-time signal timing based on congestion
 
 ## When to use them
 
@@ -62,6 +63,7 @@ It is the input to the optimization algorithms.
 | **Time-Varying Dijkstra** | Rush hour routing, traffic-aware pathfinding               |
 | **Maintenance Planning**  | Budget-constrained road repair optimization                |
 | **Transit Scheduling**    | Fleet optimization, vehicle allocation across routes       |
+| **Traffic Signal**        | Real-time congestion relief, signal timing optimization    |
 
 ## API endpoints
 
@@ -73,3 +75,4 @@ It is the input to the optimization algorithms.
 | `GET /api/algorithms/time-route?from=X&to=Y&period=Z` | Time-Varying Dijkstra  | Traffic-aware routing          |
 | `GET /api/algorithms/maintenance-plan?budget=X`       | 0/1 Knapsack DP        | Optimal repair selection       |
 | `GET /api/algorithms/transit-schedule?vehicles=X`     | Resource Allocation DP | Optimal vehicle allocation     |
+| `GET /api/algorithms/traffic-signals?period=X`        | Greedy                 | Signal timing by congestion    |
