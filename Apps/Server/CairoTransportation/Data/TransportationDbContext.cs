@@ -73,6 +73,9 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
 
             entity.HasIndex(x => x.RoadId).HasDatabaseName("idx_traffic_road");
             entity.HasIndex(x => x.Period).HasDatabaseName("idx_traffic_period");
+            entity.HasIndex(x => new { x.RoadId, x.Period })
+                .IsUnique()
+                .HasDatabaseName("uq_traffic_road_period");
 
             entity.Property(x => x.Id).HasColumnName("id");
             entity.Property(x => x.RoadId).HasColumnName("road_id");
@@ -82,12 +85,14 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
             entity.HasOne(x => x.Road)
                 .WithMany(x => x.TrafficFlows)
                 .HasForeignKey(x => x.RoadId)
+                .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("fk_traffic_road");
 
             entity.HasOne(x => x.PeriodMultiplier)
                 .WithMany(x => x.TrafficFlows)
                 .HasForeignKey(x => x.Period)
+                .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_traffic_period_multiplier");
         });

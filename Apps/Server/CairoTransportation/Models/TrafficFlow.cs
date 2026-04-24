@@ -27,9 +27,9 @@ public class TrafficFlow
 
     [JsonIgnore]
     [ForeignKey(nameof(RoadId))]
-    public Road? Road { get; set; }
+    public Road Road { get; set; } = null!;
 
     [JsonIgnore]
     [ForeignKey(nameof(Period))]
-    public TrafficPeriodMultiplier? PeriodMultiplier { get; set; }
+    public TrafficPeriodMultiplier PeriodMultiplier { get; set; } = null!;
 }

@@ -46,11 +46,11 @@ public class Road
 
     [JsonIgnore]
     [ForeignKey(nameof(FromLocationId))]
-    public Location? FromLocation { get; set; }
+    public Location FromLocation { get; set; } = null!;
 
     [JsonIgnore]
     [ForeignKey(nameof(ToLocationId))]
-    public Location? ToLocation { get; set; }
+    public Location ToLocation { get; set; } = null!;
 
     [JsonIgnore] public ICollection<TrafficFlow> TrafficFlows { get; set; } = [];
     [JsonIgnore] public RoadMaintenance? Maintenance { get; set; }

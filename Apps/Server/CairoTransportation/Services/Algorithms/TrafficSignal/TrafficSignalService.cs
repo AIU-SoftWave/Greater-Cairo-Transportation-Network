@@ -35,13 +35,21 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
     {
         AlgorithmExecutionMetrics metrics = new();
 
-        // Validate period
+        // Validate period against DB-configured multipliers.
         string normalizedPeriod = period.Trim().ToUpperInvariant();
-        string[] validPeriods = ["MORNING", "AFTERNOON", "EVENING", "NIGHT"];
-        if (!validPeriods.Contains(normalizedPeriod))
+        bool periodExists = await dbContext.TrafficPeriodMultipliers
+            .AsNoTracking()
+            .AnyAsync(x => x.Period == normalizedPeriod);
+        if (!periodExists)
         {
+            List<string> validPeriods = await dbContext.TrafficPeriodMultipliers
+                .AsNoTracking()
+                .OrderBy(x => x.Period)
+                .Select(x => x.Period)
+                .ToListAsync();
+
             return CreateFailureResponse(
-                $"Invalid period '{period}'. Valid periods: {string.Join(", ", validPeriods)}",
+                $"Invalid period '{period}'. Valid periods from database: {string.Join(", ", validPeriods)}",
                 metrics,
                 period);
         }
@@ -106,6 +114,8 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
         List<RoadCongestion> roads = await dbContext.TrafficFlows
             .AsNoTracking()
             .Where(tf => tf.Period == period)
+            .Where(tf => tf.Road.IsExisting)
+            .Where(tf => tf.PeriodMultiplier.Period == period)
             .GroupBy(tf => new
             {
                 RoadId = tf.Road.Id,

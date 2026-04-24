@@ -1,6 +1,7 @@
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Algorithms.TrafficSignal.Contracts;
 using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CairoTransportation.Controllers;
@@ -11,7 +12,7 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/algorithms/traffic-signals")]
-public class TrafficSignalController(ITrafficSignalService signalService) : ControllerBase
+public class TrafficSignalController(ITrafficSignalService signalService, ITrafficService trafficService) : ControllerBase
 {
     /// <summary>
     /// Generates optimal traffic signal timing for congested roads.
@@ -20,7 +21,7 @@ public class TrafficSignalController(ITrafficSignalService signalService) : Cont
     /// Uses Greedy algorithm to prioritize roads with highest congestion ratio.
     /// Higher congestion = longer green light duration.
     /// </remarks>
-    /// <param name="period">Time period: MORNING, AFTERNOON, EVENING, or NIGHT</param>
+    /// <param name="period">Time period configured in traffic_period_multipliers.</param>
     /// <param name="topN">Number of highest-congestion roads to optimize (1-50, default 10)</param>
     /// <param name="analyzeAllIntersections">When true, analyzes all intersections and ignores topN</param>
     /// <returns>Signal timing recommendations ordered by priority.</returns>
@@ -30,17 +31,21 @@ public class TrafficSignalController(ITrafficSignalService signalService) : Cont
         [FromQuery] int topN = 10,
         [FromQuery] bool analyzeAllIntersections = false)
     {
-        // Validate period
-        string[] validPeriods = ["MORNING", "AFTERNOON", "EVENING", "NIGHT"];
+        // Validate period against DB-configured multipliers only.
         string normalizedPeriod = period.Trim().ToUpperInvariant();
 
-        if (!validPeriods.Contains(normalizedPeriod))
+        if (await trafficService.GetPeriodMultiplierAsync(normalizedPeriod) is null)
         {
+            var validPeriods = (await trafficService.GetPeriodMultipliersAsync())
+                .Select(x => x.Period)
+                .OrderBy(x => x)
+                .ToList();
+
             return BadRequest(new AlgorithmResponseDto<TrafficSignalResultDto>
             {
                 AlgorithmName = "Traffic Signal Optimization",
                 Success = false,
-                Message = $"Invalid period '{period}'. Valid values: {string.Join(", ", validPeriods)}",
+                Message = $"Invalid period '{period}'. Valid values from database: {string.Join(", ", validPeriods)}",
                 Data = new TrafficSignalResultDto
                 {
                     Period = period,
@@ -78,7 +83,7 @@ public class TrafficSignalController(ITrafficSignalService signalService) : Cont
         }
 
         AlgorithmResponseDto<TrafficSignalResultDto> result = await signalService.OptimizeSignalsAsync(
-            period,
+            normalizedPeriod,
             topN,
             analyzeAllIntersections);
         return result.Success ? Ok(result) : BadRequest(result);

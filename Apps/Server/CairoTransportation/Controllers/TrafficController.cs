@@ -33,5 +33,19 @@ public class TrafficController(ITrafficService trafficService) : ControllerBase
     /// <param name="period">The traffic period name.</param>
     /// <returns>A list of traffic flow entries for the period.</returns>
     [HttpGet("period/{period}")]
-    public async Task<IActionResult> GetByPeriod(string period) => Ok(await trafficService.GetByPeriodAsync(period));
+    public async Task<IActionResult> GetByPeriod(string period)
+    {
+        if (string.IsNullOrWhiteSpace(period))
+        {
+            return BadRequest("'period' route parameter is required.");
+        }
+
+        string normalizedPeriod = period.Trim().ToUpperInvariant();
+        if (await trafficService.GetPeriodMultiplierAsync(normalizedPeriod) is null)
+        {
+            return BadRequest($"Unsupported period '{period}'. No multiplier is configured in database.");
+        }
+
+        return Ok(await trafficService.GetByPeriodAsync(normalizedPeriod));
+    }
 }
