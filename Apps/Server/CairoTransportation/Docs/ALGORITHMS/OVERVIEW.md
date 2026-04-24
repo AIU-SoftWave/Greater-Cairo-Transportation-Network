@@ -34,3 +34,15 @@ It is the input to the optimization algorithms.
 
 ## Diagrams
 - [Diagrams folder](../DIAGRAMS/README.md)
+
+## Current implemented algorithms
+- **Dijkstra** - best general-purpose shortest path by distance
+- **A*** - coordinate-guided shortest path, useful for emergency and target-directed routing
+
+## When to use them
+- **Dijkstra**: use for normal route planning when you want the best path by distance
+- **A***: use for emergency routing, faster target search, or map-guided route finding
+
+## API endpoints
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
+- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID`

@@ -4,24 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 namespace CairoTransportation.Controllers;
 
 /// <summary>
-/// API endpoints for accessing transportation network graph data.
-/// Used by algorithms to retrieve network structure for computation.
+/// Provides the graph view of the transportation network for algorithm services.
+/// Use this controller when you need the full node-edge structure.
 /// </summary>
 [ApiController]
 [Route("api/graph")]
 public class GraphController(IGraphService graphService) : ControllerBase
 {
     /// <summary>
-    /// Gets the complete transportation network graph with all nodes and edges.
+    /// Gets the complete transportation graph.
     /// </summary>
     /// <remarks>
-    /// Returns:
-    /// - All locations as nodes
-    /// - All existing roads as edges
-    /// - Adjacency lists for efficient neighbor lookup
-    /// - Node and edge indexes for O(1) access
+    /// Use this endpoint when you are building or testing algorithms such as
+    /// Dijkstra, A*, MST, or any custom graph traversal logic.
+    /// It returns the nodes, edges, adjacency list, and lookup indexes used by algorithms.
     /// </remarks>
-    /// <returns>Complete graph with all nodes and edges</returns>
+    /// <returns>The full graph structure for the transportation network.</returns>
     [HttpGet]
     public async Task<IActionResult> GetGraph() => Ok(await graphService.GetGraphAsync());
 }

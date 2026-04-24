@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
 using CairoTransportation.Services.Algorithms.Dijkstra.DTOs;
 using CairoTransportation.Services.Graph;
@@ -8,27 +9,53 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
 {
     public async Task<ShortestPathResultDto> FindShortestPathAsync(string fromNodeId, string toNodeId)
     {
+        var stopwatch = Stopwatch.StartNew();
         CairoTransportation.Services.Graph.Graph graph = await graphService.GetGraphAsync();
 
         if (!graph.NodeIndex.ContainsKey(fromNodeId))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = 0,
+                ExpandedNodes = 0,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"Start node '{fromNodeId}' was not found."
             };
         }
 
         if (!graph.NodeIndex.ContainsKey(toNodeId))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = 0,
+                ExpandedNodes = 0,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"Destination node '{toNodeId}' was not found."
+            };
+        }
+
+        if (fromNodeId == toNodeId)
+        {
+            stopwatch.Stop();
+            return new ShortestPathResultDto
+            {
+                FromNodeId = fromNodeId,
+                ToNodeId = toNodeId,
+                Found = true,
+                TotalDistance = 0,
+                VisitedNodes = 1,
+                ExpandedNodes = 1,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
+                PathNodes = [MapNode(graph.NodeIndex[fromNodeId])],
+                Message = "Start and destination are the same node."
             };
         }
 
@@ -36,7 +63,9 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
         var previousNode = new Dictionary<string, string>();
         var previousRoad = new Dictionary<string, long>();
         var visited = new HashSet<string>();
+        var discovered = new HashSet<string> { fromNodeId };
         var queue = new PriorityQueue<string, double>();
+        int expandedNodes = 0;
 
         foreach (GraphNode node in graph.Nodes)
         {
@@ -54,6 +83,8 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             {
                 continue;
             }
+
+            expandedNodes++;
 
             if (currentNodeId == toNodeId)
             {
@@ -88,16 +119,21 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
                 previousNode[neighborNodeId] = currentNodeId;
                 previousRoad[neighborNodeId] = edge.Id;
                 queue.Enqueue(neighborNodeId, newDistance);
+                discovered.Add(neighborNodeId);
             }
         }
 
         if (!double.IsFinite(distances[toNodeId]))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = discovered.Count,
+                ExpandedNodes = expandedNodes,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"No path was found from '{fromNodeId}' to '{toNodeId}'."
             };
         }
@@ -125,12 +161,16 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             .Select(roadId => MapRoad(graph.EdgeIndex[roadId]))
             .ToList();
 
+        stopwatch.Stop();
         return new ShortestPathResultDto
         {
             FromNodeId = fromNodeId,
             ToNodeId = toNodeId,
             Found = true,
             TotalDistance = distances[toNodeId],
+            VisitedNodes = discovered.Count,
+            ExpandedNodes = expandedNodes,
+            ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
             PathNodes = pathNodes,
             PathRoads = pathRoads,
             Message = "Shortest path found using Dijkstra's algorithm."

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CairoTransportation.Services.Algorithms.AStar.Contracts;
 using CairoTransportation.Services.Algorithms.AStar.DTOs;
 using CairoTransportation.Services.Graph;
@@ -8,38 +9,51 @@ public class AStarService(IGraphService graphService) : IAStarService
 {
     public async Task<ShortestPathResultDto> FindShortestPathAsync(string fromNodeId, string toNodeId)
     {
+        var stopwatch = Stopwatch.StartNew();
         CairoTransportation.Services.Graph.Graph graph = await graphService.GetGraphAsync();
 
         if (!graph.NodeIndex.ContainsKey(fromNodeId))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = 0,
+                ExpandedNodes = 0,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"Start node '{fromNodeId}' was not found."
             };
         }
 
         if (!graph.NodeIndex.ContainsKey(toNodeId))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = 0,
+                ExpandedNodes = 0,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"Destination node '{toNodeId}' was not found."
             };
         }
 
         if (fromNodeId == toNodeId)
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = true,
                 TotalDistance = 0,
+                VisitedNodes = 1,
+                ExpandedNodes = 1,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 PathNodes = [MapNode(graph.NodeIndex[fromNodeId])],
                 Message = "Start and destination are the same node."
             };
@@ -49,8 +63,9 @@ public class AStarService(IGraphService graphService) : IAStarService
         var cameFromNode = new Dictionary<string, string>();
         var cameFromRoad = new Dictionary<string, long>();
         var openSet = new PriorityQueue<string, double>();
-        var openSetNodes = new HashSet<string>();
         var closedSet = new HashSet<string>();
+        var discovered = new HashSet<string> { fromNodeId };
+        int expandedNodes = 0;
 
         foreach (GraphNode node in graph.Nodes)
         {
@@ -59,17 +74,17 @@ public class AStarService(IGraphService graphService) : IAStarService
 
         gScore[fromNodeId] = 0;
         openSet.Enqueue(fromNodeId, Heuristic(graph, fromNodeId, toNodeId));
-        openSetNodes.Add(fromNodeId);
 
         while (openSet.Count > 0)
         {
             string currentNodeId = openSet.Dequeue();
-            openSetNodes.Remove(currentNodeId);
 
             if (!closedSet.Add(currentNodeId))
             {
                 continue;
             }
+
+            expandedNodes++;
 
             if (currentNodeId == toNodeId)
             {
@@ -106,17 +121,21 @@ public class AStarService(IGraphService graphService) : IAStarService
 
                 double fScore = tentativeGScore + Heuristic(graph, neighborNodeId, toNodeId);
                 openSet.Enqueue(neighborNodeId, fScore);
-                openSetNodes.Add(neighborNodeId);
+                discovered.Add(neighborNodeId);
             }
         }
 
         if (!double.IsFinite(gScore[toNodeId]))
         {
+            stopwatch.Stop();
             return new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
                 ToNodeId = toNodeId,
                 Found = false,
+                VisitedNodes = discovered.Count,
+                ExpandedNodes = expandedNodes,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
                 Message = $"No path was found from '{fromNodeId}' to '{toNodeId}'."
             };
         }
@@ -144,12 +163,16 @@ public class AStarService(IGraphService graphService) : IAStarService
             .Select(roadId => MapRoad(graph.EdgeIndex[roadId]))
             .ToList();
 
+        stopwatch.Stop();
         return new ShortestPathResultDto
         {
             FromNodeId = fromNodeId,
             ToNodeId = toNodeId,
             Found = true,
             TotalDistance = gScore[toNodeId],
+            VisitedNodes = discovered.Count,
+            ExpandedNodes = expandedNodes,
+            ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
             PathNodes = pathNodes,
             PathRoads = pathRoads,
             Message = "Shortest path found using A* search."

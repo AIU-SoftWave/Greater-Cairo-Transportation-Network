@@ -27,11 +27,13 @@ Controllers are the HTTP entry points of the app.
 They are thin classes that call services and return responses.
 
 Current controllers:
-- `LocationsController`
-- `RoadsController`
-- `TrafficController`
-- `RoutesController`
-- `GraphController` (NEW - Algorithm foundation)
+- `LocationsController` - browse and inspect nodes
+- `RoadsController` - browse roads and maintenance data
+- `TrafficController` - inspect traffic flow by road or period
+- `RoutesController` - inspect public transport routes and stops
+- `GraphController` - return the graph structure for algorithms
+- `AlgorithmsController` - Dijkstra shortest path search
+- `AStarController` - A* search for emergency and target-directed routing
 
 ### Controller responsibilities
 - accept route parameters
@@ -111,7 +113,15 @@ Why it helps beginners:
 - test requests without writing client code
 - understand request and response shapes
 
----
+### Controller-specific documentation
+
+Each controller also has a dedicated Swagger/OpenAPI description:
+- **Locations**: view and search nodes
+- **Roads**: browse roads and maintenance schedules
+- **Traffic**: analyze traffic data by road or time period
+- **Routes**: explore public transport routes and stops
+- **Graph**: the transportation network structure
+- **Algorithms**: Dijkstra and A* pathfinding algorithms
 
 ## Response shape
 
