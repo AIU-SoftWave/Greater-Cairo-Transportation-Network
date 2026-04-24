@@ -24,6 +24,7 @@
 
 ## Algorithms
 - `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm and a rich DTO
+- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID` - Returns the shortest path using A* search and a rich DTO
 
 ## Response conventions
 - `200 OK` when data is found
@@ -34,4 +35,4 @@
 ## Notes
 The endpoints are intentionally simple so they can later be reused by the algorithm modules.
 The `/api/graph` endpoint provides the foundation for algorithm implementations by returning the complete network structure.
-The shortest-path endpoint uses the basic graph service and Dijkstra's algorithm.
+The shortest-path endpoints use the basic graph service and route-search algorithms.
