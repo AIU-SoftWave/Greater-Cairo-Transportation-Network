@@ -1,8 +1,8 @@
-using CairoTransportation.Services.Algorithms.Dijkstra.DTOs;
+using CairoTransportation.Services.Algorithms.Common.DTOs;
 
 namespace CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
 
 public interface IDijkstraService
 {
-    Task<ShortestPathResultDto> FindShortestPathAsync(string fromNodeId, string toNodeId);
+    Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId);
 }

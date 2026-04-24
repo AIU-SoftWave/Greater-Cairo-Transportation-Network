@@ -1,35 +1,43 @@
+using CairoTransportation.Services.Algorithms.Common.DTOs;
+using CairoTransportation.Services.Algorithms.Common.Instrumentation;
 using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
-using CairoTransportation.Services.Algorithms.Dijkstra.DTOs;
 using CairoTransportation.Services.Graph;
 
 namespace CairoTransportation.Services.Algorithms.Dijkstra;
 
 public class DijkstraService(IGraphService graphService) : IDijkstraService
 {
-    public async Task<ShortestPathResultDto> FindShortestPathAsync(string fromNodeId, string toNodeId)
+    public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId)
     {
+        var metrics = new AlgorithmExecutionMetrics();
         CairoTransportation.Services.Graph.Graph graph = await graphService.GetGraphAsync();
 
         if (!graph.NodeIndex.ContainsKey(fromNodeId))
         {
-            return new ShortestPathResultDto
-            {
-                FromNodeId = fromNodeId,
-                ToNodeId = toNodeId,
-                Found = false,
-                Message = $"Start node '{fromNodeId}' was not found."
-            };
+            return CreateFailureResponse(fromNodeId, toNodeId, $"Start node '{fromNodeId}' was not found.", metrics);
         }
 
         if (!graph.NodeIndex.ContainsKey(toNodeId))
         {
-            return new ShortestPathResultDto
-            {
-                FromNodeId = fromNodeId,
-                ToNodeId = toNodeId,
-                Found = false,
-                Message = $"Destination node '{toNodeId}' was not found."
-            };
+            return CreateFailureResponse(fromNodeId, toNodeId, $"Destination node '{toNodeId}' was not found.", metrics);
+        }
+
+        metrics.MarkDiscovered(fromNodeId);
+
+        if (fromNodeId == toNodeId)
+        {
+            metrics.MarkExpanded();
+            return CreateSuccessResponse(
+                new ShortestPathResultDto
+                {
+                    FromNodeId = fromNodeId,
+                    ToNodeId = toNodeId,
+                    Found = true,
+                    TotalDistance = 0,
+                    PathNodes = [MapNode(graph.NodeIndex[fromNodeId])]
+                },
+                "Start and destination are the same node.",
+                metrics);
         }
 
         var distances = new Dictionary<string, double>();
@@ -54,6 +62,8 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             {
                 continue;
             }
+
+            metrics.MarkExpanded();
 
             if (currentNodeId == toNodeId)
             {
@@ -88,18 +98,13 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
                 previousNode[neighborNodeId] = currentNodeId;
                 previousRoad[neighborNodeId] = edge.Id;
                 queue.Enqueue(neighborNodeId, newDistance);
+                metrics.MarkDiscovered(neighborNodeId);
             }
         }
 
         if (!double.IsFinite(distances[toNodeId]))
         {
-            return new ShortestPathResultDto
-            {
-                FromNodeId = fromNodeId,
-                ToNodeId = toNodeId,
-                Found = false,
-                Message = $"No path was found from '{fromNodeId}' to '{toNodeId}'."
-            };
+            return CreateFailureResponse(fromNodeId, toNodeId, $"No path was found from '{fromNodeId}' to '{toNodeId}'.", metrics);
         }
 
         var nodePath = new List<string>();
@@ -125,17 +130,51 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             .Select(roadId => MapRoad(graph.EdgeIndex[roadId]))
             .ToList();
 
-        return new ShortestPathResultDto
-        {
-            FromNodeId = fromNodeId,
-            ToNodeId = toNodeId,
-            Found = true,
-            TotalDistance = distances[toNodeId],
-            PathNodes = pathNodes,
-            PathRoads = pathRoads,
-            Message = "Shortest path found using Dijkstra's algorithm."
-        };
+        return CreateSuccessResponse(
+            new ShortestPathResultDto
+            {
+                FromNodeId = fromNodeId,
+                ToNodeId = toNodeId,
+                Found = true,
+                TotalDistance = distances[toNodeId],
+                PathNodes = pathNodes,
+                PathRoads = pathRoads
+            },
+            "Shortest path found using Dijkstra's algorithm.",
+            metrics);
     }
+
+    private static AlgorithmResponseDto<ShortestPathResultDto> CreateSuccessResponse(
+        ShortestPathResultDto result,
+        string message,
+        AlgorithmExecutionMetrics metrics) =>
+        new()
+        {
+            AlgorithmName = "Dijkstra",
+            Success = true,
+            Message = message,
+            Trace = metrics.Complete(),
+            Data = result
+        };
+
+    private static AlgorithmResponseDto<ShortestPathResultDto> CreateFailureResponse(
+        string fromNodeId,
+        string toNodeId,
+        string message,
+        AlgorithmExecutionMetrics metrics) =>
+        new()
+        {
+            AlgorithmName = "Dijkstra",
+            Success = false,
+            Message = message,
+            Trace = metrics.Complete(),
+            Data = new ShortestPathResultDto
+            {
+                FromNodeId = fromNodeId,
+                ToNodeId = toNodeId,
+                Found = false
+            }
+        };
 
     private static ShortestPathNodeDto MapNode(GraphNode node) => new()
     {

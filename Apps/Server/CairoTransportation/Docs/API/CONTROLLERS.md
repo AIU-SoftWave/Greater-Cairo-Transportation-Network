@@ -3,12 +3,12 @@
 Controllers are the HTTP entry points of the app.
 
 ## Current controllers
-- `LocationsController` - Location data endpoints
-- `RoadsController` - Road network endpoints
-- `TrafficController` - Traffic flow endpoints
-- `RoutesController` - Transit route endpoints
-- `GraphController` - Graph data for algorithms
-- `AlgorithmsController` - Algorithm endpoints such as shortest path
+- `LocationsController` - browse and inspect network nodes such as neighborhoods and facilities
+- `RoadsController` - browse roads, outgoing connections, and maintenance information
+- `TrafficController` - inspect traffic flow by road or by time period
+- `RoutesController` - inspect public transport routes and ordered stops
+- `GraphController` - return the full graph structure used by algorithms
+- `AlgorithmsController` - route search endpoints (Dijkstra currently implemented)
 
 ## What controllers should do
 
@@ -27,16 +27,60 @@ Controllers should not:
 The `GraphController` exposes the graph service endpoint:
 - `GET /api/graph` - Returns the complete transportation network graph
 
+Use it when you want the full graph structure for algorithm development or debugging.
+
 ## AlgorithmsController
 
-The `AlgorithmsController` exposes algorithm endpoints:
-- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm
+The `AlgorithmsController` currently exposes Dijkstra route search:
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
+- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID`
 
-This endpoint uses the graph service and a dedicated Dijkstra service.
-It returns a rich DTO with path nodes, path roads, total distance, and status information.
+Use it when you want the best general-purpose route by distance.
+
+## Standard algorithm response shape
+
+Algorithm endpoints should return the unified envelope:
+
+```json
+{
+  "algorithmName": "Dijkstra",
+  "success": true,
+  "message": "Shortest path found using Dijkstra's algorithm.",
+  "trace": {
+    "visitedNodes": 87,
+    "expandedNodes": 32,
+    "executionTimeMs": 3
+  },
+  "data": {
+    "fromNodeId": "1",
+    "toNodeId": "13",
+    "found": true,
+    "totalDistance": 70.4,
+    "pathNodes": [],
+    "pathRoads": []
+  }
+}
+```
+
+### Trace semantics
+
+- `visitedNodes`: count of unique discovered nodes.
+- `expandedNodes`: count of nodes dequeued and processed.
+- `executionTimeMs`: end-to-end service execution time.
+
+### Status code behavior
+
+- `200 OK`: `success = true`
+- `404 Not Found`: valid request but no path / missing node
+- `400 Bad Request`: invalid query parameters
+
+## Guidance for adding next algorithm controller
+
+1. Keep route under `/api/algorithms/...`.
+2. Return `AlgorithmResponseDto<TData>` envelope.
+3. Use shared trace metrics semantics.
+4. Keep algorithm-specific details inside `data` + `message`.
 
 ## Beginner summary
 A controller is like the front desk of the API.
-It gets the request and sends the work to the right service.
-
-The graph controller is special: it returns the entire network structure needed by algorithms.
+It receives the request and sends the work to the correct service.
