@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.Dijkstra.DTOs;
+namespace CairoTransportation.Services.Algorithms.Common.DTOs;
 
 public class ShortestPathRoadDto
 {

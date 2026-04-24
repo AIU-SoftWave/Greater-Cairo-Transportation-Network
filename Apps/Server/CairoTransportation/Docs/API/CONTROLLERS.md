@@ -34,6 +34,7 @@ Use it when you want the full graph structure for algorithm development or debug
 
 The `AlgorithmsController` exposes algorithm endpoints:
 - `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm
+- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID` - Alias for Dijkstra shortest path
 
 Use it when you want the best general-purpose route by distance.
 
@@ -44,67 +45,49 @@ The `AStarController` exposes A* route search:
 
 Use it when you want a coordinate-guided search, especially for emergency or target-focused routing.
 
-## Unified trace metrics (Dijkstra + A*)
+## Standard algorithm response shape
 
-Both shortest-path endpoints return the same trace fields to support fair comparisons and easier onboarding for new algorithms:
-
-- `visitedNodes`:
-  - Count of unique nodes discovered by the algorithm.
-  - A node is counted when its best-known cost is first assigned or improved.
-  - Includes the start node when input is valid.
-
-- `expandedNodes`:
-  - Count of unique nodes expanded by the algorithm.
-  - A node is expanded when dequeued from the priority queue and processed.
-
-- `executionTimeMs`:
-  - End-to-end execution time per request in milliseconds.
-  - Includes graph fetch, search loop, and result mapping.
-
-### Edge-case behavior (standardized)
-
-- Invalid start or destination node:
-  - `found = false`
-  - `visitedNodes = 0`
-  - `expandedNodes = 0`
-
-- Same start and destination:
-  - `found = true`
-  - `totalDistance = 0`
-  - `visitedNodes = 1`
-  - `expandedNodes = 1`
-
-- No route found:
-  - `found = false`
-  - counters reflect actual work done before termination
-
-## Example response fields
+Algorithm endpoints should move to the unified envelope:
 
 ```json
 {
-  "fromNodeId": "1",
-  "toNodeId": "13",
-  "found": true,
-  "totalDistance": 70.4,
-  "visitedNodes": 87,
-  "expandedNodes": 32,
-  "executionTimeMs": 3,
-  "message": "Shortest path found using A* search.",
-  "pathNodes": [],
-  "pathRoads": []
+  "algorithmName": "Dijkstra",
+  "success": true,
+  "message": "Shortest path found using Dijkstra's algorithm.",
+  "trace": {
+    "visitedNodes": 87,
+    "expandedNodes": 32,
+    "executionTimeMs": 3
+  },
+  "data": {
+    "fromNodeId": "1",
+    "toNodeId": "13",
+    "found": true,
+    "totalDistance": 70.4,
+    "pathNodes": [],
+    "pathRoads": []
+  }
 }
 ```
 
+## Unified trace metrics
+
+- `visitedNodes`: unique discovered nodes.
+- `expandedNodes`: nodes dequeued and processed.
+- `executionTimeMs`: end-to-end execution time in milliseconds.
+
+### Edge-case behavior
+
+- Invalid start or destination: failed result with zero counters.
+- Same start and destination: success with zero distance.
+- No route found: failed result with counters reflecting actual work.
+
 ## Guidance for adding the next algorithm
 
-To keep results comparable, any new path algorithm should:
-
-1. Return the same response contract fields.
-2. Use the same metric semantics above.
-3. Preserve the same edge-case behavior.
-4. Keep algorithm-specific wording in `message` only.
-
-This lets clients compare algorithms without changing parsing logic.
+1. Keep route under `/api/algorithms/...`.
+2. Return standardized response shape.
+3. Use shared trace metric semantics.
+4. Keep algorithm-specific detail in `message` + `data`.
 
 ## Beginner summary
 A controller is like the front desk of the API.

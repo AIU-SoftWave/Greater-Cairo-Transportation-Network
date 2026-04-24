@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.AStar.DTOs;
+namespace CairoTransportation.Services.Algorithms.Common.DTOs;
 
 public class ShortestPathNodeDto
 {
