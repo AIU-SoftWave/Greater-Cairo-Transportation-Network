@@ -11,7 +11,7 @@ namespace CairoTransportation.Services.Graph;
 /// </summary>
 public class GraphService(TransportationDbContext dbContext) : IGraphService
 {
-    public async Task<Graph> GetGraphAsync()
+    public async Task<Graph> GetGraphAsync(bool includePotentialRoads = false)
     {
         var graph = new Graph();
 
@@ -36,11 +36,14 @@ public class GraphService(TransportationDbContext dbContext) : IGraphService
             graph.NodeIndex[node.Id] = node;
         }
 
-        // Load all edges (existing roads only)
-        List<Road> roads = await dbContext.Roads
-            .AsNoTracking()
-            .Where(x => x.IsExisting)
-            .ToListAsync();
+        // Load edges
+        IQueryable<Road> roadsQuery = dbContext.Roads.AsNoTracking();
+        if (!includePotentialRoads)
+        {
+            roadsQuery = roadsQuery.Where(x => x.IsExisting);
+        }
+
+        List<Road> roads = await roadsQuery.ToListAsync();
 
         // Load maintenance data for edges
         Dictionary<long, RoadMaintenance> maintenanceMap = await dbContext.RoadMaintenances

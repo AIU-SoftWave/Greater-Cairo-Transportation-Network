@@ -8,8 +8,11 @@ public interface IGraphService
 {
     /// <summary>
     /// Gets the complete transportation graph with all nodes and edges.
-    /// Only includes existing roads (IsExisting = true).
+    /// By default, only includes existing roads (IsExisting = true).
     /// </summary>
+    /// <param name="includePotentialRoads">
+    /// If true, includes both existing and potential roads.
+    /// </param>
     /// <returns>Complete graph ready for algorithm processing.</returns>
-    Task<Graph> GetGraphAsync();
+    Task<Graph> GetGraphAsync(bool includePotentialRoads = false);
 }

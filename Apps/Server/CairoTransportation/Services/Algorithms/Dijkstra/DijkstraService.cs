@@ -122,11 +122,11 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
         nodePath.Reverse();
         roadPath.Reverse();
 
-        List<ShortestPathNodeDto> pathNodes = nodePath
+        var pathNodes = nodePath
             .Select(nodeId => MapNode(graph.NodeIndex[nodeId]))
             .ToList();
 
-        List<ShortestPathRoadDto> pathRoads = roadPath
+        var pathRoads = roadPath
             .Select(roadId => MapRoad(graph.EdgeIndex[roadId]))
             .ToList();
 
