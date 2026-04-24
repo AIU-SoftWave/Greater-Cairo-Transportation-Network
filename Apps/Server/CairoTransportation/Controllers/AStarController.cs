@@ -1,5 +1,5 @@
 using CairoTransportation.Services.Algorithms.AStar.Contracts;
-using CairoTransportation.Services.Algorithms.AStar.DTOs;
+using CairoTransportation.Services.Algorithms.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CairoTransportation.Controllers;
@@ -28,10 +28,21 @@ public class AStarController(IAStarService aStarService) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
         {
-            return BadRequest("Both 'from' and 'to' query parameters are required.");
+            return BadRequest(new AlgorithmResponseDto<ShortestPathResultDto>
+            {
+                AlgorithmName = "A*",
+                Success = false,
+                Message = "Both 'from' and 'to' query parameters are required.",
+                Data = new ShortestPathResultDto
+                {
+                    FromNodeId = from ?? string.Empty,
+                    ToNodeId = to ?? string.Empty,
+                    Found = false
+                }
+            });
         }
 
-        ShortestPathResultDto result = await aStarService.FindShortestPathAsync(from, to);
-        return result.Found ? Ok(result) : NotFound(result);
+        AlgorithmResponseDto<ShortestPathResultDto> result = await aStarService.FindShortestPathAsync(from, to);
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }
