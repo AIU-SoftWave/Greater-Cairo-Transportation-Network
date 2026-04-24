@@ -45,10 +45,10 @@
 
 ## Phase 4: Advanced Algorithms
 
-- **Dynamic Programming** - Maintenance planning (0/1 Knapsack)
-- **Dynamic Programming** - transit scheduling (planned)
-- **Greedy Methods** - traffic signal optimization (planned)
-- **Greedy Methods** - emergency priority routing (planned)
+- **Dynamic Programming** - Maintenance planning (0/1 Knapsack) ✅ DONE
+- **Dynamic Programming** - Transit scheduling (planned)
+- **Greedy Methods** - Traffic signal optimization (planned)
+- **Greedy Methods** - Emergency priority routing (planned)
 
 ## Phase 5: Reporting and Demo
 
@@ -83,8 +83,10 @@ The graph service will evolve incrementally:
 
 **Just Completed:**
 
-- Maintenance Planning Service with 0/1 Knapsack DP
+- Maintenance Planning Service with 0/1 Knapsack DP (simplified 2D implementation)
 - Endpoint: `GET /api/algorithms/maintenance-plan?budget=10000000`
+- Input validation (NaN, negative, max limit checks)
+- Clean single-responsibility architecture (~220 lines)
 
 **Implemented So Far:**
 

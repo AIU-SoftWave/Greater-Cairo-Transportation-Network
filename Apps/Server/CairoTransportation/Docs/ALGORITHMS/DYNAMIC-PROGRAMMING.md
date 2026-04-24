@@ -29,17 +29,29 @@ Dynamic Programming (DP) is used for optimization problems that can be broken in
    urgency = (100 - condition) / 100  // Lower condition = higher urgency
    ```
 
-2. **0/1 Knapsack DP**:
+2. **0/1 Knapsack DP** (Classic 2D approach):
 
    ```
-   dp[b] = maximum value achievable with budget b
+   dp[i, b] = maximum value using first i items with budget b
 
-   For each road i:
-     For b from max_budget down to cost[i]:
-       dp[b] = max(dp[b], dp[b - cost[i]] + value[i])
+   For each item i from 1 to n:
+     For each budget b from 0 to B:
+       // Don't take item i
+       dp[i, b] = dp[i-1, b]
+
+       // Take item i if it fits and improves value
+       if cost[i] <= b:
+         dp[i, b] = max(dp[i, b], dp[i-1, b-cost[i]] + value[i])
    ```
 
-3. **Backtrack** to find which roads were selected
+3. **Backtrack** to find selected roads:
+
+   ```
+   For i from n down to 1:
+     If dp[i, remaining] != dp[i-1, remaining]:
+       Item i was selected
+       remaining -= cost[i]
+   ```
 
 4. **Return** selected roads, total cost, total priority score, expected condition improvement
 
@@ -52,8 +64,10 @@ Dynamic Programming (DP) is used for optimization problems that can be broken in
 
 **Complexity:**
 
-- Time: O(n × budget) where n = number of candidate roads
-- Space: O(budget) using 1D array optimization
+- Time: O(n × B) where n = number of candidate roads, B = effective budget
+- Space: O(n × B) for the 2D DP table (simpler backtracking than 1D optimization)
+
+Note: Budget is capped at 1.1× total candidate cost to prevent excessive memory usage.
 
 **Example Response:**
 
@@ -90,10 +104,10 @@ Dynamic Programming (DP) is used for optimization problems that can be broken in
 **Files:**
 | File | Purpose |
 |------|---------|
-| `Services/Algorithms/MaintenancePlanning/MaintenancePlanningService.cs` | Core 0/1 Knapsack implementation |
+| `Services/Algorithms/MaintenancePlanning/MaintenancePlanningService.cs` | Core 0/1 Knapsack (~220 lines, 2D DP approach) |
 | `Services/Algorithms/MaintenancePlanning/Contracts/IMaintenancePlanningService.cs` | Service interface |
 | `Services/Algorithms/MaintenancePlanning/DTOs/MaintenancePlanningResultDto.cs` | Response DTOs |
-| `Controllers/MaintenancePlanningController.cs` | API endpoint |
+| `Controllers/MaintenancePlanningController.cs` | API endpoint with input validation |
 
 ---
 
