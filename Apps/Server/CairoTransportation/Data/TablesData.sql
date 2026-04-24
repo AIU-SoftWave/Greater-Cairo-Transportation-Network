@@ -148,6 +148,14 @@ INSERT INTO traffic_flow (road_id, period, flow)
 SELECT id,'EVENING',2200 FROM roads WHERE from_location_id='23' AND to_location_id='4';
 
 -- =========================
+-- TRAFFIC PERIOD MULTIPLIERS
+-- =========================
+INSERT INTO traffic_period_multipliers (period, multiplier) VALUES
+('MORNING', 1.15),
+('EVENING', 1.25),
+('NIGHT', 0.90);
+
+-- =========================
 -- TRANSPORT ROUTES
 -- =========================
 INSERT INTO transport_routes (id, type, daily_passengers, vehicles_assigned) VALUES

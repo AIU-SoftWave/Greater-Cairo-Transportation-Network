@@ -319,12 +319,21 @@ namespace CairoTransportation.Migrations
 
             modelBuilder.Entity("CairoTransportation.Models.TrafficFlow", b =>
                 {
+                    b.HasOne("CairoTransportation.Models.TrafficPeriodMultiplier", "PeriodMultiplier")
+                        .WithMany("TrafficFlows")
+                        .HasForeignKey("Period")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_traffic_period_multiplier");
+
                     b.HasOne("CairoTransportation.Models.Road", "Road")
                         .WithMany("TrafficFlows")
                         .HasForeignKey("RoadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_traffic_road");
+
+                    b.Navigation("PeriodMultiplier");
 
                     b.Navigation("Road");
                 });
@@ -350,6 +359,25 @@ namespace CairoTransportation.Migrations
                     b.Navigation("ToLocation");
                 });
 
+            modelBuilder.Entity("CairoTransportation.Models.TrafficPeriodMultiplier", b =>
+                {
+                    b.Property<string>("Period")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("period");
+
+                    b.Property<double>("Multiplier")
+                        .HasColumnType("REAL")
+                        .HasColumnName("multiplier");
+
+                    b.HasKey("Period");
+
+                    b.ToTable("traffic_period_multipliers", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_multiplier_positive", "multiplier > 0");
+                        });
+                });
+
             modelBuilder.Entity("CairoTransportation.Models.Location", b =>
                 {
                     b.Navigation("DestinationDemands");
@@ -373,6 +401,11 @@ namespace CairoTransportation.Migrations
             modelBuilder.Entity("CairoTransportation.Models.TransportRoute", b =>
                 {
                     b.Navigation("RouteStops");
+                });
+
+            modelBuilder.Entity("CairoTransportation.Models.TrafficPeriodMultiplier", b =>
+                {
+                    b.Navigation("TrafficFlows");
                 });
 #pragma warning restore 612, 618
         }

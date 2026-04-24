@@ -1,5 +1,7 @@
+using CairoTransportation.Services;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
+using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CairoTransportation.Controllers;
@@ -10,7 +12,10 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/algorithms")]
-public class AlgorithmsController(IDijkstraService dijkstraService) : ControllerBase
+public class AlgorithmsController(
+    IDijkstraService dijkstraService,
+    ITimeVaryingDijkstraService timeVaryingDijkstraService,
+    ITrafficService trafficService) : ControllerBase
 {
     /// <summary>
     /// Finds the shortest path between two nodes using Dijkstra's algorithm.
@@ -43,6 +48,54 @@ public class AlgorithmsController(IDijkstraService dijkstraService) : Controller
         }
 
         AlgorithmResponseDto<ShortestPathResultDto> result = await dijkstraService.FindShortestPathAsync(from, to);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    /// <summary>
+    /// Finds a shortest path using Dijkstra with period-based traffic multipliers.
+    /// </summary>
+    /// <param name="from">The starting node identifier.</param>
+    /// <param name="to">The destination node identifier.</param>
+    /// <param name="period">Traffic period configured in database multipliers table.</param>
+    /// <returns>A traffic-aware shortest path result with standardized trace metrics.</returns>
+    [HttpGet("time-route")]
+    [HttpGet("time-varying-dijkstra/shortest-path")]
+    public async Task<IActionResult> GetTimeVaryingShortestPath([FromQuery] string from, [FromQuery] string to, [FromQuery] string period)
+    {
+        if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to) || string.IsNullOrWhiteSpace(period))
+        {
+            return BadRequest(new AlgorithmResponseDto<ShortestPathResultDto>
+            {
+                AlgorithmName = "Time-Varying Dijkstra",
+                Success = false,
+                Message = "'from', 'to', and 'period' query parameters are required.",
+                Data = new ShortestPathResultDto
+                {
+                    FromNodeId = from ?? string.Empty,
+                    ToNodeId = to ?? string.Empty,
+                    Found = false
+                }
+            });
+        }
+
+        string normalizedPeriod = period.Trim().ToUpperInvariant();
+        if (await trafficService.GetPeriodMultiplierAsync(normalizedPeriod) is null)
+        {
+            return BadRequest(new AlgorithmResponseDto<ShortestPathResultDto>
+            {
+                AlgorithmName = "Time-Varying Dijkstra",
+                Success = false,
+                Message = $"Unsupported period '{period}'. No multiplier is configured in database.",
+                Data = new ShortestPathResultDto
+                {
+                    FromNodeId = from,
+                    ToNodeId = to,
+                    Found = false
+                }
+            });
+        }
+
+        AlgorithmResponseDto<ShortestPathResultDto> result = await timeVaryingDijkstraService.FindShortestPathAsync(from, to, normalizedPeriod);
         return result.Success ? Ok(result) : NotFound(result);
     }
 }

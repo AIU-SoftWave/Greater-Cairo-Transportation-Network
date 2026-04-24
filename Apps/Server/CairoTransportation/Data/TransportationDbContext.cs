@@ -13,6 +13,7 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
     public DbSet<RouteStop> RouteStops => Set<RouteStop>();
     public DbSet<TransportDemand> TransportDemands => Set<TransportDemand>();
     public DbSet<RoadMaintenance> RoadMaintenances => Set<RoadMaintenance>();
+    public DbSet<TrafficPeriodMultiplier> TrafficPeriodMultipliers => Set<TrafficPeriodMultiplier>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,6 +84,12 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
                 .HasForeignKey(x => x.RoadId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("fk_traffic_road");
+
+            entity.HasOne(x => x.PeriodMultiplier)
+                .WithMany(x => x.TrafficFlows)
+                .HasForeignKey(x => x.Period)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_traffic_period_multiplier");
         });
 
         modelBuilder.Entity<TransportRoute>(entity =>
@@ -156,6 +163,17 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
                 .WithOne(x => x.Maintenance)
                 .HasForeignKey<RoadMaintenance>(x => x.RoadId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TrafficPeriodMultiplier>(entity =>
+        {
+            entity.ToTable("traffic_period_multipliers", table =>
+                table.HasCheckConstraint("chk_multiplier_positive", "multiplier > 0"));
+
+            entity.HasKey(x => x.Period);
+
+            entity.Property(x => x.Period).HasColumnName("period");
+            entity.Property(x => x.Multiplier).HasColumnName("multiplier");
         });
     }
 }
