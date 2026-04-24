@@ -1,46 +1,61 @@
-# Greater Cairo Transportation Network
+# Cairo Transportation Network
 
-A REST API for the Greater Cairo metropolitan transportation network, built with Spring Boot.
-The API exposes all transportation data (neighborhoods, facilities, roads, traffic patterns,
-metro lines, bus routes, OD demand) and hosts algorithmic modules for route planning,
-network optimisation, and resource allocation.
+A .NET 10 REST API for the Greater Cairo transportation optimization project.
 
-## Quick Start
+## Current Status
 
-```bash
-cd Apps/transport-system-server
-mvn spring-boot:run
-# Server starts at http://localhost:8080
-```
+Implemented foundation:
+- ASP.NET Core API
+- Entity Framework Core
+- SQLite database
+- automatic migration application on startup
+- one-time seeding from `Data/TablesData.sql`
+- OpenAPI/Swagger UI
+- core transportation entities and endpoints
 
-## Documentation
+## Main Endpoints
 
-See **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** for:
-- Full architecture description
-- Data schema reference
-- Complete API reference with all endpoints
-- **Algorithm implementation checklist** (what is done vs. what needs to be implemented)
-- **Step-by-step guide** for students adding their own algorithm module
-- PlantUML diagram descriptions
+- `GET /api/locations`
+- `GET /api/locations/{id}`
+- `GET /api/roads`
+- `GET /api/roads/{id}`
+- `GET /api/roads/from/{locationId}`
+- `GET /api/roads/{roadId}/maintenance`
+- `GET /api/traffic/road/{roadId}`
+- `GET /api/traffic/period/{period}`
+- `GET /api/routes`
+- `GET /api/routes/{id}`
+- `GET /api/routes/{id}/stops`
 
-## Implemented Algorithms
+## Docs
 
-| Algorithm | Endpoint |
-|---|---|
-| Dijkstra's Shortest Path | `GET /api/graph/shortest-path?from={id}&to={id}` |
-| Kruskal's MST | `GET /api/graph/mst` |
+See `PROJECT_OVERVIEW.md` for:
+- architecture
+- repository layout
+- data model
+- API reference
+- what is implemented
+- what still needs to be implemented for the course brief
 
-## Algorithm Placeholders (to be implemented)
+## Run
 
-| Algorithm | Endpoint |
-|---|---|
-| A* Emergency Routing | `GET /api/graph/astar?from={id}&to={id}` |
-| Time-Varying Dijkstra | `GET /api/graph/time-varying-shortest-path?from={id}&to={id}&timeSlot={slot}` |
-| Prim's MST | `GET /api/graph/prim-mst` |
-| Greedy Signal Timing | `GET /api/traffic/signal-timing?timeSlot={slot}` |
-| DP Road Maintenance | `GET /api/roads/maintenance-plan?budget={millions}` |
-| DP Bus Fleet Scheduling | `GET /api/bus/fleet-optimisation` |
-| DP Metro Frequency | `GET /api/metro/frequency-optimisation` |
+Open the solution in Visual Studio and run the app.
 
-Placeholder endpoints return `"Not implemented: <Algorithm Name>"` until implemented.
-See Section 7 of `PROJECT_OVERVIEW.md` for the contribution guide.
+Swagger opens in development at:
+- `/swagger`
+
+## Project Goal
+
+The long-term goal is to implement the algorithmic modules required by the course brief:
+- MST / road network design
+- Dijkstra / A* / time-dependent routing
+- dynamic programming for transit and maintenance
+- greedy traffic signal and emergency prioritization
+- reporting and visualization support
+
+## Seed Data
+
+The sample Cairo dataset is stored in:
+- `Apps/Server/CairoTransportation/Data/TablesData.sql`
+
+It is inserted automatically only when the database is empty.

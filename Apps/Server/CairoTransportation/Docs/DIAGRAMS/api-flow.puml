@@ -1,0 +1,11 @@
+@startuml
+actor Client
+Client -> Controllers : HTTP request
+Controllers -> Services : call service
+Services -> TransportationDbContext : query data
+TransportationDbContext -> SQLite : read/write
+SQLite --> TransportationDbContext
+TransportationDbContext --> Services
+Services --> Controllers
+Controllers --> Client : JSON response
+@enduml

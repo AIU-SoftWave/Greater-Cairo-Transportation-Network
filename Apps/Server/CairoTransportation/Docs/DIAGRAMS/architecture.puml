@@ -1,0 +1,13 @@
+@startuml
+skinparam componentStyle rectangle
+
+package "CairoTransportation" {
+  [Program.cs] --> [Controllers]
+  [Controllers] --> [Services]
+  [Services] --> [TransportationDbContext]
+  [TransportationDbContext] --> [SQLite]
+  [Program.cs] --> [DatabaseSeeder]
+  [Program.cs] --> [Swagger/OpenAPI]
+}
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+hide methods
+skinparam classAttributeIconSize 0
+
+class Location
+class Road
+class TrafficFlow
+class TransportRoute
+class RouteStop
+class TransportDemand
+class RoadMaintenance
+
+Location "1" <-- "*" Road : FromLocation
+Location "1" <-- "*" Road : ToLocation
+Road "1" <-- "*" TrafficFlow
+TransportRoute "1" <-- "*" RouteStop
+Location "1" <-- "*" RouteStop
+Location "1" <-- "*" TransportDemand : From
+Location "1" <-- "*" TransportDemand : To
+Road "1" <-- "0..1" RoadMaintenance
+
+@enduml
