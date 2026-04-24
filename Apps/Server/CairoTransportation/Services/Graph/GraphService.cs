@@ -49,36 +49,51 @@ public class GraphService(TransportationDbContext dbContext) : IGraphService
 
         foreach (Road? road in roads)
         {
-            var edge = new GraphEdge
-            {
-                Id = road.Id,
-                FromNodeId = road.FromLocationId,
-                ToNodeId = road.ToLocationId,
-                Distance = road.Distance,
-                Capacity = road.Capacity,
-                Condition = road.Condition,
-                IsExisting = road.IsExisting,
-                ConstructionCost = road.ConstructionCost
-            };
+            AddEdge(graph, road, maintenanceMap, road.FromLocationId, road.ToLocationId, road.Id);
 
-            if (maintenanceMap.TryGetValue(road.Id, out RoadMaintenance? maintenance))
+            if (road.IsTwoWay)
             {
-                edge.MaintenancePriority = maintenance.Priority;
-                edge.MaintenanceCost = maintenance.EstimatedCost;
+                AddEdge(graph, road, maintenanceMap, road.ToLocationId, road.FromLocationId, -road.Id);
             }
-
-            graph.Edges.Add(edge);
-            graph.EdgeIndex[edge.Id] = edge;
-
-            // Build adjacency list
-            if (!graph.AdjacencyList.ContainsKey(edge.FromNodeId))
-            {
-                graph.AdjacencyList[edge.FromNodeId] = [];
-            }
-
-            graph.AdjacencyList[edge.FromNodeId].Add(edge.Id);
         }
 
         return graph;
+    }
+
+    private static void AddEdge(
+        Graph graph,
+        Road road,
+        Dictionary<long, RoadMaintenance> maintenanceMap,
+        string fromNodeId,
+        string toNodeId,
+        long edgeId)
+    {
+        var edge = new GraphEdge
+        {
+            Id = edgeId,
+            FromNodeId = fromNodeId,
+            ToNodeId = toNodeId,
+            Distance = road.Distance,
+            Capacity = road.Capacity,
+            Condition = road.Condition,
+            IsExisting = road.IsExisting,
+            ConstructionCost = road.ConstructionCost
+        };
+
+        if (maintenanceMap.TryGetValue(road.Id, out RoadMaintenance? maintenance))
+        {
+            edge.MaintenancePriority = maintenance.Priority;
+            edge.MaintenanceCost = maintenance.EstimatedCost;
+        }
+
+        graph.Edges.Add(edge);
+        graph.EdgeIndex[edge.Id] = edge;
+
+        if (!graph.AdjacencyList.ContainsKey(edge.FromNodeId))
+        {
+            graph.AdjacencyList[edge.FromNodeId] = [];
+        }
+
+        graph.AdjacencyList[edge.FromNodeId].Add(edge.Id);
     }
 }

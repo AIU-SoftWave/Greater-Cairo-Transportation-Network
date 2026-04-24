@@ -41,7 +41,7 @@ The model classes are the C# representation of the database tables.
 
 ### Main purpose of each model
 - **Location**: neighborhoods and facilities
-- **Road**: directed road connections
+- **Road**: road connections between locations, including whether they are one-way or two-way
 - **TrafficFlow**: traffic volume by period
 - **TransportRoute**: metro and bus routes
 - **RouteStop**: ordered route stops
@@ -78,12 +78,17 @@ The SQLite schema currently contains these tables:
 - `transport_demand.to_location_id` → `locations.id`
 - `road_maintenance.road_id` → `roads.id`
 
+### Road direction behavior
+- `is_two_way = true` means the road can be traveled in both directions
+- `is_two_way = false` means the road is one-way from `from_location_id` to `to_location_id`
+- the graph service adds reverse traversal edges for two-way roads so algorithms can route both directions
+
 ### Why the schema is simple
 The schema is intentionally close to the project brief so it is easy to explain and easy to extend with new algorithm modules.
 
 ### Schema behavior for algorithms
 - `locations` are graph vertices
-- `roads` are directed weighted edges
+- `roads` are weighted edges with direction information
 - `traffic_flow` adds time-based weight changes
 - `route_stops` and `transport_routes` describe public transit paths
 - `transport_demand` measures OD pressure

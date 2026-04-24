@@ -1,5 +1,7 @@
 using CairoTransportation.Data;
 using CairoTransportation.Services;
+using CairoTransportation.Services.Algorithms.Dijkstra;
+using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
 using CairoTransportation.Services.Graph;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +19,7 @@ builder.Services.AddScoped<IRoadService, RoadService>();
 builder.Services.AddScoped<ITrafficService, TrafficService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
 builder.Services.AddScoped<IGraphService, GraphService>();
+builder.Services.AddScoped<IDijkstraService, DijkstraService>();
 
 WebApplication app = builder.Build();
 

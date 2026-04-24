@@ -25,7 +25,6 @@
     <None Update="Data\TablesData.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>
