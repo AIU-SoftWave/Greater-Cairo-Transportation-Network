@@ -23,6 +23,12 @@ Graph (nodes, edges, adjacency lists, indexes)
 Algorithm Services (extend as needed)
 ```
 
+## Road direction behavior
+
+- `is_two_way = true` means the road can be traversed in both directions
+- the graph service creates a reverse traversal edge in memory for that road
+- `is_two_way = false` means only the original `from -> to` direction is available
+
 ## Core Types
 
 ### GraphNode
@@ -49,7 +55,7 @@ Represents a road in the network:
 ```csharp
 public class GraphEdge
 {
-    public long Id { get; set; }                  // Road ID
+    public long Id { get; set; }                  // Road ID (negative id is reverse traversal copy in memory)
     public string FromNodeId { get; set; }        // Source location
     public string ToNodeId { get; set; }          // Target location
     public double Distance { get; set; }          // Primary weight (distance in km)
@@ -96,6 +102,7 @@ Task<Graph> GetGraphAsync()
 - All algorithms start here
 - Returns graph with all locations (nodes) and existing roads (edges)
 - Includes maintenance metadata for each edge
+- Expands two-way roads into both traversal directions in memory
 
 **Returns:** Complete graph ready for algorithm processing
 

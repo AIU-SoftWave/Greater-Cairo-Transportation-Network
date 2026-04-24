@@ -12,14 +12,30 @@ Shortest path algorithms help the system find the best route between two locatio
 
 ## Dijkstra
 
-Dijkstra is a standard shortest path algorithm.
+Dijkstra is the first shortest path algorithm implemented in this project.
 Use it when:
 - you want the normal best route
 - weights are non-negative
 - traffic is not strongly dynamic
 
 ### Behavior in this project
-It can treat each road as an edge with a cost based on distance and possibly other factors like condition.
+It treats each road as an edge with `distance` as the cost.
+It uses the basic graph returned by `IGraphService.GetGraphAsync()`.
+If a road is marked `is_two_way = true`, the graph service exposes both travel directions.
+
+### Current implementation
+- Service: `IDijkstraService` / `DijkstraService`
+- Endpoint: `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
+- Result: rich DTO with path nodes, path roads, total distance, and success flag
+
+### DTO shape
+- `FromNodeId`
+- `ToNodeId`
+- `Found`
+- `TotalDistance`
+- `Message`
+- `PathNodes` - detailed node objects for the route
+- `PathRoads` - detailed road objects for the route
 
 ## A*
 
@@ -47,7 +63,7 @@ That means the best route can change depending on the time of day.
 ## Service design
 
 ### Planned services
-- `DijkstraService`
+- `DijkstraService` ✅ implemented
 - `AStarService`
 - `TimeAwareRouteService`
 
@@ -62,15 +78,13 @@ That means the best route can change depending on the time of day.
 - travel-time estimate
 - explanation for emergency or traffic-aware decisions
 
-## Planned endpoints
-- `GET /api/algorithms/shortest-path?from=1&to=3`
-- `GET /api/algorithms/emergency-route?from=1&to=F9`
-- `GET /api/algorithms/time-route?from=1&to=3&period=MORNING`
+## Current endpoint
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
 
 ## Expected outputs
 - path as a list of locations or roads
 - total cost or distance
-- travel-time estimate
+- success or failure state
 - explanation for emergency or traffic-aware decisions
 
 ## Beginner summary

@@ -7,7 +7,8 @@ Controllers are the HTTP entry points of the app.
 - `RoadsController` - Road network endpoints
 - `TrafficController` - Traffic flow endpoints
 - `RoutesController` - Transit route endpoints
-- `GraphController` (NEW) - Graph data for algorithms
+- `GraphController` - Graph data for algorithms
+- `AlgorithmsController` - Algorithm endpoints such as shortest path
 
 ## What controllers should do
 
@@ -26,8 +27,13 @@ Controllers should not:
 The `GraphController` exposes the graph service endpoint:
 - `GET /api/graph` - Returns the complete transportation network graph
 
-This endpoint is the foundation for algorithm implementations.
-It provides nodes, edges, adjacency lists, and indexes in a single call.
+## AlgorithmsController
+
+The `AlgorithmsController` exposes algorithm endpoints:
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm
+
+This endpoint uses the graph service and a dedicated Dijkstra service.
+It returns a rich DTO with path nodes, path roads, total distance, and status information.
 
 ## Beginner summary
 A controller is like the front desk of the API.

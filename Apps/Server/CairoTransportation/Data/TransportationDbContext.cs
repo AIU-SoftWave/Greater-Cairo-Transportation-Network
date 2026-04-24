@@ -50,6 +50,7 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
             entity.Property(x => x.Capacity).HasColumnName("capacity");
             entity.Property(x => x.Condition).HasColumnName("condition");
             entity.Property(x => x.IsExisting).HasColumnName("is_existing");
+            entity.Property(x => x.IsTwoWay).HasColumnName("is_two_way").HasDefaultValue(true);
             entity.Property(x => x.ConstructionCost).HasColumnName("construction_cost");
 
             entity.HasOne(x => x.FromLocation)

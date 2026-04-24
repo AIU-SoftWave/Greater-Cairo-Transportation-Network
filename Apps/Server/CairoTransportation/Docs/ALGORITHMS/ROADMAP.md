@@ -12,19 +12,20 @@
 - Basic graph service (`IGraphService`, `GraphService`)
 - Graph data structures (`GraphNode`, `GraphEdge`, `Graph`)
 - Core functionality: `GetGraphAsync()` - loads all nodes and edges with adjacency lists and indexes
+- Two-way road expansion for route traversal when `is_two_way = true`
 - **Philosophy**: Start simple, extend incrementally as algorithms require new graph variants
 
-## Phase 3: Core Algorithms (NEXT) 🚀
+## Phase 3: Core Algorithms 🚀
 
-### 3.1 MST / Road Network Design
+### 3.1 Dijkstra Shortest Path ✅ DONE
+- Implemented as `IDijkstraService` / `DijkstraService`
+- Endpoint: `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
+- Uses the basic graph and edge distance as the weight
+
+### 3.2 MST / Road Network Design
 - Implement Kruskal's or Prim's algorithm
 - Use basic `GetGraphAsync()`
 - *If needed for expansion analysis: extend graph service with `GetGraphWithPlannedRoadsAsync()`*
-
-### 3.2 Dijkstra Shortest Path
-- Implement single-source shortest path
-- Use basic `GetGraphAsync()` with adjacency lists for efficient traversal
-- *If needed: extend with traffic-aware variants*
 
 ### 3.3 A* Pathfinding
 - Implement A* using node coordinates
@@ -54,6 +55,7 @@ The graph service will evolve incrementally:
 
 **Current (Phase 2):**
 - ✅ `GetGraphAsync()` - basic graph with all nodes and existing roads
+- ✅ two-way road expansion for bidirectional travel
 
 **Planned Additions (when algorithms require them):**
 - `GetGraphWithTrafficAsync(period)` - when building time-dependent routing
@@ -69,12 +71,11 @@ The graph service will evolve incrementally:
 ## Current Status
 
 **Just Completed:**
-- Graph Service provides minimal but complete foundation
-- Ready for first algorithm implementation (MST recommended)
+- Two-way road support added to the data model and graph service
 
 **Next Steps:**
-1. Build MST algorithm service → triggers Phase 3.1
-2. Build Dijkstra service → triggers Phase 3.2
+1. Build A* pathfinding service
+2. Build MST algorithm service
 3. Evaluate if traffic features needed → conditionally triggers graph service extension
 4. Continue with remaining algorithms
 

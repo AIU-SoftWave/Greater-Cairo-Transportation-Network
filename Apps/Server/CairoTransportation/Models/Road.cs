@@ -37,6 +37,10 @@ public class Road
     [Column("is_existing")]
     public bool IsExisting { get; set; }
 
+    [Required]
+    [Column("is_two_way")]
+    public bool IsTwoWay { get; set; } = true;
+
     [Column("construction_cost")]
     public double? ConstructionCost { get; set; }
 

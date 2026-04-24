@@ -22,11 +22,18 @@ Each road has:
 - capacity
 - condition
 - existing vs potential flag
+- two-way flag
 - construction cost
 
 ## Why direction matters
-Roads are stored as directed edges.
+Roads are stored with a direction in the database.
 That means `1 -> 3` is not automatically the same as `3 -> 1`.
+
+## How two-way roads work
+- `is_two_way = true` means the road can be used in both directions
+- the graph service creates a reverse traversal edge in memory for that road
+- algorithms like Dijkstra can then travel either direction without extra code
+- `is_two_way = false` means only the original direction is available
 
 ## How traffic changes graph weight
 The `traffic_flow` table gives a traffic volume per road and period.
@@ -45,6 +52,7 @@ Think of:
 - locations as points on a map
 - roads as arrows between points
 - traffic as extra weight on those arrows
+- two-way roads as arrows that can be traversed in both directions
 
 ## Related pages
 - [MST](MST.md)
