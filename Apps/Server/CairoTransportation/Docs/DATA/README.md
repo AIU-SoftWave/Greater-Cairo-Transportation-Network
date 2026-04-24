@@ -146,6 +146,9 @@ The seeder is just startup code that says:
 - if there is no data, insert the starting dataset
 - if data already exists, do nothing
 
+### Dataset size
+The seed file includes an expanded set of sample roads, nodes, transit routes, demand rows, and maintenance rows so you can test more complex pathfinding and graph scenarios.
+
 ---
 
 ## Editing guidance

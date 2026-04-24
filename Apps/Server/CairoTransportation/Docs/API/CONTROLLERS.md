@@ -8,7 +8,8 @@ Controllers are the HTTP entry points of the app.
 - `TrafficController` - inspect traffic flow by road or by time period
 - `RoutesController` - inspect public transport routes and ordered stops
 - `GraphController` - return the full graph structure used by algorithms
-- `AlgorithmsController` - route search endpoints (Dijkstra currently implemented)
+- `AlgorithmsController` - route search endpoints such as Dijkstra shortest path
+- `AStarController` - coordinate-guided route search for emergency and fast target-directed routing
 
 ## What controllers should do
 
@@ -31,15 +32,22 @@ Use it when you want the full graph structure for algorithm development or debug
 
 ## AlgorithmsController
 
-The `AlgorithmsController` currently exposes Dijkstra route search:
-- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
-- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID`
+The `AlgorithmsController` exposes algorithm endpoints:
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm
+- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID` - Alias for Dijkstra shortest path
 
 Use it when you want the best general-purpose route by distance.
 
+## AStarController
+
+The `AStarController` exposes A* route search:
+- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID` - Returns a route using A* search
+
+Use it when you want a coordinate-guided search, especially for emergency or target-focused routing.
+
 ## Standard algorithm response shape
 
-Algorithm endpoints should return the unified envelope:
+Algorithm endpoints should move to the unified envelope:
 
 ```json
 {
@@ -62,25 +70,26 @@ Algorithm endpoints should return the unified envelope:
 }
 ```
 
-### Trace semantics
+## Unified trace metrics
 
-- `visitedNodes`: count of unique discovered nodes.
-- `expandedNodes`: count of nodes dequeued and processed.
-- `executionTimeMs`: end-to-end service execution time.
+- `visitedNodes`: unique discovered nodes.
+- `expandedNodes`: nodes dequeued and processed.
+- `executionTimeMs`: end-to-end execution time in milliseconds.
 
-### Status code behavior
+### Edge-case behavior
 
-- `200 OK`: `success = true`
-- `404 Not Found`: valid request but no path / missing node
-- `400 Bad Request`: invalid query parameters
+- Invalid start or destination: failed result with zero counters.
+- Same start and destination: success with zero distance.
+- No route found: failed result with counters reflecting actual work.
 
-## Guidance for adding next algorithm controller
+## Guidance for adding the next algorithm
 
 1. Keep route under `/api/algorithms/...`.
-2. Return `AlgorithmResponseDto<TData>` envelope.
-3. Use shared trace metrics semantics.
-4. Keep algorithm-specific details inside `data` + `message`.
+2. Return standardized response shape.
+3. Use shared trace metric semantics.
+4. Keep algorithm-specific detail in `message` + `data`.
 
 ## Beginner summary
 A controller is like the front desk of the API.
 It receives the request and sends the work to the correct service.
+The A* controller is especially useful when you need a route that searches toward a target more directly.
