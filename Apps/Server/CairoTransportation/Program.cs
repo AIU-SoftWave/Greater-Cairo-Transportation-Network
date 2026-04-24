@@ -4,6 +4,8 @@ using CairoTransportation.Services.Algorithms.AStar;
 using CairoTransportation.Services.Algorithms.AStar.Contracts;
 using CairoTransportation.Services.Algorithms.Dijkstra;
 using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
+using CairoTransportation.Services.Algorithms.MaintenancePlanning;
+using CairoTransportation.Services.Algorithms.MaintenancePlanning.Contracts;
 using CairoTransportation.Services.Algorithms.Mst;
 using CairoTransportation.Services.Algorithms.Mst.Contracts;
 using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra;
@@ -29,6 +31,7 @@ builder.Services.AddScoped<IDijkstraService, DijkstraService>();
 builder.Services.AddScoped<IAStarService, AStarService>();
 builder.Services.AddScoped<IMstService, MstService>();
 builder.Services.AddScoped<ITimeVaryingDijkstraService, TimeVaryingDijkstraService>();
+builder.Services.AddScoped<IMaintenancePlanningService, MaintenancePlanningService>();
 
 WebApplication app = builder.Build();
 
