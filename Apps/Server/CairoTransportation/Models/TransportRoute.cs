@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -22,5 +23,6 @@ public class TransportRoute
     [Column("vehicles_assigned")]
     public int? VehiclesAssigned { get; set; }
 
+    [JsonIgnore]
     public ICollection<RouteStop> RouteStops { get; set; } = [];
 }

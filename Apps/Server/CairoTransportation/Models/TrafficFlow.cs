@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -24,6 +25,7 @@ public class TrafficFlow
     [Column("flow")]
     public int Flow { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(RoadId))]
     public Road? Road { get; set; }
 }

@@ -1,23 +1,38 @@
 using CairoTransportation.Data;
+using CairoTransportation.Services;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=cairo_transportation.db";
+    ?? throw new InvalidOperationException("Missing connection string 'DefaultConnection'.");
 
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 builder.Services.AddDbContext<TransportationDbContext>(options =>
     options.UseSqlite(connectionString));
+builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<IRoadService, RoadService>();
+builder.Services.AddScoped<ITrafficService, TrafficService>();
+builder.Services.AddScoped<IRouteService, RouteService>();
 
 WebApplication app = builder.Build();
 
 using IServiceScope scope = app.Services.CreateScope();
 {
     TransportationDbContext dbContext = scope.ServiceProvider.GetRequiredService<TransportationDbContext>();
-    dbContext.Database.EnsureCreated();
+    await dbContext.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(dbContext, app.Environment);
 }
 
-app.MapGet("/", () => "Hello World!");
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "CairoTransportation API v1"));
+}
+
+app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();
 

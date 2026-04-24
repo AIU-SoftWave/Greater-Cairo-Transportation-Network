@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -39,9 +40,9 @@ public class Location
     [Column("is_critical")]
     public bool IsCritical { get; set; }
 
-    public ICollection<Road> OutgoingRoads { get; set; } = [];
-    public ICollection<Road> IncomingRoads { get; set; } = [];
-    public ICollection<RouteStop> RouteStops { get; set; } = [];
-    public ICollection<TransportDemand> OriginDemands { get; set; } = [];
-    public ICollection<TransportDemand> DestinationDemands { get; set; } = [];
+    [JsonIgnore] public ICollection<Road> OutgoingRoads { get; set; } = [];
+    [JsonIgnore] public ICollection<Road> IncomingRoads { get; set; } = [];
+    [JsonIgnore] public ICollection<RouteStop> RouteStops { get; set; } = [];
+    [JsonIgnore] public ICollection<TransportDemand> OriginDemands { get; set; } = [];
+    [JsonIgnore] public ICollection<TransportDemand> DestinationDemands { get; set; } = [];
 }

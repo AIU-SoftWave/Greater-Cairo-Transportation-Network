@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -16,6 +17,7 @@ public class RoadMaintenance
     [Column("estimated_cost")]
     public double? EstimatedCost { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(RoadId))]
     public Road? Road { get; set; }
 }

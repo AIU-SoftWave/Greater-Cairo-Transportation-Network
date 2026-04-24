@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -25,9 +26,11 @@ public class TransportDemand
     [Column("daily_passengers")]
     public int DailyPassengers { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(FromLocationId))]
     public Location? FromLocation { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(ToLocationId))]
     public Location? ToLocation { get; set; }
 }

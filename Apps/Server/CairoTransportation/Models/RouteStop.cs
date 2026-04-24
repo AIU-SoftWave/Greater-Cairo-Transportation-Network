@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CairoTransportation.Models;
 
@@ -20,9 +21,11 @@ public class RouteStop
     [Column("stop_order")]
     public int StopOrder { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(RouteId))]
     public TransportRoute? Route { get; set; }
 
+    [JsonIgnore]
     [ForeignKey(nameof(LocationId))]
     public Location? Location { get; set; }
 }
