@@ -53,9 +53,6 @@ The long-term goal is to implement the algorithmic modules required by the cours
 - greedy traffic signal and emergency prioritization
 - reporting and visualization support
 
-
--hi there
-
 ## Seed Data
 
 The sample Cairo dataset is stored in:
