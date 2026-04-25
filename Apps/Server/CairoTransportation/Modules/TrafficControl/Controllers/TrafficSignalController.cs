@@ -12,7 +12,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/signal-optimization")]
-[Route("api/algorithms/traffic-signals")]
 public class TrafficSignalController(ITrafficSignalService signalService, ITrafficService trafficService) : ControllerBase
 {
     /// <summary>

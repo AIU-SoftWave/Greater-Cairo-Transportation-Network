@@ -105,6 +105,7 @@ public class TransportationDbContext(DbContextOptions<TransportationDbContext> o
             entity.Property(x => x.Type).HasColumnName("type");
             entity.Property(x => x.DailyPassengers).HasColumnName("daily_passengers");
             entity.Property(x => x.VehiclesAssigned).HasColumnName("vehicles_assigned");
+            entity.Property(x => x.CapacityPerUnit).HasColumnName("capacity_per_unit").HasDefaultValue(50);
         });
 
         modelBuilder.Entity<RouteStop>(entity =>

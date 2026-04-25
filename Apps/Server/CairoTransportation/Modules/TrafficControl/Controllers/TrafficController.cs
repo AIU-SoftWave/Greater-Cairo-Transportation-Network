@@ -9,7 +9,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/traffic-monitoring")]
-[Route("api/traffic")]
 public class TrafficController(ITrafficService trafficService) : ControllerBase
 {
     /// <summary>

@@ -2,6 +2,7 @@
 using CairoTransportation.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CairoTransportation.Migrations
 {
     [DbContext(typeof(TransportationDbContext))]
-    partial class TransportationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425110733_capacity_per_unit")]
+    partial class capacity_per_unit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -270,7 +273,7 @@ namespace CairoTransportation.Migrations
 
                     b.Property<int>("CapacityPerUnit")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("INTEGER")
                         .HasDefaultValue(50)
                         .HasColumnName("capacity_per_unit");
 

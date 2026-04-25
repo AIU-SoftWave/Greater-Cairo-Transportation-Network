@@ -22,9 +22,6 @@ namespace CairoTransportation.Migrations
             migrationBuilder.Sql("INSERT OR IGNORE INTO traffic_period_multipliers (period, multiplier) VALUES ('NIGHT', 0.90);");
         }
 
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql("DROP TABLE IF EXISTS traffic_period_multipliers;");
-        }
+        protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("DROP TABLE IF EXISTS traffic_period_multipliers;");
     }
 }

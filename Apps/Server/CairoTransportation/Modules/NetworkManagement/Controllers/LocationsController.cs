@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/city-locations")]
-[Route("api/locations")]
 public class LocationsController(ILocationService locationService) : ControllerBase
 {
     /// <summary>

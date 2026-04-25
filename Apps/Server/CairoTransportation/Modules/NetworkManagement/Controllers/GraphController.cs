@@ -9,7 +9,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/network-topology")]
-[Route("api/graph")]
 public class GraphController(IGraphService graphService) : ControllerBase
 {
     /// <summary>

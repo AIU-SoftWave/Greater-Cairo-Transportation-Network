@@ -1,0 +1,1548 @@
+{
+  "info": {
+    "_postman_id": "682aadc8-ba45-4384-9479-8c25608be1b1",
+    "name": "CairoTransportation | v1 Copy",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "/",
+      "item": [
+        {
+          "name": "/",
+          "id": "c9012253-964a-43d3-a7fb-7030cc0d9341",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "e4c8c492-0c99-467d-ab24-dd3d7829817b",
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    ""
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ],
+      "id": "dbd9a182-c32d-4f77-9e94-34ebd527884d"
+    },
+    {
+      "name": "api",
+      "item": [
+        {
+          "name": "maintenance-strategy",
+          "item": [
+            {
+              "name": "Generates an optimal maintenance plan within the given budget.",
+              "id": "48be2b2f-b441-4f85-ba28-9f64f28470a4",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/maintenance-strategy?budget=100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "maintenance-strategy"
+                  ],
+                  "query": [
+                    {
+                      "key": "budget",
+                      "value": "100",
+                      "description": "Total maintenance budget (e.g., 10000000 for 10 million).",
+                      "uuid": "2e307e9a-839f-468e-8d97-3d0c496a5749"
+                    }
+                  ]
+                },
+                "description": "Uses 0/1 Knapsack Dynamic Programming to maximize total priority score\r\nwhile staying within budget. Lower condition roads get higher urgency multipliers."
+              },
+              "response": [
+                {
+                  "id": "bc1c3fed-39d0-4cdb-beab-01f7d77e3c43",
+                  "name": "Optimized maintenance plan with selected roads and cost breakdown.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/maintenance-strategy?budget=2901382212",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "maintenance-strategy"
+                      ],
+                      "query": [
+                        {
+                          "description": "Total maintenance budget (e.g., 10000000 for 10 million).",
+                          "key": "budget",
+                          "value": "2901382212"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "3c99783c-1255-4533-8689-cf837e055162"
+        },
+        {
+          "name": "network-topology",
+          "item": [
+            {
+              "name": "Gets the complete transportation graph.",
+              "id": "bc3447d6-5b2f-46a4-bf85-beec2ef4e534",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/network-topology",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "network-topology"
+                  ]
+                },
+                "description": "Use this endpoint when you are building or testing algorithms such as\r\nDijkstra, A*, MST, or any custom graph traversal logic.\r\nIt returns the nodes, edges, adjacency list, and lookup indexes used by algorithms."
+              },
+              "response": [
+                {
+                  "id": "b06d7747-a280-466e-ad52-4e50a12ce6d3",
+                  "name": "The full graph structure for the transportation network.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/network-topology",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "network-topology"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "6d07abbe-299a-48ea-826f-1886f29fd8b3"
+        },
+        {
+          "name": "city-locations",
+          "item": [
+            {
+              "name": "{id}",
+              "item": [
+                {
+                  "name": "Gets a single location by its identifier.",
+                  "id": "0ad54a9a-77df-4c50-bbaa-00064ed27b98",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/city-locations/:id",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "city-locations",
+                        ":id"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "string",
+                          "description": "The location identifier."
+                        }
+                      ]
+                    },
+                    "description": "Use this endpoint when you need one specific node, for example before\r\ncreating a route or inspecting a place in the network."
+                  },
+                  "response": [
+                    {
+                      "id": "1462cd2f-6777-4d93-8c98-d981085ff6a0",
+                      "name": "The matching location if found; otherwise 404 Not Found.",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/city-locations/:id",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "city-locations",
+                            ":id"
+                          ],
+                          "variable": [
+                            {
+                              "key": "id",
+                              "value": "string",
+                              "description": "The location identifier."
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "53257e50-bdad-4f91-878b-eafeafc1fdd6"
+            },
+            {
+              "name": "Gets all locations in the transportation network.",
+              "id": "534a902a-b5f9-4843-8efc-fbc5b7e54ff2",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/city-locations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "city-locations"
+                  ]
+                },
+                "description": "Use this endpoint when you want to list every node in the network,\r\nsuch as for map views, dropdowns, or algorithm inputs."
+              },
+              "response": [
+                {
+                  "id": "6a580cfb-06f9-4048-a78d-3382a7d87cd1",
+                  "name": "A list of all locations.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/city-locations",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "city-locations"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "f497e2c4-ec05-430a-9d5b-b141ed3fba77"
+        },
+        {
+          "name": "road-network",
+          "item": [
+            {
+              "name": "{id}",
+              "item": [
+                {
+                  "name": "Gets a single road by its numeric identifier.",
+                  "id": "fa1e2de1-1313-4408-b71d-087ef04ba080",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/road-network/:id",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "road-network",
+                        ":id"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "0",
+                          "description": "The road identifier."
+                        }
+                      ]
+                    },
+                    "description": "Use this endpoint to inspect one road, including its distance,\r\ncapacity, condition, and whether it is two-way."
+                  },
+                  "response": [
+                    {
+                      "id": "2218c477-892f-4c6c-af89-198b6a08e81e",
+                      "name": "The matching road if found; otherwise 404 Not Found.",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/road-network/:id",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "road-network",
+                            ":id"
+                          ],
+                          "variable": [
+                            {
+                              "key": "id",
+                              "value": "0",
+                              "description": "The road identifier."
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "b1c46702-fa3d-4943-9e8c-1fdaf56d7003"
+            },
+            {
+              "name": "from",
+              "item": [
+                {
+                  "name": "{locationId}",
+                  "item": [
+                    {
+                      "name": "Gets all roads that start from a specific location.",
+                      "id": "d75ee428-5cd8-4ee5-8360-29aa2584a9dc",
+                      "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                      },
+                      "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/road-network/from/:locationId",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "road-network",
+                            "from",
+                            ":locationId"
+                          ],
+                          "variable": [
+                            {
+                              "key": "locationId",
+                              "value": "string",
+                              "description": "The source location identifier."
+                            }
+                          ]
+                        },
+                        "description": "Use this endpoint when you want to see the outgoing connections\r\nfrom one place in the network."
+                      },
+                      "response": [
+                        {
+                          "id": "3e0d9033-6a96-469e-8f84-9bbabd91b707",
+                          "name": "A list of roads starting from the specified location.",
+                          "originalRequest": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                              "raw": "{{baseUrl}}/api/road-network/from/:locationId",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "road-network",
+                                "from",
+                                ":locationId"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "locationId",
+                                  "value": "string",
+                                  "description": "The source location identifier."
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ],
+                  "id": "64c06007-f8a2-4fe9-b3fb-f8ac17795246"
+                }
+              ],
+              "id": "9704b185-9191-40e4-b684-3c0690ad708d"
+            },
+            {
+              "name": "{roadId}",
+              "item": [
+                {
+                  "name": "maintenance",
+                  "item": [
+                    {
+                      "name": "Gets maintenance information for a specific road.",
+                      "id": "b503ff94-bd0d-40b4-a2d9-4e5c44ac3a97",
+                      "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                      },
+                      "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/road-network/:roadId/maintenance",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "road-network",
+                            ":roadId",
+                            "maintenance"
+                          ],
+                          "variable": [
+                            {
+                              "key": "roadId",
+                              "value": "1547",
+                              "description": "The road identifier."
+                            }
+                          ]
+                        },
+                        "description": "Use this endpoint when you need to review repair priority or estimated cost,\r\nsuch as for maintenance planning or optimization."
+                      },
+                      "response": [
+                        {
+                          "id": "ba5875ca-cb19-47ff-b05d-10c2ad1f8356",
+                          "name": "The maintenance record if found; otherwise 404 Not Found.",
+                          "originalRequest": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                              "raw": "{{baseUrl}}/api/road-network/:roadId/maintenance",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "road-network",
+                                ":roadId",
+                                "maintenance"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "roadId",
+                                  "value": "1547",
+                                  "description": "The road identifier."
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ],
+                  "id": "017c13a8-3f97-49c6-996f-0b43168237af"
+                }
+              ],
+              "id": "ed98e80e-0975-496e-8759-deb1097e45b0"
+            },
+            {
+              "name": "Gets all roads in the network.",
+              "id": "d3777c8e-1765-471a-bfdd-68f7544b0999",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/road-network",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "road-network"
+                  ]
+                },
+                "description": "Use this endpoint when you need the full edge list for analysis,\r\nreporting, or graph construction."
+              },
+              "response": [
+                {
+                  "id": "1ba20992-ebee-4a1b-9cd0-d2c158635abc",
+                  "name": "A list of all roads.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/road-network",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "road-network"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "0e950031-ebc6-4970-a9a0-5fdb8016cac7"
+        },
+        {
+          "name": "route-planning",
+          "item": [
+            {
+              "name": "shortest-path",
+              "item": [
+                {
+                  "name": "Finds the shortest path between two nodes using Dijkstra's algorithm.",
+                  "id": "e5f25483-ad83-430c-93a0-afebd2d22abb",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/route-planning/shortest-path?from=1&to=18",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "route-planning",
+                        "shortest-path"
+                      ],
+                      "query": [
+                        {
+                          "key": "from",
+                          "value": "1",
+                          "description": "The starting node identifier.",
+                          "uuid": "b739863c-4420-46a6-8608-5ee5428872a8"
+                        },
+                        {
+                          "key": "to",
+                          "value": "18",
+                          "description": "The destination node identifier.",
+                          "uuid": "273a1269-e081-405b-9f67-3c848a173512"
+                        }
+                      ]
+                    },
+                    "description": "Use this endpoint when you want the best general-purpose route between two places.\r\nIt is appropriate for normal route planning when you want the cheapest path by distance."
+                  },
+                  "response": [
+                    {
+                      "id": "42482812-6331-4a3b-926e-b45aa958a2d5",
+                      "name": "A rich route result containing the path, road list, total distance, and status.",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/route-planning/shortest-path?from=string&to=string",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "route-planning",
+                            "shortest-path"
+                          ],
+                          "query": [
+                            {
+                              "description": "The starting node identifier.",
+                              "key": "from",
+                              "value": "string"
+                            },
+                            {
+                              "description": "The destination node identifier.",
+                              "key": "to",
+                              "value": "string"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "de5a42ba-0825-4023-a5f9-938648b0e8a0"
+            },
+            {
+              "name": "time-route",
+              "item": [
+                {
+                  "name": "Finds a shortest path using Dijkstra with period-based traffic multipliers.",
+                  "id": "8fafc98a-7273-4451-8465-5f79ad7e549b",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/route-planning/time-route?from=1&to=19&period=MORNING",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "route-planning",
+                        "time-route"
+                      ],
+                      "query": [
+                        {
+                          "key": "from",
+                          "value": "1",
+                          "description": "The starting node identifier.",
+                          "uuid": "e96beaa7-b46f-4387-b402-616192d62a42"
+                        },
+                        {
+                          "key": "to",
+                          "value": "19",
+                          "description": "The destination node identifier.",
+                          "uuid": "fa554f23-e22d-4daf-b949-bd67d235edd9"
+                        },
+                        {
+                          "key": "period",
+                          "value": "MORNING",
+                          "description": "Traffic period configured in database multipliers table.",
+                          "uuid": "001eebf2-4160-43c3-a75d-9007d8e81065"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "id": "fdf496c0-7341-43d0-83fb-c8df6dd1b055",
+                      "name": "A traffic-aware shortest path result with standardized trace metrics.",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/route-planning/time-route?from=string&to=string&period=string",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "route-planning",
+                            "time-route"
+                          ],
+                          "query": [
+                            {
+                              "description": "The starting node identifier.",
+                              "key": "from",
+                              "value": "string"
+                            },
+                            {
+                              "description": "The destination node identifier.",
+                              "key": "to",
+                              "value": "string"
+                            },
+                            {
+                              "description": "Traffic period configured in database multipliers table.",
+                              "key": "period",
+                              "value": "string"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "5e1a10e7-ddd2-4bda-989c-e4e15ba6a3ce"
+            }
+          ],
+          "id": "51716e85-6945-41df-905c-2cf2e0fe6d30"
+        },
+        {
+          "name": "emergency-routing",
+          "item": [
+            {
+              "name": "Finds the shortest path using A* search.",
+              "id": "dbfd8424-3103-4ab2-bff7-4947897cf472",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/emergency-routing?from=1&to=18",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "emergency-routing"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "1",
+                      "description": "The starting node identifier.",
+                      "uuid": "c868bf10-603f-494b-9e54-4801edf855d3"
+                    },
+                    {
+                      "key": "to",
+                      "value": "18",
+                      "description": "The destination node identifier.",
+                      "uuid": "a4d71e03-e43b-4875-8c5a-81e09c73f782"
+                    }
+                  ]
+                },
+                "description": "Use this endpoint when you want a route search that is more target-directed than Dijkstra.\r\nIt is especially useful for emergency routing, fast target-focused search, and map-based navigation,\r\nbecause it uses node coordinates to guide the search toward the destination."
+              },
+              "response": [
+                {
+                  "id": "70e3d850-7018-4208-9aa4-565981a8b81b",
+                  "name": "A rich route result containing the path, road list, total distance, and status.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/emergency-routing?from=string&to=string",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "emergency-routing"
+                      ],
+                      "query": [
+                        {
+                          "description": "The starting node identifier.",
+                          "key": "from",
+                          "value": "string"
+                        },
+                        {
+                          "description": "The destination node identifier.",
+                          "key": "to",
+                          "value": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "e9204b13-fdc2-4391-a291-7d316b65fe67"
+        },
+        {
+          "name": "network-expansion",
+          "item": [
+            {
+              "name": "/api/network-expansion",
+              "id": "ceae9347-9f75-454e-ba98-c0f04890c997",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/network-expansion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "network-expansion"
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "id": "c67e3af5-8075-4b34-820a-e4311c5e5123",
+                  "name": "OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/network-expansion",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "network-expansion"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "21b0ef37-2e75-4aa8-8477-49e8b870af64"
+        },
+        {
+          "name": "route-catalog",
+          "item": [
+            {
+              "name": "{id}",
+              "item": [
+                {
+                  "name": "stops",
+                  "item": [
+                    {
+                      "name": "Gets the ordered stops for a specific route.",
+                      "id": "f713a80b-016a-4cb5-8ddd-acbf38cc5465",
+                      "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                      },
+                      "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/route-catalog/:id/stops",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "route-catalog",
+                            ":id",
+                            "stops"
+                          ],
+                          "variable": [
+                            {
+                              "key": "id",
+                              "value": "string",
+                              "description": "The route identifier."
+                            }
+                          ]
+                        },
+                        "description": "Use this endpoint when you need the stop sequence for scheduling,\r\ntransfer analysis, or route visualization."
+                      },
+                      "response": [
+                        {
+                          "id": "d99b30e7-2e79-4fae-82c6-8c9ab1f5dd0b",
+                          "name": "The list of stops for the route.",
+                          "originalRequest": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                              "raw": "{{baseUrl}}/api/route-catalog/:id/stops",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "route-catalog",
+                                ":id",
+                                "stops"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "id",
+                                  "value": "string",
+                                  "description": "The route identifier."
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ],
+                  "id": "eb4a503f-9fb1-495a-8984-c725be5d5eb6"
+                },
+                {
+                  "name": "Gets a single route by its identifier.",
+                  "id": "5c7a1e70-f70d-483c-9c36-ce8844734ffb",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/route-catalog/:id",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "route-catalog",
+                        ":id"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "string",
+                          "description": "The route identifier."
+                        }
+                      ]
+                    },
+                    "description": "Use this endpoint when you want to inspect one route before showing\r\nits stops or using it in transit analysis."
+                  },
+                  "response": [
+                    {
+                      "id": "19cfe35d-76fd-49c9-982a-9102fe68e919",
+                      "name": "The matching route if found; otherwise 404 Not Found.",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/route-catalog/:id",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "route-catalog",
+                            ":id"
+                          ],
+                          "variable": [
+                            {
+                              "key": "id",
+                              "value": "string",
+                              "description": "The route identifier."
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "db6f62e3-9aaa-416a-a04b-2b42dfae8c73"
+            },
+            {
+              "name": "Gets all transit routes.",
+              "id": "b9fa7953-51ff-4418-8866-e02b058e9fa0",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/route-catalog",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "route-catalog"
+                  ]
+                },
+                "description": "Use this endpoint when you want to browse all metro and bus routes\r\nin the current transport network."
+              },
+              "response": [
+                {
+                  "id": "b1bb8ac3-47b4-483a-ac58-0c7dd8a12223",
+                  "name": "A list of all transport routes.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/route-catalog",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "route-catalog"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "586dbacb-4818-4b09-8484-e7c809bbc93e"
+        },
+        {
+          "name": "traffic-monitoring",
+          "item": [
+            {
+              "name": "road",
+              "item": [
+                {
+                  "name": "{roadId}",
+                  "item": [
+                    {
+                      "name": "Gets all traffic flow records for a specific road.",
+                      "id": "972c70f1-573a-466b-aa94-1adab23beb1a",
+                      "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                      },
+                      "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/traffic-monitoring/road/:roadId",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "traffic-monitoring",
+                            "road",
+                            ":roadId"
+                          ],
+                          "variable": [
+                            {
+                              "key": "roadId",
+                              "value": "1547",
+                              "description": "The road identifier."
+                            }
+                          ]
+                        },
+                        "description": "Use this endpoint when you want to see traffic samples for one road,\r\nfor example while building traffic-aware route calculations."
+                      },
+                      "response": [
+                        {
+                          "id": "681111d4-8686-45d4-b861-6081dc7c13d0",
+                          "name": "A list of traffic flow entries for the road.",
+                          "originalRequest": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                              "raw": "{{baseUrl}}/api/traffic-monitoring/road/:roadId",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "traffic-monitoring",
+                                "road",
+                                ":roadId"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "roadId",
+                                  "value": "1547",
+                                  "description": "The road identifier."
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ],
+                  "id": "e664a932-c5df-4ee2-8ac0-f83c86448265"
+                }
+              ],
+              "id": "6b4c8cb6-6ee1-4786-8bf2-af0cc69ef67f"
+            },
+            {
+              "name": "period",
+              "item": [
+                {
+                  "name": "{period}",
+                  "item": [
+                    {
+                      "name": "Gets all traffic flow records for a specific time period.",
+                      "id": "7bacdd44-7a34-4e78-959e-c7aaf0d51bb0",
+                      "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                      },
+                      "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/traffic-monitoring/period/:period",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "traffic-monitoring",
+                            "period",
+                            ":period"
+                          ],
+                          "variable": [
+                            {
+                              "key": "period",
+                              "value": "string",
+                              "description": "The traffic period name."
+                            }
+                          ]
+                        },
+                        "description": "Use this endpoint when you need traffic information for a time slot\r\nsuch as morning or evening for congestion-aware routing."
+                      },
+                      "response": [
+                        {
+                          "id": "10751698-c09e-4c2f-ac50-7397413b5b02",
+                          "name": "A list of traffic flow entries for the period.",
+                          "originalRequest": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                              "raw": "{{baseUrl}}/api/traffic-monitoring/period/:period",
+                              "host": [
+                                "{{baseUrl}}"
+                              ],
+                              "path": [
+                                "api",
+                                "traffic-monitoring",
+                                "period",
+                                ":period"
+                              ],
+                              "variable": [
+                                {
+                                  "key": "period",
+                                  "value": "string",
+                                  "description": "The traffic period name."
+                                }
+                              ]
+                            }
+                          },
+                          "status": "OK",
+                          "code": 200,
+                          "_postman_previewlanguage": "text",
+                          "header": [],
+                          "cookie": [],
+                          "body": ""
+                        }
+                      ]
+                    }
+                  ],
+                  "id": "e9de0519-cb3d-43b9-ae5d-afd0f9d5ee84"
+                }
+              ],
+              "id": "64d9b52b-603e-42d0-8db8-0dde0b1e2d7d"
+            }
+          ],
+          "id": "61a62b38-399d-4943-af01-c4934cfdb99b"
+        },
+        {
+          "name": "traffic-policy",
+          "item": [
+            {
+              "name": "{period}",
+              "item": [
+                {
+                  "name": "Returns one traffic period multiplier by period key.",
+                  "id": "a44c5b4d-1c4a-4f3d-92c2-f000abb9ca9c",
+                  "protocolProfileBehavior": {
+                    "disableBodyPruning": true
+                  },
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/traffic-policy/:period",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "traffic-policy",
+                        ":period"
+                      ],
+                      "variable": [
+                        {
+                          "key": "period",
+                          "value": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "id": "64f6452f-81c4-4ee5-b370-3e39d455d96d",
+                      "name": "OK",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                          "raw": "{{baseUrl}}/api/traffic-policy/:period",
+                          "host": [
+                            "{{baseUrl}}"
+                          ],
+                          "path": [
+                            "api",
+                            "traffic-policy",
+                            ":period"
+                          ],
+                          "variable": [
+                            {
+                              "key": "period",
+                              "value": "string"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "text",
+                      "header": [],
+                      "cookie": [],
+                      "body": ""
+                    }
+                  ]
+                }
+              ],
+              "id": "4248e88a-dcf3-4223-8f71-ec15f20edaba"
+            },
+            {
+              "name": "Returns all configured traffic period multipliers.",
+              "id": "141e521d-4faa-4c86-a639-eb4783698fcc",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/traffic-policy",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "traffic-policy"
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "id": "9c256ccb-5279-4ba5-ae6f-a65f431e1c68",
+                  "name": "OK",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/traffic-policy",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "traffic-policy"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "f91e1a0b-61ff-492d-8812-44195953834a"
+        },
+        {
+          "name": "signal-optimization",
+          "item": [
+            {
+              "name": "Generates optimal traffic signal timing for congested roads.",
+              "id": "3b207ed1-0396-499e-acf7-073600f9662f",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/signal-optimization?period=MORNING&topN=10&analyzeAllIntersections=false",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "signal-optimization"
+                  ],
+                  "query": [
+                    {
+                      "description": "Time period configured in traffic_period_multipliers.",
+                      "key": "period",
+                      "value": "MORNING"
+                    },
+                    {
+                      "description": "Number of highest-congestion roads to optimize (1-50, default 10)",
+                      "key": "topN",
+                      "value": "10"
+                    },
+                    {
+                      "description": "When true, analyzes all intersections and ignores topN",
+                      "key": "analyzeAllIntersections",
+                      "value": "false"
+                    }
+                  ]
+                },
+                "description": "Uses Greedy algorithm to prioritize roads with highest congestion ratio.\r\nHigher congestion = longer green light duration."
+              },
+              "response": [
+                {
+                  "id": "f3852f7b-a138-4972-9322-c1bdd95bd1cd",
+                  "name": "Signal timing recommendations ordered by priority.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/signal-optimization?period=MORNING&topN=10&analyzeAllIntersections=false",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "signal-optimization"
+                      ],
+                      "query": [
+                        {
+                          "description": "Time period configured in traffic_period_multipliers.",
+                          "key": "period",
+                          "value": "MORNING"
+                        },
+                        {
+                          "description": "Number of highest-congestion roads to optimize (1-50, default 10)",
+                          "key": "topN",
+                          "value": "10"
+                        },
+                        {
+                          "description": "When true, analyzes all intersections and ignores topN",
+                          "key": "analyzeAllIntersections",
+                          "value": "false"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "a5cdaf8b-da92-4821-9d2c-3a1edbf9e3f1"
+        },
+        {
+          "name": "transit-operations",
+          "item": [
+            {
+              "name": "Generates an optimal vehicle allocation schedule across transit routes.",
+              "id": "e51f874b-40f5-42c2-924c-a4c441af002a",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/transit-operations?vehicles=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "transit-operations"
+                  ],
+                  "query": [
+                    {
+                      "key": "vehicles",
+                      "value": "10",
+                      "description": "Total number of vehicles in the fleet (e.g., 50).",
+                      "uuid": "297f5591-be23-4eab-a54b-c3e5ab979e01"
+                    }
+                  ]
+                },
+                "description": "Uses Resource Allocation DP to distribute vehicles across routes\r\nto maximize total passenger demand coverage."
+              },
+              "response": [
+                {
+                  "id": "b6b7a01e-4173-44a8-bb30-b5f3c1bf27ba",
+                  "name": "Optimized schedule with route allocations and frequency estimates.",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/transit-operations?vehicles=0",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "transit-operations"
+                      ],
+                      "query": [
+                        {
+                          "description": "Total number of vehicles in the fleet (e.g., 50).",
+                          "key": "vehicles",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "text",
+                  "header": [],
+                  "cookie": [],
+                  "body": ""
+                }
+              ]
+            }
+          ],
+          "id": "24b453a5-6894-4945-acbd-6ba8156f0ed7"
+        }
+      ],
+      "id": "6a6eff64-9305-4480-b38b-f8bd3c6e7028"
+    }
+  ],
+  "variable": [
+    {
+      "id": "0d86a7a3-a352-4e0b-a451-94063612d550",
+      "key": "baseUrl",
+      "value": "http://localhost:5208"
+    }
+  ]
+}

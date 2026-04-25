@@ -9,7 +9,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/traffic-policy")]
-[Route("api/traffic/period-multipliers")]
 public class TrafficPeriodMultipliersController(ITrafficService trafficService) : ControllerBase
 {
     /// <summary>

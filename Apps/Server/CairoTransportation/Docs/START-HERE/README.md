@@ -18,17 +18,15 @@ It stores transportation data for Greater Cairo and prepares the foundation for 
 ## Main parts of the app
 
 - `Program.cs` – app startup and dependency setup
-- `Controllers/` – HTTP endpoints
-- `Services/` – query logic
-- `Models/` – database entities
+- `Modules/` – business modules (Routing, TrafficControl, NetworkManagement, TransitScheduling, MaintenancePlanning)
+- `Utils/` – shared helpers and extensions
+- `Common/` – shared contracts, validators, and common abstractions
 - `Data/` – DbContext, seeding, migrations
 
 ## Reading order
-1. [ASP.NET Core Basics](../ASP-NET-CORE/README.md)
-2. [Data Layer](../DATA/README.md)
-3. [API Layer](../API/README.md)
-4. [Algorithms](../ALGORITHMS/README.md)
-5. [Development Guide](../DEV/README.md)
+1. [Core Docs](../CORE/README.md)
+2. [Modules Documentation](../MODULES/README.md)
+3. [Diagrams](../DIAGRAMS/README.md)
 
 ## Beginner summary
 
