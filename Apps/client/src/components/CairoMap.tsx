@@ -52,13 +52,13 @@ export default function CairoMap() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {edges.map((road, index) => {
+      {edges.map((road) => {
         const from = nodeIndex[road.fromNodeId];
         const to = nodeIndex[road.toNodeId];
         if (!from || !to) return null;
         return (
           <Polyline
-            key={`road-${road.fromNodeId}-${road.toNodeId}-${index}`}
+            key={`road-${road.fromNodeId}-${road.toNodeId}`}
             positions={[
               [from.y, from.x],
               [to.y, to.x],
