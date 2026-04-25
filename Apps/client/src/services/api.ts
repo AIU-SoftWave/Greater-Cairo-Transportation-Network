@@ -5,7 +5,7 @@ export async function apiFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
+    const res = await fetch(`${BASE_URL}/api/${endpoint}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -15,6 +15,7 @@ export async function apiFetch<T>(
 
     if (!res.ok) {
       const text = await res.text();
+      
       throw new Error(`API Error ${res.status}: ${text}`);
     }
 
