@@ -9,6 +9,7 @@ This project is a beginner-friendly ASP.NET Core + EF Core application for the G
 - [Start Here](START-HERE/README.md)
 - [Modules](MODULES/README.md)
 - [Core Docs](CORE/README.md)
+- [Plans](Plans/README.md)
 - [Diagrams](DIAGRAMS/README.md)
 
 ## What this project currently includes
