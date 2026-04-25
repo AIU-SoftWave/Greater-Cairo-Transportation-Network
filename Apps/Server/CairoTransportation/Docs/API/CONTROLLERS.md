@@ -8,7 +8,7 @@ Controllers are the HTTP entry points of the app.
 - `TrafficController` - inspect traffic flow by road or by time period
 - `RoutesController` - inspect public transport routes and ordered stops
 - `GraphController` - return the full graph structure used by algorithms
-- `AlgorithmsController` - route search endpoints such as Dijkstra shortest path
+- `AlgorithmsController` - route search endpoints (Dijkstra + Time-Varying Dijkstra)
 - `AStarController` - coordinate-guided route search for emergency and fast target-directed routing
 
 ## What controllers should do
@@ -33,10 +33,13 @@ Use it when you want the full graph structure for algorithm development or debug
 ## AlgorithmsController
 
 The `AlgorithmsController` exposes algorithm endpoints:
-- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm
-- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID` - Alias for Dijkstra shortest path
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Dijkstra shortest path
+- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID` - Dijkstra alias
+- `GET /api/algorithms/time-route?from=NODE_ID&to=NODE_ID&period=MORNING` - Time-Varying Dijkstra shortest path
+- `GET /api/algorithms/time-varying-dijkstra/shortest-path?from=NODE_ID&to=NODE_ID&period=EVENING` - Time-Varying Dijkstra alias
 
-Use it when you want the best general-purpose route by distance.
+Use Dijkstra for baseline distance optimization.
+Use Time-Varying Dijkstra when the requested period should influence route cost through traffic multipliers.
 
 ## AStarController
 
@@ -47,7 +50,7 @@ Use it when you want a coordinate-guided search, especially for emergency or tar
 
 ## Standard algorithm response shape
 
-Algorithm endpoints should move to the unified envelope:
+Algorithm endpoints should return the unified envelope:
 
 ```json
 {
@@ -78,7 +81,7 @@ Algorithm endpoints should move to the unified envelope:
 
 ### Edge-case behavior
 
-- Invalid start or destination: failed result with zero counters.
+- Invalid start or destination: failed result with zero/low counters.
 - Same start and destination: success with zero distance.
 - No route found: failed result with counters reflecting actual work.
 

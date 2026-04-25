@@ -1,6 +1,7 @@
 # Implementation Roadmap
 
 ## Phase 1: Data and API foundation ✅ DONE
+
 - models
 - DbContext
 - migrations
@@ -9,6 +10,7 @@
 - Swagger
 
 ## Phase 2: Graph foundation ✅ DONE
+
 - Basic graph service (`IGraphService`, `GraphService`)
 - Graph data structures (`GraphNode`, `GraphEdge`, `Graph`)
 - Core functionality: `GetGraphAsync()` - loads all nodes and edges with adjacency lists and indexes
@@ -18,31 +20,38 @@
 ## Phase 3: Core Algorithms 🚀
 
 ### 3.1 Dijkstra Shortest Path ✅ DONE
+
 - Implemented as `IDijkstraService` / `DijkstraService`
 - Endpoint: `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID`
 - Uses the basic graph and edge distance as the weight
 
-### 3.2 A* Pathfinding ✅ DONE
+### 3.2 A\* Pathfinding
+
 - Implemented as `IAStarService` / `AStarService`
 - Endpoint: `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID`
 - Uses the basic graph and coordinate heuristic
 
 ### 3.3 MST / Road Network Design
-- Implement Kruskal's or Prim's algorithm
-- Use basic `GetGraphAsync()`
-- *If needed for expansion analysis: extend graph service with `GetGraphWithPlannedRoadsAsync()`*
+
+- Implemented Prim's algorithm as `MstService`
+- Extended `GetGraphAsync(includePotentialRoads: true)` to include planned roads
+- Endpoint: `GET /api/algorithms/mst`
 
 ### 3.4 Time-Dependent Routing
-- Extend graph service with `GetGraphWithTrafficAsync(period)` when needed
-- Incorporate traffic flow into path cost
-- *Triggered only when implementing time-aware algorithms*
 
-## Phase 4: Advanced Algorithms
-- **Dynamic Programming** - transit scheduling
-- **Greedy Methods** - maintenance prioritization
-- New graph service methods added as needed
+- Implemented as `TimeVaryingDijkstraService`
+- Uses `ITrafficService` for period multipliers and traffic flow
+- Endpoint: `GET /api/algorithms/time-route`
+
+## Phase 4: Advanced Algorithms ✅ DONE
+
+- **Dynamic Programming** - Maintenance planning (0/1 Knapsack) ✅ DONE
+- **Dynamic Programming** - Transit scheduling (Resource Allocation DP) ✅ DONE
+- **Greedy Methods** - Traffic signal optimization ✅ DONE
+- **Greedy Methods** - Emergency priority routing (planned)
 
 ## Phase 5: Reporting and Demo
+
 - Result DTOs for algorithm outputs
 - Demo scenarios
 - Performance measurements
@@ -54,10 +63,12 @@
 The graph service will evolve incrementally:
 
 **Current (Phase 2):**
+
 - ✅ `GetGraphAsync()` - basic graph with all nodes and existing roads
 - ✅ two-way road expansion for bidirectional travel
 
 **Planned Additions (when algorithms require them):**
+
 - `GetGraphWithTrafficAsync(period)` - when building time-dependent routing
 - `GetGraphWithPlannedRoadsAsync()` - when building MST expansion analysis
 - `GetCriticalSubgraphAsync()` - when building critical infrastructure analysis
@@ -71,17 +82,32 @@ The graph service will evolve incrementally:
 ## Current Status
 
 **Just Completed:**
-- A* pathfinding service and endpoint
+
+- Traffic Signal Service with Greedy algorithm
+- Endpoint: `GET /api/algorithms/traffic-signals?period=MORNING`
+- Prioritizes congested roads for immediate signal timing relief
+
+**Implemented So Far:**
+
+1. ✅ Dijkstra - shortest path by distance
+2. ✅ A\* - heuristic-guided pathfinding
+3. ✅ MST (Prim's) - cheapest network design
+4. ✅ Time-Varying Dijkstra - traffic-aware routing
+5. ✅ Maintenance Planning (0/1 Knapsack) - budget optimization
+6. ✅ Transit Scheduling (Resource Allocation DP) - vehicle/fleet optimization
+7. ✅ Traffic Signal (Greedy) - congestion-based signal timing
 
 **Next Steps:**
-1. Build MST algorithm service
-2. Evaluate if traffic features needed → conditionally triggers graph service extension
-3. Continue with remaining algorithms
+
+1. Emergency Priority Service (Greedy) - emergency vehicle priority routing
+2. Phase 5: Reporting and Demo - result visualization and benchmarks
 
 ---
 
 ## Editing note
+
 This roadmap reflects the incremental approach:
+
 - Simple and complete in each phase
 - Algorithms drive feature additions to graph service
 - No speculative features added upfront- No speculative features added upfront

@@ -32,8 +32,11 @@ These pages explain how the current data can support those algorithms.
 ## Implementation status
 
 - ✅ Dijkstra shortest path is implemented.
-- 🔄 A* shortest path is planned/refactoring target in this branch.
-- ⏳ MST, time-dependent routing, DP, and greedy modules are pending.
+- ✅ A* shortest path is implemented.
+- ✅ Time-Varying Dijkstra is implemented.
+- ⏳ MST is pending.
+- ⏳ Dynamic Programming modules are pending.
+- ⏳ Greedy control modules are pending.
 
 ---
 
@@ -58,7 +61,7 @@ To prepare for multiple algorithms, shared contracts are now the default directi
   - `ShortestPathNodeDto`
   - `ShortestPathRoadDto`
 
-This prevents DTO duplication when adding MST, A*, time-dependent, DP, and greedy features.
+This prevents DTO duplication when adding MST, DP, and greedy features.
 
 ---
 
@@ -74,9 +77,48 @@ Algorithm services should use centralized instrumentation (`AlgorithmExecutionMe
 
 ### Edge-case conventions
 
-- invalid input or missing node: `success = false`, counters typically remain zero
-- same start and destination: `success = true`, zero distance, one discovered and expanded node
+- invalid input or missing node: `success = false`
+- same start and destination: `success = true`, zero distance
 - no route: `success = false`, counters reflect work done until termination
+
+---
+
+## Model-to-algorithm implementation matrix
+
+This matrix shows what is implemented based on the current backend models.
+
+| Model / Data Source | Current usage | Status |
+|---|---|---|
+| `locations` | Node data for Dijkstra, A*, Time-Varying Dijkstra | ✅ Implemented |
+| `roads` | Edge data for Dijkstra, A*, Time-Varying Dijkstra | ✅ Implemented |
+| `traffic_flow` | Period traffic intensity in Time-Varying Dijkstra | ✅ Implemented |
+| `traffic_period_multipliers` | DB-driven period validation and base multiplier selection | ✅ Implemented |
+| `road_maintenance` | Loaded in graph metadata, not yet optimized | 🟡 Partial |
+| `transport_routes` | Exposed via API, no optimization yet | ⏳ Not implemented |
+| `route_stops` | Exposed via API, no optimization yet | ⏳ Not implemented |
+| `transport_demand` | Exposed via API, no optimization yet | ⏳ Not implemented |
+
+### Not implemented yet (algorithmic modules)
+
+1. **MST / Infrastructure Optimization**
+   - target models: `roads`, `locations`
+   - planned endpoint: `GET /api/algorithms/mst`
+
+2. **DP Maintenance Planning**
+   - target models: `road_maintenance`, `roads.condition`
+   - planned endpoint: `GET /api/algorithms/maintenance-plan?budget=...`
+
+3. **DP Transit Scheduling**
+   - target models: `transport_routes`, `route_stops`, `transport_demand`
+   - planned endpoint: `GET /api/algorithms/transit-schedule`
+
+4. **Greedy Traffic Signal Optimization**
+   - target models: `traffic_flow`, `roads`
+   - planned endpoint: `GET /api/algorithms/traffic-signals?period=...`
+
+5. **Greedy Emergency Priority Handling**
+   - target models: `locations` (critical flags), `roads`, `traffic_flow`
+   - planned endpoint: `GET /api/algorithms/emergency-priority?from=...&to=...`
 
 ---
 
@@ -89,9 +131,8 @@ Algorithm services should use centralized instrumentation (`AlgorithmExecutionMe
 - `isExisting` and `constructionCost` help compare built vs. possible roads
 
 ### Time-based behavior
-- `traffic_flow` changes the cost of a road depending on period
-- morning and evening traffic should increase weight
-- night or off-peak periods should reduce weight
+- `traffic_flow` changes congestion by period
+- `traffic_period_multipliers` defines period-level base impact from DB
 
 ### Transit behavior
 - `transport_routes` describe metro and bus networks
@@ -104,37 +145,9 @@ Algorithm services should use centralized instrumentation (`AlgorithmExecutionMe
 
 ---
 
-## Algorithm services and future endpoints
+## Algorithm services and current endpoints
 
-This section explains what each algorithm service should do and what endpoint it should expose when implemented.
-
-### 1. MST / Road Network Design
-
-#### Planned service
-`MstService` or `GraphMstService`
-
-#### What it should do
-- build a low-cost network using locations and roads
-- prefer existing roads when possible
-- consider population and critical facilities as priority signals
-- return selected roads, total cost, and connectivity explanation
-
-#### Planned endpoint
-- `GET /api/algorithms/mst`
-
-#### Expected response
-- selected road list
-- total network cost
-- connected locations
-- notes about critical coverage
-
-#### Data used
-- `locations`
-- `roads`
-
----
-
-### 2. Shortest Path / Dijkstra
+### 1. Shortest Path / Dijkstra
 
 #### Current service
 `DijkstraService`
@@ -143,105 +156,35 @@ This section explains what each algorithm service should do and what endpoint it
 - `GET /api/algorithms/shortest-path?from=1&to=3`
 - `GET /api/algorithms/dijkstra/shortest-path?from=1&to=3`
 
-#### Current response shape
-- wrapped inside `AlgorithmResponseDto<ShortestPathResultDto>`
-
-#### Data used
-- `roads`
-- `locations`
+#### Response shape
+- `AlgorithmResponseDto<ShortestPathResultDto>`
 
 ---
 
-### 3. Emergency Routing / A*
+### 2. Emergency Routing / A*
 
-#### Planned service
-`EmergencyRoutingService` or `AStarService`
+#### Current service
+`AStarService`
 
-#### What it should do
-- find a fast path to a critical facility
-- prefer routes that reduce estimated response time
-- use a heuristic such as geographic distance
-- account for road quality and traffic if needed
-
-#### Planned endpoint
+#### Current endpoint
 - `GET /api/algorithms/a-star?from=1&to=F9`
 
-#### Expected response
-- `AlgorithmResponseDto<ShortestPathResultDto>` envelope
-- emergency path and explanation in `data/message`
-
-#### Data used
-- `locations`
-- `roads`
-- `traffic_flow`
-- critical flags on locations
+#### Response shape
+- `AlgorithmResponseDto<ShortestPathResultDto>`
 
 ---
 
-### 4. Time-Dependent Shortest Path
+### 3. Time-Varying Dijkstra
 
-#### Planned service
-`TimeAwareRouteService`
+#### Current service
+`TimeVaryingDijkstraService`
 
-#### What it should do
-- adjust edge costs by traffic period
-- find routes that are best for morning, evening, or night
-- show how congestion changes the answer
-
-#### Planned endpoint
+#### Current endpoint
 - `GET /api/algorithms/time-route?from=1&to=3&period=MORNING`
+- `GET /api/algorithms/time-varying-dijkstra/shortest-path?from=1&to=3&period=EVENING`
 
-#### Expected response
-- same standard algorithm envelope with time-adjusted route result payload
-
-#### Data used
-- `roads`
-- `traffic_flow`
-
----
-
-### 5. Dynamic Programming for Transit Scheduling
-
-#### Planned service
-`TransitSchedulingService`
-
-#### What it should do
-- allocate metro or bus service based on demand
-- balance vehicle availability, passenger demand, and route coverage
-- return an optimized schedule or allocation plan
-
-#### Planned endpoint
-- `GET /api/algorithms/transit-schedule`
-
----
-
-### 6. Dynamic Programming for Maintenance Planning
-
-#### Planned service
-`MaintenancePlanningService`
-
-#### Planned endpoint
-- `GET /api/algorithms/maintenance-plan?budget=1000`
-
----
-
-### 7. Greedy Traffic Signal Optimization
-
-#### Planned service
-`TrafficSignalService`
-
-#### Planned endpoint
-- `GET /api/algorithms/traffic-signals?period=MORNING`
-
----
-
-### 8. Greedy Emergency Priority Handling
-
-#### Planned service
-`EmergencyPriorityService`
-
-#### Planned endpoint
-- `GET /api/algorithms/emergency-priority?from=1&to=F10`
+#### Response shape
+- `AlgorithmResponseDto<ShortestPathResultDto>`
 
 ---
 

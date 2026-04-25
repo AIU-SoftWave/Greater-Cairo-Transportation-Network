@@ -13,6 +13,8 @@
 ## Traffic
 - `GET /api/traffic/road/{roadId}`
 - `GET /api/traffic/period/{period}`
+- `GET /api/traffic/period-multipliers`
+- `GET /api/traffic/period-multipliers/{period}`
 
 ## Routes
 - `GET /api/routes`
@@ -23,16 +25,41 @@
 - `GET /api/graph` - Returns complete transportation network graph (nodes, edges, adjacency lists, indexes)
 
 ## Algorithms
-- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns the shortest path using Dijkstra's algorithm and a rich DTO
-- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID` - Returns the shortest path using A* search and a rich DTO
+- `GET /api/algorithms/shortest-path?from=NODE_ID&to=NODE_ID` - Returns shortest path using Dijkstra
+- `GET /api/algorithms/dijkstra/shortest-path?from=NODE_ID&to=NODE_ID` - Alias for Dijkstra endpoint
+- `GET /api/algorithms/a-star?from=NODE_ID&to=NODE_ID` - Returns shortest path using A*
+- `GET /api/algorithms/time-route?from=NODE_ID&to=NODE_ID&period=MORNING` - Returns traffic-aware shortest path using Time-Varying Dijkstra
+- `GET /api/algorithms/time-varying-dijkstra/shortest-path?from=NODE_ID&to=NODE_ID&period=EVENING` - Alias for Time-Varying Dijkstra endpoint
 
-## Response conventions
-- `200 OK` when data is found
-- `404 Not Found` when a single entity does not exist
+## Algorithm response conventions
+Algorithms should return the standardized envelope:
+
+```json
+{
+  "algorithmName": "Time-Varying Dijkstra",
+  "success": true,
+  "message": "Traffic-aware shortest path found for period 'MORNING' using time-varying Dijkstra.",
+  "trace": {
+    "visitedNodes": 12,
+    "expandedNodes": 9,
+    "executionTimeMs": 2
+  },
+  "data": {
+    "fromNodeId": "1",
+    "toNodeId": "13",
+    "found": true,
+    "totalDistance": 78.5,
+    "pathNodes": [],
+    "pathRoads": []
+  }
+}
+```
+
+## HTTP status conventions
+- `200 OK` when algorithm execution succeeds
+- `404 Not Found` when request is valid but no path can be found / nodes missing
 - `400 Bad Request` when required query parameters are missing
-- JSON output by default
 
 ## Notes
-The endpoints are intentionally simple so they can later be reused by the algorithm modules.
-The `/api/graph` endpoint provides the foundation for algorithm implementations by returning the complete network structure.
-The shortest-path endpoints use the basic graph service and route-search algorithms.
+The endpoints are intentionally simple so they can be reused by algorithm modules.
+`/api/graph` provides the shared graph structure consumed by routing services.

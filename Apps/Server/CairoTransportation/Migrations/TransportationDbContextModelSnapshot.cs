@@ -198,9 +198,32 @@ namespace CairoTransportation.Migrations
                     b.HasIndex("RoadId")
                         .HasDatabaseName("idx_traffic_road");
 
+                    b.HasIndex("RoadId", "Period")
+                        .IsUnique()
+                        .HasDatabaseName("uq_traffic_road_period");
+
                     b.ToTable("traffic_flow", null, t =>
                         {
                             t.HasCheckConstraint("chk_flow", "flow >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CairoTransportation.Models.TrafficPeriodMultiplier", b =>
+                {
+                    b.Property<string>("Period")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("period");
+
+                    b.Property<double>("Multiplier")
+                        .HasColumnType("REAL")
+                        .HasColumnName("multiplier");
+
+                    b.HasKey("Period");
+
+                    b.ToTable("traffic_period_multipliers", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_multiplier_positive", "multiplier > 0");
                         });
                 });
 
@@ -319,12 +342,21 @@ namespace CairoTransportation.Migrations
 
             modelBuilder.Entity("CairoTransportation.Models.TrafficFlow", b =>
                 {
+                    b.HasOne("CairoTransportation.Models.TrafficPeriodMultiplier", "PeriodMultiplier")
+                        .WithMany("TrafficFlows")
+                        .HasForeignKey("Period")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_traffic_period_multiplier");
+
                     b.HasOne("CairoTransportation.Models.Road", "Road")
                         .WithMany("TrafficFlows")
                         .HasForeignKey("RoadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_traffic_road");
+
+                    b.Navigation("PeriodMultiplier");
 
                     b.Navigation("Road");
                 });
@@ -367,6 +399,11 @@ namespace CairoTransportation.Migrations
                 {
                     b.Navigation("Maintenance");
 
+                    b.Navigation("TrafficFlows");
+                });
+
+            modelBuilder.Entity("CairoTransportation.Models.TrafficPeriodMultiplier", b =>
+                {
                     b.Navigation("TrafficFlows");
                 });
 

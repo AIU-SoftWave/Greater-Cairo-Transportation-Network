@@ -1,28 +1,14 @@
 using CairoTransportation.Data;
-using CairoTransportation.Services;
-using CairoTransportation.Services.Algorithms.AStar;
-using CairoTransportation.Services.Algorithms.AStar.Contracts;
-using CairoTransportation.Services.Algorithms.Dijkstra;
-using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Utils.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Missing connection string 'DefaultConnection'.");
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<TransportationDbContext>(options =>
-    options.UseSqlite(connectionString));
-builder.Services.AddScoped<ILocationService, LocationService>();
-builder.Services.AddScoped<IRoadService, RoadService>();
-builder.Services.AddScoped<ITrafficService, TrafficService>();
-builder.Services.AddScoped<IRouteService, RouteService>();
-builder.Services.AddScoped<IGraphService, GraphService>();
-builder.Services.AddScoped<IDijkstraService, DijkstraService>();
-builder.Services.AddScoped<IAStarService, AStarService>();
+builder.Services
+    .AddProjectInfrastructure(builder.Configuration)
+    .AddProjectApplicationServices();
 
 WebApplication app = builder.Build();
 
@@ -33,14 +19,7 @@ using IServiceScope scope = app.Services.CreateScope();
     await DatabaseSeeder.SeedAsync(dbContext, app.Environment);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "CairoTransportation API v1"));
-}
-
-app.MapControllers();
-app.MapGet("/", () => Results.Redirect("/swagger"));
+app.UseProjectPipeline();
 
 app.Run();
 
