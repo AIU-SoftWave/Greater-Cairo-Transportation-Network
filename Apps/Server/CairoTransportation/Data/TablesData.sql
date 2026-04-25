@@ -426,7 +426,13 @@ VALUES
     ('F11', '3', 2.8, 2200, 7, 1, 1, NULL),
     ('F11', '2', 4.6, 2000, 7, 1, 1, NULL),
     ('F12', '20', 3.5, 1800, 8, 1, 1, NULL),
-    ('F12', '17', 6.1, 1900, 7, 1, 1, NULL);
+    ('F12', '17', 6.1, 1900, 7, 1, 1, NULL),
+    -- Connect isolated facility nodes for MST connectivity
+    ('F3', '10', 1.5, 2000, 8, 1, 1, NULL),
+    ('F4', '3', 2.1, 2000, 7, 1, 1, NULL),
+    ('F5', '3', 1.8, 1800, 8, 1, 1, NULL),
+    ('F6', '2', 2.3, 2200, 7, 1, 1, NULL),
+    ('F10', '1', 1.2, 1500, 8, 1, 1, NULL);
 
 -- =========================
 -- ROADS (POTENTIAL)
@@ -583,16 +589,22 @@ WHERE
 -- TRANSPORT ROUTES
 -- =========================
 INSERT INTO
-    transport_routes (id, type, daily_passengers, vehicles_assigned)
+    transport_routes (
+        id,
+        type,
+        daily_passengers,
+        vehicles_assigned,
+        capacity_per_unit
+    )
 VALUES
-    ('M1', 'METRO', 1500000, NULL),
-    ('M2', 'METRO', 1200000, NULL),
-    ('M3', 'METRO', 800000, NULL),
-    ('B1', 'BUS', 35000, 25),
-    ('B2', 'BUS', 42000, 30),
-    ('M4', 'METRO', 900000, NULL),
-    ('B3', 'BUS', 51000, 34),
-    ('B4', 'BUS', 38000, 22);
+    ('M1', 'METRO', 1500000, NULL, 50),
+    ('M2', 'METRO', 1200000, NULL, 50),
+    ('M3', 'METRO', 800000, NULL, 50),
+    ('B1', 'BUS', 35000, 25, 50),
+    ('B2', 'BUS', 42000, 30, 50),
+    ('M4', 'METRO', 900000, NULL, 50),
+    ('B3', 'BUS', 51000, 34, 50),
+    ('B4', 'BUS', 38000, 22, 50);
 
 -- =========================
 -- ROUTE STOPS (SAMPLE)
