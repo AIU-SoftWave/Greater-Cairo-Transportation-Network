@@ -33,3 +33,4 @@ public class TrafficFlow
     [ForeignKey(nameof(Period))]
     public TrafficPeriodMultiplier PeriodMultiplier { get; set; } = null!;
 }
+

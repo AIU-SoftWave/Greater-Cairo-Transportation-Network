@@ -68,3 +68,4 @@ public class GraphEdge
     /// </summary>
     public double? MaintenanceCost { get; set; }
 }
+

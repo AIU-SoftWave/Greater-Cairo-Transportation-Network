@@ -7,3 +7,4 @@ public interface IMaintenancePlanningService
 {
     Task<AlgorithmResponseDto<MaintenancePlanningResultDto>> GenerateMaintenancePlanAsync(double budget);
 }
+

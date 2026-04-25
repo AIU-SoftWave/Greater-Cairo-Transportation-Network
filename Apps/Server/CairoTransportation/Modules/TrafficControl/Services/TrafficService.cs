@@ -32,3 +32,4 @@ public class TrafficService(TransportationDbContext dbContext) : ITrafficService
     public Task<List<TrafficPeriodMultiplier>> GetPeriodMultipliersAsync() =>
         dbContext.TrafficPeriodMultipliers.AsNoTracking().OrderBy(x => x.Period).ToListAsync();
 }
+

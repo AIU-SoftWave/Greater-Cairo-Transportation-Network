@@ -10,3 +10,4 @@ public class ShortestPathNodeDto
     public int? Population { get; set; }
     public bool IsCritical { get; set; }
 }
+

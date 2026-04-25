@@ -11,3 +11,4 @@ public class ShortestPathRoadDto
     public bool IsExisting { get; set; }
     public double? ConstructionCost { get; set; }
 }
+

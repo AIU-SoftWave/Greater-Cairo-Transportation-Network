@@ -49,3 +49,4 @@ public class Graph
     /// </summary>
     public int EdgeCount => Edges.Count;
 }
+

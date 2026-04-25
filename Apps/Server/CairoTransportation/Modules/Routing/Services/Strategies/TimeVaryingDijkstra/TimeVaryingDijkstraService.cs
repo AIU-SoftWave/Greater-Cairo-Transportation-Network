@@ -250,3 +250,4 @@ public class TimeVaryingDijkstraService(IGraphService graphService, ITrafficServ
         ConstructionCost = edge.ConstructionCost
     };
 }
+

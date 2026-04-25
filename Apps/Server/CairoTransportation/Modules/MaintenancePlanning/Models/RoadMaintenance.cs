@@ -21,3 +21,4 @@ public class RoadMaintenance
     [ForeignKey(nameof(RoadId))]
     public Road? Road { get; set; }
 }
+

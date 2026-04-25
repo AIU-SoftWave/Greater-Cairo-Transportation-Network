@@ -11,6 +11,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you need shortest-path calculations.
 /// </summary>
 [ApiController]
+[Route("api/route-planning")]
 [Route("api/algorithms")]
 public class AlgorithmsController(
     IDijkstraService dijkstraService,
@@ -99,3 +100,4 @@ public class AlgorithmsController(
         return result.Success ? Ok(result) : NotFound(result);
     }
 }
+

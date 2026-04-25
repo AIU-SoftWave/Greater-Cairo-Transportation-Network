@@ -9,6 +9,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you need to inspect or query the network edges.
 /// </summary>
 [ApiController]
+[Route("api/road-network")]
 [Route("api/roads")]
 public class RoadsController(IRoadService roadService) : ControllerBase
 {
@@ -67,3 +68,4 @@ public class RoadsController(IRoadService roadService) : ControllerBase
         return maintenance is null ? NotFound() : Ok(maintenance);
     }
 }
+

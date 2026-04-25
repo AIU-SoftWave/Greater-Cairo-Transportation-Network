@@ -9,6 +9,7 @@ namespace CairoTransportation.Controllers;
 /// Provides transit vehicle scheduling optimization using Dynamic Programming (Resource Allocation).
 /// </summary>
 [ApiController]
+[Route("api/transit-operations")]
 [Route("api/algorithms/transit-schedule")]
 public class TransitSchedulingController(ITransitSchedulingService schedulingService) : ControllerBase
 {
@@ -75,3 +76,4 @@ public class TransitSchedulingController(ITransitSchedulingService schedulingSer
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }
+

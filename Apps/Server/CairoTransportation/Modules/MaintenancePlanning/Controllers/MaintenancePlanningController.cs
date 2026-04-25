@@ -9,6 +9,7 @@ namespace CairoTransportation.Controllers;
 /// Provides maintenance planning optimization using Dynamic Programming (0/1 Knapsack).
 /// </summary>
 [ApiController]
+[Route("api/maintenance-strategy")]
 [Route("api/algorithms/maintenance-plan")]
 public class MaintenancePlanningController(IMaintenancePlanningService maintenanceService) : ControllerBase
 {
@@ -98,3 +99,4 @@ public class MaintenancePlanningController(IMaintenancePlanningService maintenan
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }
+

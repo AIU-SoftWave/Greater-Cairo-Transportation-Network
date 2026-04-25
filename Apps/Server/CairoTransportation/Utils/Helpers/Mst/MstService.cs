@@ -198,3 +198,4 @@ public class MstService(IGraphService graphService) : IMstService
         ConstructionCost = edge.ConstructionCost
     };
 }
+

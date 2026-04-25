@@ -216,3 +216,4 @@ public class AStarService(IGraphService graphService) : IAStarService
         ConstructionCost = edge.ConstructionCost
     };
 }
+

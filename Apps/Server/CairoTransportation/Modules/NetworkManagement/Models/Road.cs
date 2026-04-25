@@ -55,3 +55,4 @@ public class Road
     [JsonIgnore] public ICollection<TrafficFlow> TrafficFlows { get; set; } = [];
     [JsonIgnore] public RoadMaintenance? Maintenance { get; set; }
 }
+

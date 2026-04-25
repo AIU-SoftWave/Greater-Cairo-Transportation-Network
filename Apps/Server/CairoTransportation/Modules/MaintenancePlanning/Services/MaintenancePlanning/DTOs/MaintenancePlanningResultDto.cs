@@ -26,3 +26,4 @@ public class MaintenanceRoadDto
     public double? ExpectedNewCondition { get; set; }
     public string Reason { get; set; } = string.Empty;
 }
+

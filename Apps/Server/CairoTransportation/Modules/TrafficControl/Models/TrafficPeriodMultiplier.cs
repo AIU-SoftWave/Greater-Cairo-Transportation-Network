@@ -19,3 +19,4 @@ public class TrafficPeriodMultiplier
     [JsonIgnore]
     public ICollection<TrafficFlow> TrafficFlows { get; set; } = [];
 }
+

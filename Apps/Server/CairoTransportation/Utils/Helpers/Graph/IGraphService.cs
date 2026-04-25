@@ -16,3 +16,4 @@ public interface IGraphService
     /// <returns>Complete graph ready for algorithm processing.</returns>
     Task<Graph> GetGraphAsync(bool includePotentialRoads = false);
 }
+

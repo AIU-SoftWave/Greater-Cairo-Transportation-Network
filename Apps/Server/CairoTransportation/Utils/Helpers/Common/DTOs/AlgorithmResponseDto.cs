@@ -8,3 +8,4 @@ public class AlgorithmResponseDto<TData>
     public AlgorithmTraceDto Trace { get; set; } = new();
     public TData? Data { get; set; }
 }
+

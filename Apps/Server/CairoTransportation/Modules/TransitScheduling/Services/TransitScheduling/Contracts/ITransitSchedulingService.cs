@@ -15,3 +15,4 @@ public interface ITransitSchedulingService
     /// <returns>Optimized allocation plan with route frequencies and demand coverage</returns>
     Task<AlgorithmResponseDto<TransitSchedulingResultDto>> GenerateScheduleAsync(int totalVehicles);
 }
+

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CairoTransportation.Controllers;
 
 [ApiController]
+[Route("api/network-expansion")]
 [Route("api/algorithms/mst")]
 public class MstController(IMstService mstService) : ControllerBase
 {
@@ -16,3 +17,4 @@ public class MstController(IMstService mstService) : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 }
+

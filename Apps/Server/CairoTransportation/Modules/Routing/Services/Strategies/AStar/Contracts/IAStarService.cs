@@ -6,3 +6,4 @@ public interface IAStarService
 {
     Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId);
 }
+

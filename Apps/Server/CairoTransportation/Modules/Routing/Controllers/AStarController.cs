@@ -9,6 +9,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you want a route search guided by coordinates.
 /// </summary>
 [ApiController]
+[Route("api/emergency-routing")]
 [Route("api/algorithms/a-star")]
 public class AStarController(IAStarService aStarService) : ControllerBase
 {
@@ -46,3 +47,4 @@ public class AStarController(IAStarService aStarService) : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 }
+

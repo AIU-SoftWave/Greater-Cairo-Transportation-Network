@@ -46,3 +46,4 @@ public class Location
     [JsonIgnore] public ICollection<TransportDemand> OriginDemands { get; set; } = [];
     [JsonIgnore] public ICollection<TransportDemand> DestinationDemands { get; set; } = [];
 }
+

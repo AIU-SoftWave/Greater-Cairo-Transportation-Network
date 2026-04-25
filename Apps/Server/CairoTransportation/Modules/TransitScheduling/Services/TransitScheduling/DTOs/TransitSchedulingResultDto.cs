@@ -68,3 +68,4 @@ public class RouteAllocationDto
     /// <summary>Explanation for the allocation decision.</summary>
     public string Reason { get; set; } = string.Empty;
 }
+

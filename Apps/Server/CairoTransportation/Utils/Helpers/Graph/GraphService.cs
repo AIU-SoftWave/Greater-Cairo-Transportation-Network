@@ -100,3 +100,4 @@ public class GraphService(TransportationDbContext dbContext) : IGraphService
         graph.AdjacencyList[edge.FromNodeId].Add(edge.Id);
     }
 }
+

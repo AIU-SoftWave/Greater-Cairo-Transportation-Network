@@ -29,3 +29,4 @@ public class RouteStop
     [ForeignKey(nameof(LocationId))]
     public Location? Location { get; set; }
 }
+

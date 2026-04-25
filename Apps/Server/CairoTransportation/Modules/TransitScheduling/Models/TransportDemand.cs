@@ -34,3 +34,4 @@ public class TransportDemand
     [ForeignKey(nameof(ToLocationId))]
     public Location? ToLocation { get; set; }
 }
+

@@ -65,3 +65,4 @@ public class SignalTimingDto
     /// <summary>Reason for this signal timing recommendation.</summary>
     public string Reason { get; set; } = string.Empty;
 }
+

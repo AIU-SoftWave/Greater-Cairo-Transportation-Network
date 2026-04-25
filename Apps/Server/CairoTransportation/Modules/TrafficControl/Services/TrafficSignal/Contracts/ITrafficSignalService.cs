@@ -21,3 +21,4 @@ public interface ITrafficSignalService
         int topN,
         bool analyzeAllIntersections = false);
 }
+

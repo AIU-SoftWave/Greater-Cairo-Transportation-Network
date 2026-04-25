@@ -8,6 +8,7 @@ namespace CairoTransportation.Controllers;
 /// Provides read access to configured traffic period multipliers used by time-varying routing.
 /// </summary>
 [ApiController]
+[Route("api/traffic-policy")]
 [Route("api/traffic/period-multipliers")]
 public class TrafficPeriodMultipliersController(ITrafficService trafficService) : ControllerBase
 {
@@ -33,3 +34,4 @@ public class TrafficPeriodMultipliersController(ITrafficService trafficService) 
         return result is null ? NotFound($"Period '{period}' was not found.") : Ok(result);
     }
 }
+

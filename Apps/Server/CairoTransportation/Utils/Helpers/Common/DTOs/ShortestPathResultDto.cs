@@ -9,3 +9,4 @@ public class ShortestPathResultDto
     public List<ShortestPathNodeDto> PathNodes { get; set; } = [];
     public List<ShortestPathRoadDto> PathRoads { get; set; } = [];
 }
+

@@ -16,3 +16,4 @@ public class LocationService(TransportationDbContext dbContext) : ILocationServi
 
     public Task<Location?> GetByIdAsync(string id) => dbContext.Locations.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
 }
+

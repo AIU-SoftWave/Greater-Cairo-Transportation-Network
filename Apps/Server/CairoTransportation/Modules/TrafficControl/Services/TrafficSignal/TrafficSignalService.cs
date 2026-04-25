@@ -245,3 +245,4 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
             Data = new TrafficSignalResultDto { Period = period }
         };
 }
+

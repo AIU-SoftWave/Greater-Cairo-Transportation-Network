@@ -9,6 +9,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you need to browse the transportation network nodes.
 /// </summary>
 [ApiController]
+[Route("api/city-locations")]
 [Route("api/locations")]
 public class LocationsController(ILocationService locationService) : ControllerBase
 {
@@ -39,3 +40,4 @@ public class LocationsController(ILocationService locationService) : ControllerB
         return location is null ? NotFound() : Ok(location);
     }
 }
+

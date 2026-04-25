@@ -11,6 +11,7 @@ namespace CairoTransportation.Controllers;
 /// Prioritizes directions with highest congestion for immediate relief.
 /// </summary>
 [ApiController]
+[Route("api/signal-optimization")]
 [Route("api/algorithms/traffic-signals")]
 public class TrafficSignalController(ITrafficSignalService signalService, ITrafficService trafficService) : ControllerBase
 {
@@ -89,3 +90,4 @@ public class TrafficSignalController(ITrafficSignalService signalService, ITraff
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }
+

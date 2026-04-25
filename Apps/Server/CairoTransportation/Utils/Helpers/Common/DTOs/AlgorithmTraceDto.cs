@@ -6,3 +6,4 @@ public class AlgorithmTraceDto
     public int ExpandedNodes { get; set; }
     public long ExecutionTimeMs { get; set; }
 }
+

@@ -24,3 +24,4 @@ public class RoadService(TransportationDbContext dbContext) : IRoadService
     public Task<RoadMaintenance?> GetMaintenanceByRoadIdAsync(long roadId) =>
         dbContext.RoadMaintenances.AsNoTracking().FirstOrDefaultAsync(x => x.RoadId == roadId);
 }
+

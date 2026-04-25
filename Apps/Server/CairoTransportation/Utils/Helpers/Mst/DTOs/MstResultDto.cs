@@ -11,3 +11,4 @@ public class MstResultDto
     public List<ShortestPathNodeDto> Nodes { get; set; } = [];
     public List<ShortestPathRoadDto> SelectedRoads { get; set; } = [];
 }
+

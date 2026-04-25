@@ -6,3 +6,4 @@ public interface IDijkstraService
 {
     Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId);
 }
+

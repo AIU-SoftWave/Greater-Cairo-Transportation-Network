@@ -199,3 +199,4 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
         ConstructionCost = edge.ConstructionCost
     };
 }
+

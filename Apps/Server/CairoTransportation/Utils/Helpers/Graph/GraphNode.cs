@@ -42,3 +42,4 @@ public class GraphNode
     /// </summary>
     public bool IsCritical { get; set; }
 }
+

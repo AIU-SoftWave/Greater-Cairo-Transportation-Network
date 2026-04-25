@@ -8,6 +8,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you need congestion information for routing.
 /// </summary>
 [ApiController]
+[Route("api/traffic-monitoring")]
 [Route("api/traffic")]
 public class TrafficController(ITrafficService trafficService) : ControllerBase
 {
@@ -49,3 +50,4 @@ public class TrafficController(ITrafficService trafficService) : ControllerBase
         return Ok(await trafficService.GetByPeriodAsync(normalizedPeriod));
     }
 }
+

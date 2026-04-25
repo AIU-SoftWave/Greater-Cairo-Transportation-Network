@@ -26,3 +26,4 @@ public class TransportRoute
     [JsonIgnore]
     public ICollection<RouteStop> RouteStops { get; set; } = [];
 }
+

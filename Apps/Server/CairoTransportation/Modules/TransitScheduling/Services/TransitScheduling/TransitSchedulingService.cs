@@ -228,3 +228,4 @@ public class TransitSchedulingService(TransportationDbContext dbContext) : ITran
             Data = new TransitSchedulingResultDto { TotalVehicles = totalVehicles }
         };
 }
+

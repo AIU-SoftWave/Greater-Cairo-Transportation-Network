@@ -8,6 +8,7 @@ namespace CairoTransportation.Controllers;
 /// Use this controller when you need the full node-edge structure.
 /// </summary>
 [ApiController]
+[Route("api/network-topology")]
 [Route("api/graph")]
 public class GraphController(IGraphService graphService) : ControllerBase
 {
@@ -23,3 +24,4 @@ public class GraphController(IGraphService graphService) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetGraph() => Ok(await graphService.GetGraphAsync());
 }
+
