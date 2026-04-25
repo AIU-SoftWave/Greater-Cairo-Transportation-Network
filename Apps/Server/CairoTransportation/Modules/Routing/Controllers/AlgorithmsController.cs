@@ -12,7 +12,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/route-planning")]
-[Route("api/algorithms")]
 public class AlgorithmsController(
     IDijkstraService dijkstraService,
     ITimeVaryingDijkstraService timeVaryingDijkstraService,
@@ -29,7 +28,6 @@ public class AlgorithmsController(
     /// <param name="to">The destination node identifier.</param>
     /// <returns>A rich route result containing the path, road list, total distance, and status.</returns>
     [HttpGet("shortest-path")]
-    [HttpGet("dijkstra/shortest-path")]
     public async Task<IActionResult> GetShortestPath([FromQuery] string from, [FromQuery] string to)
     {
         if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
@@ -60,7 +58,6 @@ public class AlgorithmsController(
     /// <param name="period">Traffic period configured in database multipliers table.</param>
     /// <returns>A traffic-aware shortest path result with standardized trace metrics.</returns>
     [HttpGet("time-route")]
-    [HttpGet("time-varying-dijkstra/shortest-path")]
     public async Task<IActionResult> GetTimeVaryingShortestPath([FromQuery] string from, [FromQuery] string to, [FromQuery] string period)
     {
         if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to) || string.IsNullOrWhiteSpace(period))

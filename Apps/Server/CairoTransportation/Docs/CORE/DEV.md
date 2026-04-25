@@ -1,6 +1,6 @@
 # Development Guide
 
-This folder explains how to work on the project as a developer.
+This page explains how to work on the project as a developer.
 
 ## What is here
 - setup instructions
@@ -13,12 +13,6 @@ This folder explains how to work on the project as a developer.
 3. Run the app.
 4. Check Swagger.
 5. Verify the response shape.
-
-## Beginner advice
-Make one small change at a time.
-That makes the project easier to understand and debug.
-
----
 
 ## Setup
 
@@ -41,8 +35,6 @@ On startup the app will:
 ### Useful URLs
 - `http://localhost:5208/swagger`
 - `https://localhost:7167/swagger`
-
----
 
 ## Libraries used
 
@@ -75,8 +67,6 @@ Used for:
 - JSON serialization
 - returning API responses
 
----
-
 ## Contribution notes
 
 ### General rules
@@ -96,8 +86,4 @@ Used for:
 - place it in a dedicated folder
 - keep the service focused on one responsibility
 - add a controller endpoint if the result should be testable
-- document the algorithm in `Docs/ALGORITHMS/`
-
-### Editing note
-Use the docs folders as a map.
-Add new markdown files instead of making one huge document
+- document the algorithm in `Docs/MODULES/`

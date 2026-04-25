@@ -7,12 +7,8 @@ This project is a beginner-friendly ASP.NET Core + EF Core application for the G
 ## Quick links
 
 - [Start Here](START-HERE/README.md)
-- [ASP.NET Core Basics](ASP-NET-CORE/README.md)
-- [Data Layer](DATA/README.md)
-- [API Layer](API/README.md)
-- [Algorithms](ALGORITHMS/README.md)
-- [Development Guide](DEV/README.md)
-- [Project Goals](PROJECT/README.md)
+- [Modules](MODULES/README.md)
+- [Core Docs](CORE/README.md)
 - [Diagrams](DIAGRAMS/README.md)
 
 ## What this project currently includes
@@ -23,26 +19,20 @@ This project is a beginner-friendly ASP.NET Core + EF Core application for the G
 - one-time seeding from `Data/TablesData.sql`
 - Swagger/OpenAPI in development
 - clean JSON entity responses
+- business-first module routes (legacy aliases removed)
 
 ## What still needs to be built
 
-- MST / road network optimization
-- shortest path algorithms
-- emergency routing
-- time-dependent routing
-- dynamic programming optimization
-- greedy traffic control
+- cross-module test coverage and validation suites
+- tighter namespace/module alignment
+- complete DTO + mapper consolidation into module folders
 - visual demo outputs
 
 ## Folder map
 
+- `MODULES/` – module-by-module documentation (source of truth)
+- `CORE/` – shared framework, data, development, and project docs
 - `START-HERE/` – quick beginner orientation
-- `ASP-NET-CORE/` – how the web framework works here
-- `DATA/` – models, schema, EF Core, and seeding
-- `API/` – controllers, endpoints, Swagger, and response shape
-- `ALGORITHMS/` – algorithm goals, behavior, and roadmap
-- `DEV/` – setup, libraries, and contribution notes
-- `PROJECT/` – status, goals, and remaining work
 - `DIAGRAMS/` – PlantUML diagrams and PNG exports
 
 ## Editing strategy

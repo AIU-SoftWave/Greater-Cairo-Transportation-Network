@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/road-network")]
-[Route("api/roads")]
 public class RoadsController(IRoadService roadService) : ControllerBase
 {
     /// <summary>

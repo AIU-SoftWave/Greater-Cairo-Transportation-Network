@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/emergency-routing")]
-[Route("api/algorithms/a-star")]
 public class AStarController(IAStarService aStarService) : ControllerBase
 {
     /// <summary>

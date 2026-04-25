@@ -22,16 +22,6 @@ It wires up:
 - seeding
 - Swagger/OpenAPI
 
-### Controllers
-Controllers define the public API.
-They are thin classes that only handle HTTP concerns.
-
-Current controllers:
-- `LocationsController`
-- `RoadsController`
-- `TrafficController`
-- `RoutesController`
-
 ### Dependency injection
 ASP.NET Core creates and injects services for you.
 In this project, controllers receive service classes through constructor injection.
@@ -51,7 +41,7 @@ Here it is mainly used to:
 Middleware is the pipeline that processes requests before they reach controllers.
 
 ### Routing
-Routing matches URLs like `/api/roads/{id}` to the correct controller action.
+Routing matches URLs like `/api/road-network/{id}` to the correct controller action.
 
 ### Action results
 Controller methods return `IActionResult` so they can send:
@@ -65,9 +55,3 @@ Think of ASP.NET Core as the outer shell of the app:
 - it receives the request
 - it passes work to the service layer
 - it returns the response to the client
-
-## More reading
-- [Start Here](../START-HERE/README.md)
-- [API Layer](../API/README.md)
-- [Data Layer](../DATA/README.md)
-- [Diagrams](../DIAGRAMS/README.md)

@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/route-catalog")]
-[Route("api/routes")]
 public class RoutesController(IRouteService routeService) : ControllerBase
 {
     /// <summary>

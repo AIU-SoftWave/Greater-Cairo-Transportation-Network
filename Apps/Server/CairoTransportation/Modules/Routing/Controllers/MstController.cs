@@ -7,7 +7,6 @@ namespace CairoTransportation.Controllers;
 
 [ApiController]
 [Route("api/network-expansion")]
-[Route("api/algorithms/mst")]
 public class MstController(IMstService mstService) : ControllerBase
 {
     [HttpGet]

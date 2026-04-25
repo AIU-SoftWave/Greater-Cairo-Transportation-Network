@@ -1,6 +1,6 @@
 # Data Layer
 
-This folder explains the data layer in the project.
+This page explains the data layer in the project.
 
 ## What the data layer does
 
@@ -16,9 +16,6 @@ The data layer is responsible for:
 - [Database schema](#database-schema)
 - [EF Core and migrations](#ef-core-and-migrations)
 - [Seeding](#seeding)
-- [Diagrams](../DIAGRAMS/README.md)
-
----
 
 ## Models
 
@@ -44,18 +41,9 @@ The model classes are the C# representation of the database tables.
 - **Road**: road connections between locations, including whether they are one-way or two-way
 - **TrafficFlow**: traffic volume by period
 - **TransportRoute**: metro and bus routes
-- **RouteStop**: ordered route stops
+- **RouteStop**: ordered stops
 - **TransportDemand**: origin-destination demand
 - **RoadMaintenance**: maintenance priority and cost
-
-### How models relate to algorithms
-- `Location` and `Road` form the graph used by MST and shortest path algorithms
-- `TrafficFlow` changes edge cost over time
-- `TransportRoute` and `RouteStop` support transit scheduling
-- `TransportDemand` helps measure load and allocation pressure
-- `RoadMaintenance` supports repair prioritization
-
----
 
 ## Database schema
 
@@ -86,16 +74,6 @@ The SQLite schema currently contains these tables:
 ### Why the schema is simple
 The schema is intentionally close to the project brief so it is easy to explain and easy to extend with new algorithm modules.
 
-### Schema behavior for algorithms
-- `locations` are graph vertices
-- `roads` are weighted edges with direction information
-- `traffic_flow` adds time-based weight changes
-- `route_stops` and `transport_routes` describe public transit paths
-- `transport_demand` measures OD pressure
-- `road_maintenance` supports road repair prioritization
-
----
-
 ## EF Core and migrations
 
 Entity Framework Core is the ORM used by the project.
@@ -114,12 +92,6 @@ It exposes the entity sets and configures relationships.
 ### Why migrations are used
 Migrations are the safe way to evolve the schema over time.
 They are better than recreating the whole database every time the model changes.
-
-### Beginner explanation
-Think of EF Core as the bridge between C# objects and database tables.
-The models describe the shape of the data, and the DbContext tells EF Core how everything connects.
-
----
 
 ## Seeding
 
@@ -140,22 +112,3 @@ If it is empty, the seed SQL is executed once.
 
 ### Why seeding is separate
 This keeps the startup process simple and makes the data easy to edit later.
-
-### Beginner explanation
-The seeder is just startup code that says:
-- if there is no data, insert the starting dataset
-- if data already exists, do nothing
-
-### Dataset size
-The seed file includes an expanded set of sample roads, nodes, transit routes, demand rows, and maintenance rows so you can test more complex pathfinding and graph scenarios.
-
----
-
-## Editing guidance
-
-If you change anything in the data layer:
-- update the model
-- update the DbContext mapping if needed
-- create a migration
-- update seed data if the sample dataset changes
-- run the app and check Swagger for the result

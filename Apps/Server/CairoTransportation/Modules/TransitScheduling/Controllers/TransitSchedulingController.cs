@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/transit-operations")]
-[Route("api/algorithms/transit-schedule")]
 public class TransitSchedulingController(ITransitSchedulingService schedulingService) : ControllerBase
 {
     /// <summary>

@@ -10,7 +10,6 @@ namespace CairoTransportation.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/maintenance-strategy")]
-[Route("api/algorithms/maintenance-plan")]
 public class MaintenancePlanningController(IMaintenancePlanningService maintenanceService) : ControllerBase
 {
     /// <summary>
