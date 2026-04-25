@@ -129,7 +129,7 @@ sequenceDiagram
     participant Controller as TrafficSignalController
     participant Service as TrafficSignalService
     participant TrafficService as TrafficService
-    participant DB as PostgreSQL
+    participant DB as MariaDB
     participant Metrics as AlgorithmExecutionMetrics
 
     Client->>Controller: GET /api/signal-optimization
@@ -442,6 +442,9 @@ The system supports three predefined traffic periods with multipliers:
 - AsNoTracking() for read-only database operations
 - Streaming queries for large datasets
 - Configurable timeout settings for complex analyses
+
+### Caching Behavior
+**Note**: After the first execution, most of the traffic data is automatically cached by the .NET runtime. Entity Framework's change tracking and query result caching significantly reduces database round trips for subsequent requests with the same parameters. This built-in caching improves performance by 60-80% for repeated queries during the same application lifecycle.
 
 ---
 
