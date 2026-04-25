@@ -1,5 +1,4 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Algorithms.Common.Instrumentation;
 using CairoTransportation.Services.Algorithms.TransitScheduling.Contracts;
@@ -8,35 +7,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CairoTransportation.Services.Algorithms.TransitScheduling;
 
-/// <summary>
-/// Service for optimizing transit vehicle allocation using Dynamic Programming.
-/// 
-/// This is a Resource Allocation problem: distribute limited vehicles across routes
-/// to maximize total passenger demand coverage.
-/// </summary>
-public class TransitSchedulingService(TransportationDbContext dbContext) : ITransitSchedulingService
+public class TransitSchedulingService(TransportationDbContext dbContext)
+    : ITransitSchedulingService
 {
-    /// <summary>
-    /// Internal model for DP computation.
-    /// </summary>
     private record RouteData(
         string RouteId,
         string RouteType,
-        int? DailyPassengers,
-        int? CurrentVehicles,
+        int DailyPassengers,
+        int CapacityPerRoute,
         int StopCount,
         int ValuePerVehicle);
 
     public async Task<AlgorithmResponseDto<TransitSchedulingResultDto>> GenerateScheduleAsync(int totalVehicles)
     {
-        AlgorithmExecutionMetrics metrics = new();
+        var metrics = new AlgorithmExecutionMetrics();
 
         if (totalVehicles <= 0)
         {
             return CreateFailureResponse("Total vehicles must be greater than zero.", metrics, totalVehicles);
         }
 
-        // Load route data with stop counts
         List<RouteData> routes = await LoadRoutesAsync();
         metrics.MarkExpanded();
 
@@ -45,187 +35,167 @@ public class TransitSchedulingService(TransportationDbContext dbContext) : ITran
             return CreateEmptyResponse(totalVehicles, metrics);
         }
 
-        // Cap vehicles at reasonable max (sum of max vehicles per route)
-        int maxVehiclesPerRoute = 20; // Assume max 20 vehicles per route
-        int effectiveFleet = Math.Min(totalVehicles, routes.Count * maxVehiclesPerRoute);
-
         int n = routes.Count;
-        int V = effectiveFleet;
+        int V = totalVehicles;
 
-        // DP: dp[i, v] = max demand covered using first i routes with v vehicles
         int[,] dp = new int[n + 1, V + 1];
-        // choice[i, v] = vehicles assigned to route i in optimal solution
         int[,] choice = new int[n + 1, V + 1];
 
-        // Build DP table
+        // ================= DP =================
         for (int i = 1; i <= n; i++)
         {
             RouteData route = routes[i - 1];
-            int maxForThisRoute = Math.Min(maxVehiclesPerRoute, V);
 
             for (int v = 0; v <= V; v++)
             {
-                // Default: don't assign any vehicles to this route
                 dp[i, v] = dp[i - 1, v];
                 choice[i, v] = 0;
 
-                // Try assigning k vehicles to this route
-                for (int k = 1; k <= maxForThisRoute && k <= v; k++)
+                int max = Math.Min(route.CapacityPerRoute, v);
+
+                for (int k = 1; k <= max; k++)
                 {
-                    int valueWithK = dp[i - 1, v - k] + k * route.ValuePerVehicle;
-                    if (valueWithK > dp[i, v])
+                    int value = k * route.ValuePerVehicle;
+                    int candidate = dp[i - 1, v - k] + value;
+
+                    if (candidate > dp[i, v])
                     {
-                        dp[i, v] = valueWithK;
+                        dp[i, v] = candidate;
                         choice[i, v] = k;
                     }
                 }
             }
-
-            metrics.MarkDiscovered(route.RouteId);
         }
 
-        metrics.MarkExpanded();
+        // ================= BACKTRACK =================
+        var allocation = new Dictionary<string, int>();
+        int remaining = V;
 
-        // Backtrack to find allocation
-        Dictionary<string, int> allocation = [];
-        int remainingVehicles = V;
-
-        for (int i = n; i > 0 && remainingVehicles > 0; i--)
+        for (int i = n; i > 0; i--)
         {
-            int assigned = choice[i, remainingVehicles];
+            int assigned = choice[i, remaining];
             if (assigned > 0)
             {
-                RouteData route = routes[i - 1];
-                allocation[route.RouteId] = assigned;
-                remainingVehicles -= assigned;
+                allocation[routes[i - 1].RouteId] = assigned;
+                remaining -= assigned;
             }
         }
 
-        metrics.MarkExpanded();
-
-        // Build result
         TransitSchedulingResultDto result = BuildResult(routes, allocation, totalVehicles, dp[n, V]);
-        string message = result.ActiveRoutes > 0
-            ? $"Transit schedule optimized: {result.ActiveRoutes} routes active with {result.AssignedVehicles} vehicles, serving ~{result.EstimatedPassengersServed} passengers."
-            : "No vehicles could be allocated to routes.";
 
-        return CreateSuccessResponse(result, message, metrics);
+        return CreateSuccessResponse(
+            result,
+            $"Optimized {result.ActiveRoutes} routes using {result.AssignedVehicles} vehicles.",
+            metrics);
     }
 
+    // ================= DATA =================
     private async Task<List<RouteData>> LoadRoutesAsync()
-    {
-        // Load routes with their stop counts
-        List<RouteData> routes = await dbContext.TransportRoutes
+        => await dbContext.TransportRoutes
             .AsNoTracking()
             .Select(r => new RouteData(
                 r.Id,
                 r.Type,
-                r.DailyPassengers,
-                r.VehiclesAssigned,
+                r.DailyPassengers ?? 0,
+
+                // IMPORTANT:
+                // VehiclesAssigned = MAX CAPACITY (your decision)
+                r.VehiclesAssigned ?? 20,
+
                 r.RouteStops.Count,
-                // Value per vehicle: passengers per vehicle (estimated)
-                r.DailyPassengers.HasValue && r.VehiclesAssigned.HasValue && r.VehiclesAssigned.Value > 0
-                    ? r.DailyPassengers.Value / r.VehiclesAssigned.Value
-                    : r.DailyPassengers ?? 100 // Default if no data
+
+                // SIMPLE VALUE MODEL (no logs, no tricks)
+                (r.DailyPassengers ?? 0) / Math.Max(r.VehiclesAssigned ?? 20, 1)
             ))
             .ToListAsync();
 
-        return routes;
-    }
-
+    // ================= RESULT =================
     private static TransitSchedulingResultDto BuildResult(
         List<RouteData> routes,
         Dictionary<string, int> allocation,
         int totalVehicles,
         int totalValue)
     {
-        int assignedVehicles = 0;
-        int totalDemand = routes.Sum(r => r.DailyPassengers ?? 0);
-        List<RouteAllocationDto> allocations = [];
-
-        foreach (RouteData route in routes)
-        {
-            bool isAllocated = allocation.TryGetValue(route.RouteId, out int vehicles);
-            assignedVehicles += vehicles;
-
-            int estimatedServed = isAllocated
-                ? Math.Min(route.DailyPassengers ?? 0, vehicles * route.ValuePerVehicle)
-                : 0;
-
-            double efficiency = vehicles > 0 ? (double)estimatedServed / vehicles : 0;
-
-            // Estimate frequency: assume 16 hours operation, round-trip time ~2 hours
-            int? frequency = vehicles > 0 ? 120 / vehicles : null; // minutes between buses
-
-            allocations.Add(new RouteAllocationDto
-            {
-                RouteId = route.RouteId,
-                RouteType = route.RouteType,
-                AssignedVehicles = vehicles,
-                CurrentVehicles = route.CurrentVehicles,
-                DailyPassengers = route.DailyPassengers,
-                StopCount = route.StopCount,
-                EstimatedFrequencyMinutes = frequency,
-                EstimatedServed = estimatedServed,
-                EfficiencyScore = efficiency,
-                Reason = isAllocated
-                    ? $"Allocated {vehicles} vehicles based on demand {route.DailyPassengers} passengers"
-                    : "No vehicles allocated - lower priority than other routes"
-            });
-        }
+        int used = allocation.Values.Sum();
 
         return new TransitSchedulingResultDto
         {
             TotalVehicles = totalVehicles,
-            AssignedVehicles = assignedVehicles,
-            RemainingVehicles = totalVehicles - assignedVehicles,
-            TotalDemand = totalDemand,
+            AssignedVehicles = used,
+            RemainingVehicles = totalVehicles - used,
+            TotalDemand = routes.Sum(r => r.DailyPassengers),
+
             EstimatedPassengersServed = totalValue,
-            CoverageRatio = totalDemand > 0 ? (double)totalValue / totalDemand : 0,
+            CoverageRatio = routes.Sum(r => r.DailyPassengers) > 0
+                ? (double)totalValue / routes.Sum(r => r.DailyPassengers)
+                : 0,
+
             TotalRoutes = routes.Count,
             ActiveRoutes = allocation.Count,
-            RouteAllocations = allocations.OrderByDescending(x => x.EstimatedServed).ToList()
+
+            RouteAllocations = routes.Select(r =>
+            {
+                allocation.TryGetValue(r.RouteId, out int v);
+
+                int served = Math.Min(r.DailyPassengers, v * r.ValuePerVehicle);
+
+                return new RouteAllocationDto
+                {
+                    RouteId = r.RouteId,
+                    RouteType = r.RouteType,
+                    AssignedVehicles = v,
+                    DailyPassengers = r.DailyPassengers,
+                    StopCount = r.StopCount,
+                    EstimatedServed = served,
+                    EfficiencyScore = v > 0 ? served / (double)v : 0,
+                    Reason = v > 0
+                        ? $"Allocated {v} vehicles within capacity {r.CapacityPerRoute}"
+                        : "Not selected"
+                };
+            }).ToList()
         };
     }
 
-    private static AlgorithmResponseDto<TransitSchedulingResultDto> CreateEmptyResponse(
-        int totalVehicles, AlgorithmExecutionMetrics metrics) =>
-        CreateSuccessResponse(
-            new TransitSchedulingResultDto
-            {
-                TotalVehicles = totalVehicles,
-                AssignedVehicles = 0,
-                RemainingVehicles = totalVehicles,
-                TotalDemand = 0,
-                EstimatedPassengersServed = 0,
-                CoverageRatio = 0,
-                TotalRoutes = 0,
-                ActiveRoutes = 0,
-                RouteAllocations = []
-            },
-            "No transit routes found in database.",
-            metrics);
-
+    // ================= RESPONSES =================
     private static AlgorithmResponseDto<TransitSchedulingResultDto> CreateSuccessResponse(
-        TransitSchedulingResultDto result, string message, AlgorithmExecutionMetrics metrics) =>
-        new()
+        TransitSchedulingResultDto result,
+        string message,
+        AlgorithmExecutionMetrics metrics)
+        => new()
         {
-            AlgorithmName = "Transit Scheduling (Resource Allocation DP)",
+            AlgorithmName = "Transit Scheduling (Simple DP)",
             Success = true,
             Message = message,
             Trace = metrics.Complete(),
             Data = result
         };
 
+    private static AlgorithmResponseDto<TransitSchedulingResultDto> CreateEmptyResponse(
+        int totalVehicles,
+        AlgorithmExecutionMetrics metrics)
+        => CreateSuccessResponse(
+            new TransitSchedulingResultDto
+            {
+                TotalVehicles = totalVehicles,
+                AssignedVehicles = 0,
+                RemainingVehicles = totalVehicles
+            },
+            "No routes found.",
+            metrics);
+
     private static AlgorithmResponseDto<TransitSchedulingResultDto> CreateFailureResponse(
-        string message, AlgorithmExecutionMetrics metrics, int totalVehicles) =>
-        new()
+        string message,
+        AlgorithmExecutionMetrics metrics,
+        int totalVehicles)
+        => new()
         {
-            AlgorithmName = "Transit Scheduling (Resource Allocation DP)",
+            AlgorithmName = "Transit Scheduling (Simple DP)",
             Success = false,
             Message = message,
             Trace = metrics.Complete(),
-            Data = new TransitSchedulingResultDto { TotalVehicles = totalVehicles }
+            Data = new TransitSchedulingResultDto
+            {
+                TotalVehicles = totalVehicles
+            }
         };
 }
-

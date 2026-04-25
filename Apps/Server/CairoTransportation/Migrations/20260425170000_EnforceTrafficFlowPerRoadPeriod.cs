@@ -51,11 +51,8 @@ namespace CairoTransportation.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropIndex(
+        protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropIndex(
                 name: "uq_traffic_road_period",
                 table: "traffic_flow");
-        }
     }
 }

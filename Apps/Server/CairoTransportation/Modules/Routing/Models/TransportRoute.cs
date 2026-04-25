@@ -23,6 +23,8 @@ public class TransportRoute
     [Column("vehicles_assigned")]
     public int? VehiclesAssigned { get; set; }
 
+    [Column("capacity_per_unit" , TypeName = "int")]
+    public int CapacityPerUnit { get; set; } = 50; // Default capacity per vehicle/unit
     [JsonIgnore]
     public ICollection<RouteStop> RouteStops { get; set; } = [];
 }
