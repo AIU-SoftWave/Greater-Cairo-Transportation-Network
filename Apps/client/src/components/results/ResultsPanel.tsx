@@ -234,7 +234,7 @@ function TraceSection({ result }: { result: RunResult }) {
     <div className="grid grid-cols-3 gap-2">
       <StatCard label="Visited Nodes" value={trace.visitedNodes} />
       <StatCard label="Expanded Nodes" value={trace.expandedNodes} />
-      <StatCard label="Time (ms)" value={`${trace.executionTimeMs.toFixed(2)} ms`} />
+      <StatCard label="Time" value={`${trace.executionTimeMs.toFixed(2)} ms`} />
     </div>
   );
 }

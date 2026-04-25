@@ -145,25 +145,8 @@ export default function MapClient({ topology, result }: MapClientProps) {
     }
 
     if (algorithmId === "maintenance") {
-      const data = response.data as {
-        selectedRoads?: Array<{ roadId: number }>;
-      } | null;
-      if (data) {
-        // mark maintenance roads by mapping roadId to edge keys
-        const selectedIds = new Set((data.selectedRoads ?? []).map((r) => String(r.roadId)));
-        edges.forEach((edge: Road) => {
-          // edges don't carry an id, so we use the fromNodeId|toNodeId key
-          // the server may return numeric road ids; we can't match without road id on edge,
-          // so we highlight all edges whose participants are in selectedRoads via road catalogue
-          void selectedIds; // available for future enrichment
-        });
-      }
-    }
-
-    // track visited nodes from trace
-    if (response.trace && algorithmId !== "mst") {
-      // We don't have individual visited node ids from trace (only count),
-      // so visitedNodeIds stays empty — count is shown in results panel.
+      // Maintenance roads are highlighted by roadId, but the topology edges don't carry
+      // a road id. Map highlighting for maintenance is limited to the results panel list.
     }
   }
 
