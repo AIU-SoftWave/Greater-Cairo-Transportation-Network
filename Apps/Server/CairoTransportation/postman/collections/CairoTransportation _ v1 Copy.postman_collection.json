@@ -72,7 +72,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/api/maintenance-strategy?budget=2901382212",
+                  "raw": "{{baseUrl}}/api/maintenance-strategy?budget=100",
                   "host": [
                     "{{baseUrl}}"
                   ],
@@ -82,9 +82,10 @@
                   ],
                   "query": [
                     {
-                      "description": "Total maintenance budget (e.g., 10000000 for 10 million).",
                       "key": "budget",
-                      "value": "2901382212"
+                      "value": "100",
+                      "description": "Total maintenance budget (e.g., 10000000 for 10 million).",
+                      "uuid": "2e307e9a-839f-468e-8d97-3d0c496a5749"
                     }
                   ]
                 },
@@ -601,7 +602,7 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{baseUrl}}/api/route-planning/shortest-path?from=string&to=string",
+                      "raw": "{{baseUrl}}/api/route-planning/shortest-path?from=1&to=18",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -612,14 +613,16 @@
                       ],
                       "query": [
                         {
-                          "description": "The starting node identifier.",
                           "key": "from",
-                          "value": "string"
+                          "value": "1",
+                          "description": "The starting node identifier.",
+                          "uuid": "b739863c-4420-46a6-8608-5ee5428872a8"
                         },
                         {
-                          "description": "The destination node identifier.",
                           "key": "to",
-                          "value": "string"
+                          "value": "18",
+                          "description": "The destination node identifier.",
+                          "uuid": "273a1269-e081-405b-9f67-3c848a173512"
                         }
                       ]
                     },
@@ -681,7 +684,7 @@
                     "method": "GET",
                     "header": [],
                     "url": {
-                      "raw": "{{baseUrl}}/api/route-planning/time-route?from=string&to=string&period=string",
+                      "raw": "{{baseUrl}}/api/route-planning/time-route?from=1&to=19&period=MORNING",
                       "host": [
                         "{{baseUrl}}"
                       ],
@@ -692,19 +695,22 @@
                       ],
                       "query": [
                         {
-                          "description": "The starting node identifier.",
                           "key": "from",
-                          "value": "string"
+                          "value": "1",
+                          "description": "The starting node identifier.",
+                          "uuid": "e96beaa7-b46f-4387-b402-616192d62a42"
                         },
                         {
-                          "description": "The destination node identifier.",
                           "key": "to",
-                          "value": "string"
+                          "value": "19",
+                          "description": "The destination node identifier.",
+                          "uuid": "fa554f23-e22d-4daf-b949-bd67d235edd9"
                         },
                         {
-                          "description": "Traffic period configured in database multipliers table.",
                           "key": "period",
-                          "value": "string"
+                          "value": "MORNING",
+                          "description": "Traffic period configured in database multipliers table.",
+                          "uuid": "001eebf2-4160-43c3-a75d-9007d8e81065"
                         }
                       ]
                     }
@@ -773,7 +779,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/api/emergency-routing?from=string&to=string",
+                  "raw": "{{baseUrl}}/api/emergency-routing?from=1&to=18",
                   "host": [
                     "{{baseUrl}}"
                   ],
@@ -783,14 +789,16 @@
                   ],
                   "query": [
                     {
-                      "description": "The starting node identifier.",
                       "key": "from",
-                      "value": "string"
+                      "value": "1",
+                      "description": "The starting node identifier.",
+                      "uuid": "c868bf10-603f-494b-9e54-4801edf855d3"
                     },
                     {
-                      "description": "The destination node identifier.",
                       "key": "to",
-                      "value": "string"
+                      "value": "18",
+                      "description": "The destination node identifier.",
+                      "uuid": "a4d71e03-e43b-4875-8c5a-81e09c73f782"
                     }
                   ]
                 },
@@ -1470,7 +1478,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/api/transit-operations?vehicles=0",
+                  "raw": "{{baseUrl}}/api/transit-operations?vehicles=10",
                   "host": [
                     "{{baseUrl}}"
                   ],
@@ -1481,7 +1489,7 @@
                   "query": [
                     {
                       "key": "vehicles",
-                      "value": "0",
+                      "value": "10",
                       "description": "Total number of vehicles in the fleet (e.g., 50).",
                       "uuid": "297f5591-be23-4eab-a54b-c3e5ab979e01"
                     }
@@ -1532,7 +1540,7 @@
   ],
   "variable": [
     {
-      "id": "0c3d76bf-4d28-4d9a-9375-65dedd8707c1",
+      "id": "0d86a7a3-a352-4e0b-a451-94063612d550",
       "key": "baseUrl",
       "value": "http://localhost:5208"
     }
