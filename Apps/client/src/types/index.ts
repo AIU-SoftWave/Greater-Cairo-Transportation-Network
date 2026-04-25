@@ -25,3 +25,17 @@ export interface AlgorithmResponse<T> {
   trace: Trace;
   data: T; // refine later per algorithm
 }
+
+export interface NetworkTopologyData {
+  nodes: Node[];
+  edges: Road[];
+  adjacencyList: {
+    [key: string]: [number];
+  };
+  nodeIndex: {
+    [key: string]: Node;
+  };
+  edgeIndex: {
+    [key: string]: Road;
+  };
+}
