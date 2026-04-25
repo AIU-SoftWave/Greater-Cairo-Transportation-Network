@@ -46,7 +46,8 @@ CREATE TABLE
     `id` VARCHAR(10) PRIMARY KEY,
     `type` VARCHAR(20) NOT NULL,
     `daily_passengers` INT,
-    `vehicles_assigned` INT
+    `vehicles_assigned` INT,
+    `capacity_per_unit` INT DEFAULT 50
   );
 
 CREATE TABLE
@@ -65,13 +66,13 @@ CREATE TABLE
     `daily_passengers` INT NOT NULL
   );
 
--- FIXED: multiple maintenance records per road
+-- Road maintenance (one-to-one with Road)
 CREATE TABLE
   `road_maintenance` (
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `road_id` BIGINT NOT NULL,
+    `road_id` BIGINT PRIMARY KEY,
     `priority` INT,
-    `estimated_cost` DOUBLE
+    `estimated_cost` DOUBLE,
+    CONSTRAINT `fk_road_maintenance_road` FOREIGN KEY (`road_id`) REFERENCES `roads` (`id`) ON DELETE CASCADE
   );
 
 -- INDEXES
@@ -107,5 +108,3 @@ ALTER TABLE `route_stops` ADD CONSTRAINT `fk_route_stops_location` FOREIGN KEY (
 ALTER TABLE `transport_demand` ADD CONSTRAINT `fk_demand_from` FOREIGN KEY (`from_location_id`) REFERENCES `locations` (`id`) ON DELETE CASCADE;
 
 ALTER TABLE `transport_demand` ADD CONSTRAINT `fk_demand_to` FOREIGN KEY (`to_location_id`) REFERENCES `locations` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `road_maintenance` ADD CONSTRAINT `fk_road_maintenance_road` FOREIGN KEY (`road_id`) REFERENCES `roads` (`id`) ON DELETE CASCADE;
