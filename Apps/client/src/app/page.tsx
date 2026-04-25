@@ -1,12 +1,5 @@
-import { fetchNetworkTopology } from "@/services/networkTopology";
+import TransportDashboard from "@/components/TransportDashboard";
 
-export default  function Home() {
-  const data =  fetchNetworkTopology();  
-  console.log(data);
-  
-  return (
-    <main className="flex h-screen items-center justify-center">
-      <h1 className="text-2xl font-bold">Cairo Transportation System</h1>
-    </main>
-  );
+export default function Home() {
+  return <TransportDashboard />;
 }
