@@ -1,5 +1,5 @@
 import { TransportRoute, RouteStop } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getAllRoutes(): Promise<TransportRoute[]> {
   return apiFetch<TransportRoute[]>("route-catalog");

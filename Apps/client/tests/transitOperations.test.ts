@@ -1,4 +1,4 @@
-import { getTransitSchedule } from "../src/services/transitOperations";
+import { getTransitSchedule } from "../src/services/transit/transitOperations";
 import { AlgorithmResponse, TransitSchedulingResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

@@ -1,5 +1,5 @@
 import { TrafficPeriodMultiplier } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getAllPeriodMultipliers(): Promise<TrafficPeriodMultiplier[]> {
   return apiFetch<TrafficPeriodMultiplier[]>("traffic-policy");

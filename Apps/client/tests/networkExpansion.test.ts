@@ -1,4 +1,4 @@
-import { getCheapestNetwork } from "../src/services/networkExpansion";
+import { getCheapestNetwork } from "../src/services/network/networkExpansion";
 import { AlgorithmResponse, MstResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

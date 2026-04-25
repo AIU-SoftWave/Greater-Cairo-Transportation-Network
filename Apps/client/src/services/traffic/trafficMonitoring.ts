@@ -1,5 +1,5 @@
 import { TrafficFlow } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getTrafficByRoadId(roadId: number): Promise<TrafficFlow[]> {
   return apiFetch<TrafficFlow[]>(`traffic-monitoring/road/${roadId}`);

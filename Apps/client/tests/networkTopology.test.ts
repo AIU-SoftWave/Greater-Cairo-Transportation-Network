@@ -1,4 +1,4 @@
-import { fetchNetworkTopology } from "../src/services/networkTopology";
+import { fetchNetworkTopology } from "../src/services/network/networkTopology";
 import { NetworkTopologyData } from "@/types";
 
 jest.mock("../src/services/api", () => ({

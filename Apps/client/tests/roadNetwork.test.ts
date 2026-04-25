@@ -3,7 +3,7 @@ import {
   getRoadById,
   getRoadsByFromLocation,
   getRoadMaintenance,
-} from "../src/services/roadNetwork";
+} from "../src/services/roads/roadNetwork";
 import { RoadFull, RoadMaintenance } from "@/types";
 
 jest.mock("../src/services/api", () => ({

@@ -1,4 +1,4 @@
-import { getSignalOptimization } from "../src/services/signalOptimization";
+import { getSignalOptimization } from "../src/services/traffic/signalOptimization";
 import { AlgorithmResponse, TrafficSignalResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

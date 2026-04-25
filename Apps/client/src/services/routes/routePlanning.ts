@@ -1,5 +1,5 @@
 import { AlgorithmResponse, ShortestPathResultDto } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getShortestPath(from: string, to: string): Promise<AlgorithmResponse<ShortestPathResultDto>> {
   const params = new URLSearchParams({ from, to });

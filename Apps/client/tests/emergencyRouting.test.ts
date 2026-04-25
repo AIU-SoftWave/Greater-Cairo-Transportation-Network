@@ -1,4 +1,4 @@
-import { getEmergencyRoute } from "../src/services/emergencyRouting";
+import { getEmergencyRoute } from "../src/services/routes/emergencyRouting";
 import { AlgorithmResponse, ShortestPathResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

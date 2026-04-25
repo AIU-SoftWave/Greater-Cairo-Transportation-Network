@@ -1,24 +1,28 @@
-// Network Management Services
-export * from "./cityLocations";
-export * from "./roadNetwork";
-export * from "./networkTopology";
+// Locations
+export * from "./locations/cityLocations";
 
-// Routing Services
-export * from "./routeCatalog";
-export * from "./routePlanning";
-export * from "./emergencyRouting";
-export * from "./networkExpansion";
+// Roads
+export * from "./roads/roadNetwork";
 
-// Maintenance Service
-export * from "./maintenanceStrategy";
+// Network
+export * from "./network/networkTopology";
+export * from "./network/networkExpansion";
 
-// Transit Service
-export * from "./transitOperations";
+// Routes
+export * from "./routes/routeCatalog";
+export * from "./routes/routePlanning";
+export * from "./routes/emergencyRouting";
 
-// Traffic Control Services
-export * from "./trafficMonitoring";
-export * from "./trafficPolicy";
-export * from "./signalOptimization";
+// Maintenance
+export * from "./maintenance/maintenanceStrategy";
+
+// Transit
+export * from "./transit/transitOperations";
+
+// Traffic
+export * from "./traffic/trafficMonitoring";
+export * from "./traffic/trafficPolicy";
+export * from "./traffic/signalOptimization";
 
 // Base API
 export * from "./api";

@@ -1,5 +1,5 @@
 import { AlgorithmResponse, TransitSchedulingResultDto } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getTransitSchedule(vehicles: number): Promise<AlgorithmResponse<TransitSchedulingResultDto>> {
   const params = new URLSearchParams({ vehicles: vehicles.toString() });

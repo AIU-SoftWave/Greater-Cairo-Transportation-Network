@@ -1,5 +1,5 @@
 import { RoadFull, RoadMaintenance } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getAllRoads(): Promise<RoadFull[]> {
   return apiFetch<RoadFull[]>("road-network");

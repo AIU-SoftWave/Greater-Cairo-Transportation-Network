@@ -1,7 +1,7 @@
 import {
   getAllLocations,
   getLocationById,
-} from "../src/services/cityLocations";
+} from "../src/services/locations/cityLocations";
 import { Location } from "@/types";
 
 // Mock apiFetch

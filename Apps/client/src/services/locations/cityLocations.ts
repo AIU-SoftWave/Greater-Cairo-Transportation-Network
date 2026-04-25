@@ -1,5 +1,5 @@
 import { Location } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getAllLocations(): Promise<Location[]> {
   return apiFetch<Location[]>("city-locations");

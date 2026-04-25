@@ -1,5 +1,5 @@
 import { AlgorithmResponse, TrafficSignalResultDto } from "@/types";
-import { apiFetch } from "./api";
+import { apiFetch } from "../api";
 
 export async function getSignalOptimization(
   period: string = "MORNING",

@@ -2,7 +2,7 @@ import {
   getAllRoutes,
   getRouteById,
   getRouteStops,
-} from "../src/services/routeCatalog";
+} from "../src/services/routes/routeCatalog";
 import { TransportRoute, RouteStop } from "@/types";
 
 jest.mock("../src/services/api", () => ({

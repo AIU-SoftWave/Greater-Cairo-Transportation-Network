@@ -1,4 +1,4 @@
-import { getMaintenancePlan } from "../src/services/maintenanceStrategy";
+import { getMaintenancePlan } from "../src/services/maintenance/maintenanceStrategy";
 import { AlgorithmResponse, MaintenancePlanningResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

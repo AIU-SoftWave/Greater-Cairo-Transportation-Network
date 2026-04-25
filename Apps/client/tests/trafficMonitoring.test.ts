@@ -1,7 +1,7 @@
 import {
   getTrafficByRoadId,
   getTrafficByPeriod,
-} from "../src/services/trafficMonitoring";
+} from "../src/services/traffic/trafficMonitoring";
 import { TrafficFlow } from "@/types";
 
 jest.mock("../src/services/api", () => ({

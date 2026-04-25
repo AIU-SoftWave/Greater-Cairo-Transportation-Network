@@ -1,7 +1,7 @@
 import {
   getShortestPath,
   getTimeVaryingShortestPath,
-} from "../src/services/routePlanning";
+} from "../src/services/routes/routePlanning";
 import { AlgorithmResponse, ShortestPathResultDto } from "@/types";
 
 jest.mock("../src/services/api", () => ({

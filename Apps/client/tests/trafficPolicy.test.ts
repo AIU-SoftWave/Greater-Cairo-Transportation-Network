@@ -1,7 +1,7 @@
 import {
   getAllPeriodMultipliers,
   getPeriodMultiplier,
-} from "../src/services/trafficPolicy";
+} from "../src/services/traffic/trafficPolicy";
 import { TrafficPeriodMultiplier } from "@/types";
 
 jest.mock("../src/services/api", () => ({
