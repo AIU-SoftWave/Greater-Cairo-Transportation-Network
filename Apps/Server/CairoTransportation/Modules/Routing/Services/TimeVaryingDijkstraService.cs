@@ -10,12 +10,12 @@ namespace CairoTransportation.Services.Routing;
 public class TimeVaryingDijkstraService(
     IGraphService graphService, 
     ITrafficService trafficService, 
-    ITimeVaryingRoutePlanner planner) : ITimeVaryingDijkstraService
+    ITimeVaryingRoutePlanner planner,
+    ISimulationService simulationService,
+    AlgorithmExecutionMetrics metrics) : ITimeVaryingDijkstraService
 {
     public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string from, string to, string period)
     {
-        var metrics = new AlgorithmExecutionMetrics();
-        
         // 1. Load city graph and traffic metadata
         Graph.Graph graph = await graphService.GetGraphAsync();
         TrafficPeriodMultiplier? periodMultiplier = await trafficService.GetPeriodMultiplierAsync(period);
@@ -33,12 +33,15 @@ public class TimeVaryingDijkstraService(
         // 3. Execute traffic-aware route planning
         ShortestPathResultDto data = planner.FindShortestPath(graph, from, to, traffic, periodMultiplier.Multiplier);
 
+        var trace = metrics.Complete();
+        simulationService.RecordMetrics("Time-Varying Dijkstra", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
+
         return new AlgorithmResponseDto<ShortestPathResultDto>
         {
             AlgorithmName = "Time-Varying Dijkstra",
             Success = data.Found,
-            Message = data.Found ? $"Path found for {period}." : "No path.",
-            Trace = metrics.Complete(),
+            Message = data.Found ? $"Path found for {period.ToUpper()}." : "No path.",
+            Trace = trace,
             Data = data
         };
     }

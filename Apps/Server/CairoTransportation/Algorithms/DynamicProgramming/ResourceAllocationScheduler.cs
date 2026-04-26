@@ -7,39 +7,46 @@ public class ResourceAllocationScheduler : IResourceAllocationScheduler
 {
     public TransitSchedulingResultDto GenerateSchedule(List<TransitRouteData> routes, int totalVehicles)
     {
+        // 1. Validation
         if (routes.Count == 0 || totalVehicles <= 0)
         {
             return new TransitSchedulingResultDto { TotalVehicles = totalVehicles };
         }
 
-        int n = routes.Count; int V = totalVehicles;
-        // dp[i, v] = max passengers served by first 'i' routes using 'v' vehicles
+        int n = routes.Count; 
+        int V = totalVehicles;
+        
+        // dp[i, v] = max passengers served using first 'i' routes with 'v' total vehicles
         int[,] dp = new int[n + 1, V + 1];
-        // choice[i, v] = number of vehicles assigned to route 'i' to get the max value
+        
+        // choice[i, v] = records how many vehicles were assigned to route 'i' to reach the max value
         int[,] choice = new int[n + 1, V + 1];
 
-        // 1. Build the DP table
+        // 2. Main DP loop: Multi-choice knapsack style
         for (int i = 1; i <= n; i++)
         {
             TransitRouteData r = routes[i - 1];
             for (int v = 0; v <= V; v++)
             {
-                dp[i, v] = dp[i - 1, v]; // Default: assign 0 vehicles to this route
+                // Default: Assign 0 vehicles to this route
+                dp[i, v] = dp[i - 1, v]; 
                 
+                // Try assigning k vehicles (1 to max capacity of the route)
                 int maxPossibleVehicles = Math.Min(r.CapacityPerRoute, v);
                 for (int k = 1; k <= maxPossibleVehicles; k++)
                 {
+                    // Value = Passengers served by k vehicles + best result for previous routes with remaining vehicles
                     int val = dp[i - 1, v - k] + k * r.ValuePerVehicle;
                     if (val > dp[i, v])
                     {
                         dp[i, v] = val;
-                        choice[i, v] = k;
+                        choice[i, v] = k; // Record choice for backtracking
                     }
                 }
             }
         }
 
-        // 2. Backtrack to find the specific allocation per route
+        // 3. Backtrack to find the specific allocation per route
         var allocation = new Dictionary<string, int>();
         int rem = V;
         for (int i = n; i > 0; i--)
@@ -81,7 +88,7 @@ public class ResourceAllocationScheduler : IResourceAllocationScheduler
                     StopCount = r.StopCount,
                     EstimatedServed = served,
                     EfficiencyScore = v > 0 ? served / (double)v : 0,
-                    Reason = v > 0 ? $"Allocated {v} vehicles" : "Not selected"
+                    Reason = v > 0 ? $"Allocated {v} vehicles for maximum coverage" : "Resource better utilized elsewhere"
                 };
             }).ToList()
         };

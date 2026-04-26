@@ -10,33 +10,51 @@ namespace CairoTransportation.Services.Routing;
 public class AStarService(
     IGraphService graphService, 
     IMemoryCache cache, 
-    IAStarPathFinder planner) : IAStarService
+    IAStarPathFinder planner,
+    ISimulationService simulationService,
+    AlgorithmExecutionMetrics metrics) : IAStarService
 {
     private static readonly TimeSpan PathCacheTtl = TimeSpan.FromSeconds(60);
 
     public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string from, string to)
     {
         // 1. Check cache for recent results
-        string key = $"astar:{from}:{to}";
+        int version = simulationService.GetStateVersion();
+        string key = $"astar:{from}:{to}:v{version}";
         if (cache.TryGetValue(key, out AlgorithmResponseDto<ShortestPathResultDto>? c) && c != null)
         {
             return c;
         }
 
-        var m = new AlgorithmExecutionMetrics();
-        
         // 2. Load the network graph
         Graph.Graph g = await graphService.GetGraphAsync();
         
         // 3. Execute A* search algorithm
         ShortestPathResultDto data = planner.FindShortestPath(g, from, to);
         
+        if (data.Found)
+        {
+            data.EstimatedTravelTimeMinutes = data.TotalDistance * 1.0;
+        }
+
+        var trace = metrics.Complete();
+        simulationService.RecordMetrics("A*", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
+
+        // Enable emergency preemption for the calculated path
+        if (data.Found)
+        {
+            foreach (var road in data.PathRoads)
+            {
+                await simulationService.SetEmergencyPreemptionAsync(road.Id, true);
+            }
+        }
+
         var res = new AlgorithmResponseDto<ShortestPathResultDto> 
         { 
             AlgorithmName = "A*", 
             Success = data.Found, 
             Message = data.Found ? "Path found." : "No path.", 
-            Trace = m.Complete(), 
+            Trace = trace, 
             Data = data 
         };
 
@@ -52,7 +70,8 @@ public class AStarService(
     public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindNearestMedicalFacilityAsync(string from)
     {
         // 1. Check cache
-        string key = $"astar:medical:{from}";
+        int version = simulationService.GetStateVersion();
+        string key = $"astar:medical:{from}:v{version}";
         if (cache.TryGetValue(key, out AlgorithmResponseDto<ShortestPathResultDto>? c) && c != null)
         {
             return c;
@@ -65,6 +84,12 @@ public class AStarService(
         
         // 3. Execute A* search for nearest critical facility
         ShortestPathResultDto data = planner.FindNearestMedicalFacility(g, from);
+
+        if (data.Found)
+        {
+            // Emergency speed is higher, so multiplier is lower (0.75x)
+            data.EstimatedTravelTimeMinutes = data.TotalDistance * 0.75;
+        }
 
         var res = new AlgorithmResponseDto<ShortestPathResultDto> 
         { 

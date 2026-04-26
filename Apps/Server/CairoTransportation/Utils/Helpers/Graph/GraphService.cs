@@ -12,13 +12,17 @@ namespace CairoTransportation.Services.Graph;
 /// with a 30-second TTL. This means any request within the same 30-second window reuses the same
 /// graph object and skips all database round-trips.
 /// </summary>
-public class GraphService(TransportationDbContext dbContext, IMemoryCache cache) : IGraphService
+public class GraphService(
+    TransportationDbContext dbContext, 
+    IMemoryCache cache,
+    ISimulationService simulationService) : IGraphService
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
     public async Task<Graph> GetGraphAsync(bool includePotentialRoads = false)
     {
-        string cacheKey = $"graph:{includePotentialRoads}";
+        int version = simulationService.GetStateVersion();
+        string cacheKey = $"graph:{includePotentialRoads}:v{version}";
         if (cache.TryGetValue(cacheKey, out Graph? cached) && cached is not null)
         {
             return cached;
@@ -62,8 +66,15 @@ public class GraphService(TransportationDbContext dbContext, IMemoryCache cache)
             .AsNoTracking()
             .ToDictionaryAsync(x => x.RoadId);
 
+        var closedRoadIds = await simulationService.GetClosedRoadIdsAsync();
+
         foreach (Road? road in roads)
         {
+            if (closedRoadIds.Contains(road.Id))
+            {
+                continue;
+            }
+
             AddEdge(graph, road, maintenanceMap, road.FromLocationId, road.ToLocationId, road.Id);
 
             if (road.IsTwoWay)

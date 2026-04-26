@@ -7,43 +7,47 @@ public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
 {
     public MaintenancePlanningResultDto GenerateMaintenancePlan(List<MaintenanceCandidate> candidates, double budget)
     {
+        // 1. Validation: check if we have data and budget
         if (candidates.Count == 0 || budget <= 0)
         {
             return new MaintenancePlanningResultDto { Budget = budget };
         }
 
-        // Use a capped budget to prevent OOM on massive virtual budgets
+        // Budget capping to prevent massive memory usage in DP table
         int totalCost = candidates.Sum(c => c.Cost);
         int B = (int)Math.Min(budget, totalCost * 1.1);
         int n = candidates.Count;
 
-        // dp[i, b] = max priority value using first 'i' roads with budget 'b'
+        // 2. DP Table Setup: dp[i, b] = max priority value using first 'i' roads with budget 'b'
         int[,] dp = new int[n + 1, B + 1];
 
-        // 1. Fill DP Table
+        // 3. Fill the DP table (Standard 0/1 Knapsack)
         for (int i = 1; i <= n; i++)
         {
             MaintenanceCandidate item = candidates[i - 1];
             for (int b = 0; b <= B; b++)
             {
-                dp[i, b] = dp[i - 1, b]; // Skip road
+                // Option A: Skip this road
+                dp[i, b] = dp[i - 1, b]; 
+                
+                // Option B: Include this road (if budget allows)
                 if (item.Cost <= b)
                 {
-                    int val = dp[i - 1, b - item.Cost] + item.Value;
-                    if (val > dp[i, b])
+                    int valIfIncluded = dp[i - 1, b - item.Cost] + item.Value;
+                    if (valIfIncluded > dp[i, b]) 
                     {
-                        dp[i, b] = val;
+                        dp[i, b] = valIfIncluded; // Take the better option
                     }
-
                 }
             }
         }
 
-        // 2. Backtrack to find selected road IDs
+        // 4. Backtrack through the table to see which specific roads were chosen
         HashSet<long> selectedIds = [];
         int remaining = B;
         for (int i = n; i > 0 && remaining > 0; i--)
         {
+            // If the value changed from the previous row, it means we included this road
             if (dp[i, remaining] != dp[i - 1, remaining])
             {
                 selectedIds.Add(candidates[i - 1].RoadId);
@@ -63,7 +67,7 @@ public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
         {
             bool isSel = selectedIds.Contains(c.RoadId);
             double curr = c.Condition ?? 50;
-            double next = Math.Min(100, curr + (100 - curr) * 0.5); // Heuristic improvement
+            double next = Math.Min(100, curr + (100 - curr) * 0.5); // Heuristic: restore 50% of condition loss
             
             var dto = new MaintenanceRoadDto 
             { 
@@ -74,7 +78,7 @@ public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
                 EstimatedCost = c.Cost, 
                 Priority = c.Priority, 
                 ExpectedNewCondition = next, 
-                Reason = isSel ? "Optimized via 0/1 Knapsack" : "Not optimal for budget" 
+                Reason = isSel ? "Optimal selection for maximum impact" : "Exceeds budget for this priority level" 
             };
 
             if (isSel) 

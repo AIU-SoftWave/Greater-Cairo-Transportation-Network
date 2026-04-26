@@ -2,12 +2,15 @@ using CairoTransportation.Algorithms.ShortestPath.Contracts;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Graph;
 
+using CairoTransportation.Services.Algorithms.Common.Instrumentation;
+
 namespace CairoTransportation.Algorithms.ShortestPath;
 
-public class AStarPathFinder : IAStarPathFinder
+public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFinder
 {
     public ShortestPathResultDto FindShortestPath(Graph graph, string fromNodeId, string toNodeId)
     {
+        // Check if start/end nodes are valid
         if (!graph.NodeIndex.ContainsKey(fromNodeId) || !graph.NodeIndex.ContainsKey(toNodeId))
         {
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = false };
@@ -18,6 +21,7 @@ public class AStarPathFinder : IAStarPathFinder
 
     public ShortestPathResultDto FindNearestMedicalFacility(Graph graph, string fromNodeId)
     {
+        // 1. Get all nodes marked as critical or facilities
         var facilities = graph.Nodes
             .Where(n => n.IsCritical || n.Type.Equals("FACILITY", StringComparison.OrdinalIgnoreCase))
             .Where(n => n.Id != fromNodeId)
@@ -28,6 +32,7 @@ public class AStarPathFinder : IAStarPathFinder
             return new ShortestPathResultDto { FromNodeId = fromNodeId, Found = false };
         }
 
+        // 2. Find the one with the actual shortest path distance
         ShortestPathResultDto? best = null;
         foreach (GraphNode facility in facilities)
         {
@@ -41,13 +46,14 @@ public class AStarPathFinder : IAStarPathFinder
         return best ?? new ShortestPathResultDto { FromNodeId = fromNodeId, Found = false };
     }
 
-    private static ShortestPathResultDto RunAStar(Graph graph, string fromNodeId, string toNodeId)
+    private ShortestPathResultDto RunAStar(Graph graph, string fromNodeId, string toNodeId)
     {
         if (fromNodeId == toNodeId)
         {
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = true, TotalDistance = 0, PathNodes = [MapNode(graph.NodeIndex[fromNodeId])] };
         }
 
+        // gScore[n] is the cost of the cheapest path from start to n currently known
         var gScore = graph.Nodes.ToDictionary(n => n.Id, _ => double.PositiveInfinity);
         var cameFromNode = new Dictionary<string, string>();
         var cameFromRoad = new Dictionary<string, long>();
@@ -55,8 +61,10 @@ public class AStarPathFinder : IAStarPathFinder
         var closedSet = new HashSet<string>();
 
         gScore[fromNodeId] = 0;
-        // Priority = gScore (cost so far) + hScore (estimated cost to destination)
+        
+        // Priority = Cost so far (gScore) + Heuristic (estimated remaining distance)
         openSet.Enqueue(fromNodeId, Heuristic(graph, fromNodeId, toNodeId));
+        metrics.MarkDiscovered(fromNodeId);
 
         while (openSet.Count > 0)
         {
@@ -65,11 +73,12 @@ public class AStarPathFinder : IAStarPathFinder
             {
                 continue;
             }
+            metrics.MarkExpanded();
 
 
             if (curr == toNodeId)
             {
-                break;
+                break; // Destination reached!
             }
 
 
@@ -97,20 +106,25 @@ public class AStarPathFinder : IAStarPathFinder
                 double tentG = gScore[curr] + edge.Distance;
                 if (tentG < gScore[neighbor])
                 {
+                    // Found a better path to the neighbor node
                     cameFromNode[neighbor] = curr;
                     cameFromRoad[neighbor] = edge.Id;
                     gScore[neighbor] = tentG;
-                    // fScore = gScore + heuristic
+                    
+                    // Priority = cost so far + straight-line distance to goal
                     openSet.Enqueue(neighbor, tentG + Heuristic(graph, neighbor, toNodeId));
+                    metrics.MarkDiscovered(neighbor);
                 }
             }
         }
 
+        // Return failure if no path exists
         if (!double.IsFinite(gScore[toNodeId]))
         {
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = false };
         }
 
+        // Reconstruct the path by following 'cameFrom' links backwards
         var nodePath = new List<string>(); 
         var roadPath = new List<long>();
         string pathCurr = toNodeId;
@@ -137,6 +151,7 @@ public class AStarPathFinder : IAStarPathFinder
         };
     }
 
+    // Heuristic: Straight-line distance between two points (Crow's distance)
     private static double Heuristic(Graph graph, string fromId, string toId)
     {
         GraphNode f = graph.NodeIndex[fromId];

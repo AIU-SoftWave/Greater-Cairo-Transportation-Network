@@ -2,9 +2,12 @@ using CairoTransportation.Algorithms.ShortestPath.Contracts;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Graph;
 
+using CairoTransportation.Services.Algorithms.Common.Instrumentation;
+using CairoTransportation.Services;
+
 namespace CairoTransportation.Algorithms.ShortestPath;
 
-public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
+public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : ITimeVaryingRoutePlanner
 {
     public ShortestPathResultDto FindShortestPath(
         Graph graph,
@@ -13,7 +16,7 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
         Dictionary<long, int> trafficByRoadId,
         double periodMultiplier)
     {
-        // 1. Validation
+        // 1. Basic validation
         if (!graph.NodeIndex.ContainsKey(fromNodeId) || !graph.NodeIndex.ContainsKey(toNodeId))
         {
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = false };
@@ -24,7 +27,7 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = true, TotalDistance = 0, PathNodes = [MapNode(graph.NodeIndex[fromNodeId])] };
         }
 
-        // 2. Setup
+        // 2. Setup Dijkstra with traffic-weighted edges
         var distances = graph.Nodes.ToDictionary(n => n.Id, _ => double.PositiveInfinity);
         var previousNode = new Dictionary<string, string>();
         var previousRoad = new Dictionary<string, long>();
@@ -33,6 +36,7 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
 
         distances[fromNodeId] = 0;
         queue.Enqueue(fromNodeId, 0);
+        metrics.MarkDiscovered(fromNodeId);
 
         // 3. Search Loop
         while (queue.Count > 0)
@@ -42,6 +46,7 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
             {
                 continue;
             }
+            metrics.MarkExpanded();
 
 
             if (curr == toNodeId)
@@ -66,22 +71,24 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
 
                 string neighbor = edge.ToNodeId;
                 
-                // Adjustment: physical distance * traffic impact
+                // Weight Calculation: Base Distance * Traffic Penalty Factor
                 double trafficFactor = GetTrafficAdjustment(edge, trafficByRoadId, periodMultiplier);
                 double adjustedDist = edge.Distance * trafficFactor;
                 double newDist = distances[curr] + adjustedDist;
 
+                // Typical Dijkstra update logic
                 if (newDist < distances[neighbor])
                 {
                     distances[neighbor] = newDist;
                     previousNode[neighbor] = curr;
                     previousRoad[neighbor] = edge.Id;
                     queue.Enqueue(neighbor, newDist);
+                    metrics.MarkDiscovered(neighbor);
                 }
             }
         }
 
-        // 4. Result
+        // 4. Trace and return result
         if (!double.IsFinite(distances[toNodeId]))
         {
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = false };
@@ -94,43 +101,57 @@ public class TimeVaryingRoutePlanner : ITimeVaryingRoutePlanner
         while (previousNode.TryGetValue(pathCurr, out string? prev)) { roadPath.Add(previousRoad[pathCurr]); nodePath.Add(prev); pathCurr = prev; }
         nodePath.Reverse(); roadPath.Reverse();
 
+        double physicalDistance = roadPath.Sum(id => graph.EdgeIndex[id].Distance);
+
         return new ShortestPathResultDto 
         { 
             FromNodeId = fromNodeId, 
             ToNodeId = toNodeId, 
             Found = true, 
-            TotalDistance = distances[toNodeId], 
+            TotalDistance = physicalDistance, 
+            EstimatedTravelTimeMinutes = distances[toNodeId], // In our model, Cost = Time
             PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(), 
             PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList() 
         };
     }
 
-    private static double GetTrafficAdjustment(GraphEdge edge, Dictionary<long, int> trafficByRoadId, double multiplier)
+    // Logic: If road is congested, increase its "effective distance" so the algorithm avoids it
+    private double GetTrafficAdjustment(GraphEdge edge, Dictionary<long, int> trafficByRoadId, double multiplier)
     {
         long roadId = Math.Abs(edge.Id);
         int flow = trafficByRoadId.TryGetValue(roadId, out int f) ? f : 0;
+        
+        // Ratio = current flow vs maximum capacity
         double ratio = (double)flow / Math.Max(edge.Capacity, 1);
         
-        // Threshold-based multiplier adjustment
+        // Weather Penalty
+        double weatherPenalty = simulationService.GetWeather() switch
+        {
+            SimulationWeather.Rain => 1.3,
+            SimulationWeather.Storm => 1.8,
+            _ => 1.0
+        };
+
+        // Return a penalty multiplier based on traffic density levels
         if (ratio <= 0.75)
         {
-            return multiplier; // Free flow
+            return multiplier * weatherPenalty;       // Light traffic
         }
 
 
         if (ratio <= 1.0)
         {
-            return multiplier * 1.1; // Moderate
+            return multiplier * 1.1 * weatherPenalty; // Noticeable traffic
         }
 
 
         if (ratio <= 1.25)
         {
-            return multiplier * 1.2; // Heavy
+            return multiplier * 1.2 * weatherPenalty; // Heavy traffic
         }
 
 
-        return multiplier * 1.35; // Oversaturated
+        return multiplier * 1.35 * weatherPenalty;                   // Extreme congestion
     }
 
     private static ShortestPathNodeDto MapNode(GraphNode n) => new() { Id = n.Id, Name = n.Name, Type = n.Type, X = n.X, Y = n.Y, Population = n.Population, IsCritical = n.IsCritical };

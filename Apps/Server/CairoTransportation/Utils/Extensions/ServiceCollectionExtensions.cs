@@ -11,6 +11,7 @@ using CairoTransportation.Services;
 using CairoTransportation.Services.Graph;
 using CairoTransportation.Services.MaintenancePlanning;
 using CairoTransportation.Services.MaintenancePlanning.Contracts;
+using CairoTransportation.Services.Algorithms.Common.Instrumentation;
 using CairoTransportation.Services.Routing;
 using CairoTransportation.Services.Routing.Contracts;
 using CairoTransportation.Services.TrafficControl;
@@ -41,11 +42,13 @@ public static class ServiceCollectionExtensions
         services.AddMemoryCache();
 
         // Infrastructure Services
+        services.AddScoped<AlgorithmExecutionMetrics>();
         services.AddScoped<ILocationService, LocationService>();
         services.AddScoped<IRoadService, RoadService>();
         services.AddScoped<ITrafficService, TrafficService>();
         services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<IGraphService, GraphService>();
+        services.AddSingleton<ISimulationService, SimulationService>();
 
         // Pure Algorithm Layer
         services.AddScoped<IDijkstraRoutePlanner, DijkstraRoutePlanner>();

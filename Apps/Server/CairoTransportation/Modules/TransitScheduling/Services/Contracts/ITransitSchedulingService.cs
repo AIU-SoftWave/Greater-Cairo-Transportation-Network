@@ -15,4 +15,6 @@ public interface ITransitSchedulingService
     /// </summary>
     /// <param name="totalVehicles">Total number of vehicles to be assigned.</param>
     Task<AlgorithmResponseDto<TransitSchedulingResultDto>> GenerateScheduleAsync(int totalVehicles);
+    Task<List<ShortestPathNodeDto>> GetRouteGeometryAsync(string routeId);
+    Task<List<TransferHubDto>> GetTransferHubsAsync();
 }

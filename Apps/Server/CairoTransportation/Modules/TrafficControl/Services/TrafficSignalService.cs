@@ -10,7 +10,8 @@ namespace CairoTransportation.Services.TrafficControl;
 
 public class TrafficSignalService(
     TransportationDbContext dbContext, 
-    IGreedySignalOptimizer optimizer) : ITrafficSignalService
+    IGreedySignalOptimizer optimizer,
+    ISimulationService simulationService) : ITrafficSignalService
 {
     public async Task<AlgorithmResponseDto<TrafficSignalResultDto>> OptimizeSignalsAsync(string period, int topN, bool analyzeAllIntersections = false)
     {
@@ -24,23 +25,42 @@ public class TrafficSignalService(
         }
 
         // 2. Fetch traffic flow data for the specific time period
-        List<SignalRoadCongestion> roads = await dbContext.TrafficFlows
+        var trafficFlows = await dbContext.TrafficFlows
             .AsNoTracking()
             .Where(tf => tf.Period == normalizedPeriod && tf.Road.IsExisting)
-            .Select(tf => new SignalRoadCongestion(
-                tf.Road.Id,
-                tf.Road.FromLocation.Name,
-                tf.Road.ToLocation.Name,
-                tf.Road.ToLocation.Name,
-                tf.Flow,
-                tf.Road.Capacity,
-                (double)tf.Flow / tf.Road.Capacity,
-                tf.Road.FromLocation.IsCritical || tf.Road.ToLocation.IsCritical
-            ))
+            .Select(tf => new { 
+                tf.RoadId, 
+                FromName = tf.Road.FromLocation.Name, 
+                ToName = tf.Road.ToLocation.Name, 
+                tf.Flow, 
+                tf.Road.Capacity, 
+                FromCritical = tf.Road.FromLocation.IsCritical, 
+                ToCritical = tf.Road.ToLocation.IsCritical 
+            })
             .ToListAsync();
+
+        var roads = new List<SignalRoadCongestion>();
+        foreach (var tf in trafficFlows)
+        {
+            bool isPreempted = await simulationService.IsPreemptedAsync(tf.RoadId);
+            roads.Add(new SignalRoadCongestion(
+                tf.RoadId,
+                tf.FromName,
+                tf.ToName,
+                tf.ToName,
+                tf.Flow,
+                tf.Capacity,
+                (double)tf.Flow / tf.Capacity,
+                tf.FromCritical || tf.ToCritical || isPreempted
+            ) { IsEmergencyRoute = isPreempted });
+        }
 
         // 3. Run Greedy optimization to calculate signal timings and green light priority
         TrafficSignalResultDto data = optimizer.OptimizeSignals(roads, normalizedPeriod, topN, analyzeAllIntersections);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        stopwatch.Stop();
+        simulationService.RecordMetrics("Greedy Signal Optimizer", stopwatch.ElapsedMilliseconds, roads.Count, data.Intersections.Count);
 
         return new AlgorithmResponseDto<TrafficSignalResultDto>
         {

@@ -112,6 +112,7 @@ export interface ShortestPathResultDto {
   toNodeId: string;
   found: boolean;
   totalDistance: number;
+  estimatedTravelTimeMinutes?: number;
   pathNodes: ShortestPathNodeDto[];
   pathRoads: ShortestPathRoadDto[];
 }

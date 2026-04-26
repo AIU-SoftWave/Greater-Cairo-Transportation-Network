@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CairoTransportation.Services.TransitScheduling;
 
 public class TransitSchedulingService(
-    TransportationDbContext dbContext, 
+    TransportationDbContext dbContext,
     IResourceAllocationScheduler scheduler) : ITransitSchedulingService
 {
     public async Task<AlgorithmResponseDto<TransitSchedulingResultDto>> GenerateScheduleAsync(int totalVehicles)
@@ -22,7 +22,7 @@ public class TransitSchedulingService(
 
         // 1. Fetch current transit route performance data
         List<TransitRouteData> routes = await dbContext.TransportRoutes.AsNoTracking().Select(r => new TransitRouteData(
-            r.Id, r.Type, r.DailyPassengers ?? 0, r.VehiclesAssigned ?? 20, r.RouteStops.Count, 
+            r.Id, r.Type, r.DailyPassengers ?? 0, r.VehiclesAssigned ?? 20, r.RouteStops.Count,
             (r.DailyPassengers ?? 0) / Math.Max(r.VehiclesAssigned ?? 20, 1))).ToListAsync();
 
         // 2. Run Resource Allocation algorithm to optimize vehicle assignment
@@ -36,5 +36,40 @@ public class TransitSchedulingService(
             Trace = metrics.Complete(),
             Data = data
         };
+    }
+
+    public async Task<List<ShortestPathNodeDto>> GetRouteGeometryAsync(string routeId) => await (from rs in dbContext.RouteStops.AsNoTracking()
+                                                                                                 join l in dbContext.Locations.AsNoTracking() on rs.LocationId equals l.Id
+                                                                                                 where rs.RouteId == routeId
+                                                                                                 orderby rs.StopOrder
+                                                                                                 select new ShortestPathNodeDto
+                                                                                                 {
+                                                                                                     Id = l.Id,
+                                                                                                     Name = l.Name,
+                                                                                                     Type = l.Type,
+                                                                                                     X = l.X,
+                                                                                                     Y = l.Y,
+                                                                                                     IsCritical = l.IsCritical
+                                                                                                 }).ToListAsync();
+
+    public async Task<List<TransferHubDto>> GetTransferHubsAsync()
+    {
+        var stops = await dbContext.RouteStops.AsNoTracking()
+            .Join(dbContext.Locations.AsNoTracking(), rs => rs.LocationId, l => l.Id, (rs, l) => new { rs.RouteId, l.Id, l.Name, l.X, l.Y })
+            .ToListAsync();
+
+        return stops.GroupBy(x => x.Id)
+            .Where(g => g.Count() > 1) // Only hubs with > 1 route
+            .Select(g => new TransferHubDto
+            {
+                LocationId = g.Key,
+                LocationName = g.First().Name,
+                RouteCount = g.Count(),
+                RouteIds = g.Select(x => x.RouteId).Distinct().ToList(),
+                X = g.First().X,
+                Y = g.First().Y
+            })
+            .OrderByDescending(h => h.RouteCount)
+            .ToList();
     }
 }

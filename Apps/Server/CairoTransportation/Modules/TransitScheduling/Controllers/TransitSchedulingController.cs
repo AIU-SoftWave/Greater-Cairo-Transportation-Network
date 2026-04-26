@@ -74,5 +74,29 @@ public class TransitSchedulingController(ITransitSchedulingService schedulingSer
         AlgorithmResponseDto<TransitSchedulingResultDto> result = await schedulingService.GenerateScheduleAsync(vehicles);
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    /// <summary>
+    /// Fetches the visual geometry (stops and points) of a specific transit route for map display.
+    /// </summary>
+    /// <param name="id">Route ID.</param>
+    /// <returns>Ordered list of locations along the route.</returns>
+    [HttpGet("route/{id}/geometry")]
+    public async Task<IActionResult> GetRouteGeometry(string id)
+    {
+        var geometry = await schedulingService.GetRouteGeometryAsync(id);
+        return Ok(geometry);
+    }
+
+    /// <summary>
+    /// Identifies and analyzes transfer points between different transit lines.
+    /// Fulfills Requirement 158: Optimize transfer points.
+    /// </summary>
+    /// <returns>List of locations where multiple routes intersect.</returns>
+    [HttpGet("transfer-hubs")]
+    public async Task<IActionResult> GetTransferHubs()
+    {
+        var hubs = await schedulingService.GetTransferHubsAsync();
+        return Ok(hubs);
+    }
 }
 

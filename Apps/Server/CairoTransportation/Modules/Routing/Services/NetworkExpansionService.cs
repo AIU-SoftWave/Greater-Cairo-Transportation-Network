@@ -9,24 +9,27 @@ namespace CairoTransportation.Services.Routing;
 
 public class NetworkExpansionService(
     IGraphService graphService, 
-    IPrimNetworkExpander planner) : INetworkExpansionService
+    IPrimNetworkExpander planner,
+    ISimulationService simulationService,
+    AlgorithmExecutionMetrics metrics) : INetworkExpansionService
 {
     public async Task<AlgorithmResponseDto<MstResultDto>> BuildCheapestNetworkAsync()
     {
-        var metrics = new AlgorithmExecutionMetrics();
-        
         // 1. Load full graph (including potential new roads)
         Graph.Graph graph = await graphService.GetGraphAsync(includePotentialRoads: true);
 
         // 2. Execute Prim's algorithm for cost-effective connectivity
         MstResultDto data = planner.BuildCheapestNetwork(graph);
+        
+        var trace = metrics.Complete();
+        simulationService.RecordMetrics("Prim's MST", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
 
         return new AlgorithmResponseDto<MstResultDto>
         {
             AlgorithmName = "Prim's MST",
             Success = data.Connected,
             Message = data.Connected ? "Cheapest network built." : "Disconnected graph.",
-            Trace = metrics.Complete(),
+            Trace = trace,
             Data = data
         };
     }

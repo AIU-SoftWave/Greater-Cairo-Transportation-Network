@@ -22,7 +22,15 @@ import { getEmergencyRoute } from "@/services/routes/emergencyRouting";
 import { getCheapestNetwork } from "@/services/network/networkExpansion";
 import { getMaintenancePlan } from "@/services/maintenance/maintenanceStrategy";
 import { getSignalOptimization } from "@/services/traffic/signalOptimization";
-import { getTransitSchedule } from "@/services/transit/transitOperations";
+import { getTransitSchedule, getRouteGeometry } from "@/services/transit/transitOperations";
+import { 
+  toggleRoadClosure, 
+  resetSimulation, 
+  getClosedRoads, 
+  getMetrics,
+  setWeather,
+  PerformanceMetric 
+} from "@/services/simulation";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -56,7 +64,8 @@ type AlgorithmType =
   | "time-varying"
   | "maintenance"
   | "signals"
-  | "transit";
+  | "transit"
+  | "simulation";
 
 const PERIODS = ["morning", "evening", "night"];
 
@@ -76,6 +85,9 @@ function MapInner({ nodes, edges }: MapViewProps) {
     useState<AlgorithmResponse<TrafficSignalResultDto> | null>(null);
   const [transitResponse, setTransitResponse] =
     useState<AlgorithmResponse<TransitSchedulingResultDto> | null>(null);
+  const [transitPathPositions, setTransitPathPositions] = useState<
+    [number, number][]
+  >([]);
   const [topN, setTopN] = useState<number>(10);
   const [vehicles, setVehicles] = useState<number>(50);
   const [loading, setLoading] = useState(false);
@@ -86,6 +98,10 @@ function MapInner({ nodes, edges }: MapViewProps) {
   const [showMst, setShowMst] = useState(false);
   const [mstResponse, setMstResponse] =
     useState<AlgorithmResponse<MstResultDto> | null>(null);
+  const [closedRoadIds, setClosedRoadIds] = useState<number[]>([]);
+  const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [weather, setWeatherState] = useState<number>(0);
 
   // Import Leaflet only on client side
   useEffect(() => {
@@ -105,7 +121,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     });
   }, []);
 
-  // Fetch MST data on component load
+  // Fetch MST and Simulation data on component load
   useEffect(() => {
     getCheapestNetwork().then((res) => {
       setMstResponse(res);
@@ -123,6 +139,8 @@ function MapInner({ nodes, edges }: MapViewProps) {
         setMstEdges(mstRoads);
       }
     });
+
+    getClosedRoads().then(setClosedRoadIds);
   }, []);
 
   // Icons (IMPORTANT: always return a valid icon)
@@ -259,6 +277,47 @@ function MapInner({ nodes, edges }: MapViewProps) {
     setTransitResponse(null);
   };
 
+  const handleToggleClosure = async (roadId: number) => {
+    setLoading(true);
+    try {
+      await toggleRoadClosure(roadId);
+      const closed = await getClosedRoads();
+      setClosedRoadIds(closed);
+      // Trigger re-fetch of current route if any
+      if (startId && endId) {
+        setAlgorithm((prev) => {
+          // Temporarily change and restore to trigger useEffect
+          setTimeout(() => setAlgorithm(prev), 10);
+          return "dijkstra";
+        });
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSimulation = async () => {
+    setLoading(true);
+    try {
+      await resetSimulation();
+      setClosedRoadIds([]);
+      setAlgorithm("dijkstra");
+      handleReset();
+    } catch {
+      // Ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefreshMetrics = async () => {
+    const data = await getMetrics();
+    setMetrics(data);
+    setShowMetrics(true);
+  };
+
   // Marker click logic
   const handleMarkerClick = (id: string) => {
     const node = nodeLookup[id];
@@ -286,6 +345,9 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
   // Road click logic
   const handleRoadClick = (edge: Road) => {
+    if (algorithm === "simulation") {
+      handleToggleClosure(Math.abs(edge.id));
+    }
     setSelectedRoad(edge);
     setSelectedNode(null);
   };
@@ -330,16 +392,19 @@ function MapInner({ nodes, edges }: MapViewProps) {
         const to = nodeLookup[edge.toNodeId];
         if (!from || !to) return null;
 
+        const isClosed = closedRoadIds.includes(Math.abs(edge.id));
+
         return {
           edge,
+          isClosed,
           pos: [
             [from.y, from.x],
             [to.y, to.x],
           ] as [number, number][],
         };
       })
-      .filter(Boolean) as { edge: Road; pos: [number, number][] }[];
-  }, [edges, nodeLookup]);
+      .filter(Boolean) as { edge: Road; isClosed: boolean; pos: [number, number][] }[];
+  }, [edges, nodeLookup, closedRoadIds]);
 
   // Draw shortest path
   const pathPositions = useMemo(() => {
@@ -565,6 +630,30 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return "#ef4444"; // red
   };
 
+  const handleShowTransitRoute = async (routeId: string) => {
+    try {
+      const geometry = await getRouteGeometry(routeId);
+      const points = geometry
+        .filter((g) => g.x !== undefined && g.y !== undefined)
+        .map((g) => [g.y!, g.x!] as [number, number]);
+      setTransitPathPositions(points);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleWeatherChange = async (w: number) => {
+    setWeatherState(w);
+    await setWeather(w);
+    // Refresh current route if exists
+    if (startId && endId) {
+      // Small delay to let version propagate
+      setTimeout(() => {
+        setStartId(startId); 
+      }, 50);
+    }
+  };
+
   const resultClassName = "ml-1 font-medium text-black";
   return (
     <div className="relative h-full w-full">
@@ -583,6 +672,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
               { key: "maintenance", label: "Maintenance" },
               { key: "signals", label: "Signals" },
               { key: "transit", label: "Transit" },
+              { key: "simulation", label: "Simulation" },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -731,6 +821,46 @@ function MapInner({ nodes, edges }: MapViewProps) {
               >
                 Reset
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Simulation Panel (only for simulation) */}
+        {algorithm === "simulation" && (
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              Simulation Controls
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={handleResetSimulation}
+                className="w-full rounded bg-red-500 px-2 py-2 text-xs font-medium text-white hover:bg-red-600"
+                disabled={loading}
+              >
+                Reset All Closures
+              </button>
+              <button
+                onClick={handleRefreshMetrics}
+                className="w-full rounded bg-emerald-500 px-2 py-2 text-xs font-medium text-white hover:bg-emerald-600"
+                disabled={loading}
+              >
+                Performance Metrics
+              </button>
+              <div className="mt-2">
+                <p className="mb-1 text-[10px] font-semibold text-gray-500 uppercase">Weather Condition</p>
+                <select 
+                  value={weather}
+                  onChange={(e) => handleWeatherChange(parseInt(e.target.value))}
+                  className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                >
+                  <option value={0}>Clear Sky</option>
+                  <option value={1}>Heavy Rain (1.3x delay)</option>
+                  <option value={2}>Severe Storm (1.8x delay)</option>
+                </select>
+              </div>
+              <p className="text-[10px] text-gray-500 italic">
+                * Click any road on the map to simulate an accident (close road).
+              </p>
             </div>
           </div>
         )}
@@ -1021,9 +1151,17 @@ function MapInner({ nodes, edges }: MapViewProps) {
               <div>
                 <span className="text-gray-500">Distance:</span>
                 <span className={resultClassName}>
-                  {response.data.totalDistance.toFixed(1)}km
+                   {response.data.totalDistance.toFixed(1)}km
                 </span>
               </div>
+              {response.data.estimatedTravelTimeMinutes !== undefined && (
+                <div>
+                  <span className="text-gray-500">Est. Time:</span>
+                  <span className={resultClassName}>
+                    {response.data.estimatedTravelTimeMinutes.toFixed(1)} min
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Roads:</span>
                 <span className={resultClassName}>
@@ -1262,14 +1400,18 @@ function MapInner({ nodes, edges }: MapViewProps) {
                 .sort((a, b) => b.assignedVehicles - a.assignedVehicles)
                 .slice(0, 5)
                 .map((route) => (
-                  <div key={route.routeId} className="mt-1">
+                  <div key={route.routeId} className="mt-1 border-b border-purple-100 pb-1">
                     <span className="text-gray-600">
                       {route.routeId} ({route.routeType}):{" "}
                       {route.assignedVehicles} vehicles,{" "}
-                      {route.estimatedServed.toLocaleString()} passengers,{" "}
-                      {route.efficiencyScore.toLocaleString()}{" "}
-                      passengers/vehicle
+                      {route.estimatedServed.toLocaleString()} passengers
                     </span>
+                    <button
+                      onClick={() => handleShowTransitRoute(route.routeId)}
+                      className="block mt-1 text-[10px] text-blue-500 font-semibold hover:underline"
+                    >
+                      View Route Geometry
+                    </button>
                   </div>
                 ))}
             </div>
@@ -1301,7 +1443,8 @@ function MapInner({ nodes, edges }: MapViewProps) {
         />
 
         {/* Roads */}
-        {edgeSegments.map(({ edge, pos }, i) => {
+        {edgeSegments.map((segment, i) => {
+          const { edge, pos, isClosed } = segment;
           let color = "#9ca3af";
           let weight = 2;
           let opacity = 0.6;
@@ -1356,11 +1499,20 @@ function MapInner({ nodes, edges }: MapViewProps) {
             opacity = 0.4;
           }
 
+          // Override for closed roads
+          let dashArray: string | undefined = undefined;
+          if (isClosed) {
+            color = "#ef4444";
+            weight = 4;
+            opacity = 1.0;
+            dashArray = "10, 10";
+          }
+
           return (
             <Polyline
-              key={`${i}-${algorithm}-${maintenanceResponse?.data?.selectedRoadCount ?? 0}-${highlightSelected ? 1 : 0}-${signalResponse?.data.summary.optimizedIntersections ?? 0}`}
+              key={`${i}-${algorithm}-${maintenanceResponse?.data?.selectedRoadCount ?? 0}-${highlightSelected ? 1 : 0}-${signalResponse?.data.summary.optimizedIntersections ?? 0}-${isClosed ? 1 : 0}`}
               positions={pos}
-              pathOptions={{ color, weight, opacity }}
+              pathOptions={{ color, weight, opacity, dashArray }}
               eventHandlers={{
                 click: () => handleRoadClick(edge),
               }}
@@ -1387,6 +1539,16 @@ function MapInner({ nodes, edges }: MapViewProps) {
             color="#3b82f6"
             weight={5}
             opacity={0.9}
+          />
+        )}
+
+        {/* Transit Path */}
+        {transitPathPositions.length > 0 && algorithm === "transit" && (
+          <Polyline
+            positions={transitPathPositions}
+            color="#a855f7"
+            weight={7}
+            opacity={0.8}
           />
         )}
 
@@ -1462,6 +1624,61 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </Marker>
         ))}
       </MapContainer>
+
+      {/* Performance Metrics Modal */}
+      {showMetrics && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Performance Dashboard</h2>
+              <button 
+                onClick={() => setShowMetrics(false)}
+                className="rounded-full bg-gray-100 p-2 hover:bg-gray-200 text-black"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Algorithm</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Execution</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Efficiency</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {metrics.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No metrics recorded yet.</td>
+                    </tr>
+                  ) : (
+                    metrics.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((m, i) => (
+                      <tr key={i}>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{m.algorithmName}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{m.executionTimeMs} ms</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">{m.visitedNodes} nodes</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">{new Date(m.timestamp).toLocaleTimeString()}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setShowMetrics(false)}
+                className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-700"
+              >
+                Close Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
