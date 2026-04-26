@@ -11,6 +11,7 @@ import type {
   ShortestPathResultDto,
   MstResultDto,
   MaintenancePlanningResultDto,
+  TrafficSignalResultDto,
 } from "@/types";
 import {
   getShortestPath,
@@ -19,6 +20,7 @@ import {
 import { getEmergencyRoute } from "@/services/routes/emergencyRouting";
 import { getCheapestNetwork } from "@/services/network/networkExpansion";
 import { getMaintenancePlan } from "@/services/maintenance/maintenanceStrategy";
+import { getSignalOptimization } from "@/services/traffic/signalOptimization";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -46,7 +48,12 @@ interface MapViewProps {
   edges: Road[];
 }
 
-type AlgorithmType = "dijkstra" | "astar" | "time-varying" | "maintenance";
+type AlgorithmType =
+  | "dijkstra"
+  | "astar"
+  | "time-varying"
+  | "maintenance"
+  | "signals";
 
 const PERIODS = ["morning", "evening", "night"];
 
@@ -62,6 +69,9 @@ function MapInner({ nodes, edges }: MapViewProps) {
     useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
   const [maintenanceResponse, setMaintenanceResponse] =
     useState<AlgorithmResponse<MaintenancePlanningResultDto> | null>(null);
+  const [signalResponse, setSignalResponse] =
+    useState<AlgorithmResponse<TrafficSignalResultDto> | null>(null);
+  const [topN, setTopN] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
   const [mstEdges, setMstEdges] = useState<Road[]>([]);
@@ -211,6 +221,22 @@ function MapInner({ nodes, edges }: MapViewProps) {
     setMaintenanceResponse(null);
   };
 
+  const handleCalculateSignals = async () => {
+    setLoading(true);
+    try {
+      const res = await getSignalOptimization(period, topN, false);
+      setSignalResponse(res);
+    } catch {
+      // Silently handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSignals = () => {
+    setSignalResponse(null);
+  };
+
   // Marker click logic
   const handleMarkerClick = (id: string) => {
     const node = nodeLookup[id];
@@ -256,6 +282,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     setPathDistance(null);
     setResponse(null);
     setMaintenanceResponse(null);
+    setSignalResponse(null);
   };
 
   // Lookup for nodes
@@ -388,15 +415,102 @@ function MapInner({ nodes, edges }: MapViewProps) {
         : maintenanceResponse?.success
           ? `Selected: ${maintenanceResponse.data.selectedRoadCount} roads`
           : "Adjust budget and calculate"
-      : !startId
-        ? "Click a location to set start"
-        : !endId
-          ? "Click a location to set destination"
-          : loading
-            ? "Calculating..."
-            : pathNodes.length > 0 && pathDistance !== null
-              ? `Path: ${pathDistance.toFixed(1)} km`
-              : "No path found";
+      : algorithm === "signals"
+        ? loading
+          ? "Optimizing signals..."
+          : signalResponse?.success
+            ? `${signalResponse.data.summary.optimizedIntersections} intersections optimized`
+            : "Select period and calculate"
+        : !startId
+          ? "Click a location to set start"
+          : !endId
+            ? "Click a location to set destination"
+            : loading
+              ? "Calculating..."
+              : pathNodes.length > 0 && pathDistance !== null
+                ? `Path: ${pathDistance.toFixed(1)} km`
+                : "No path found";
+
+  // Map intersection signals from API response with node lookup
+  const intersectionSignals = useMemo(() => {
+    if (!signalResponse?.success) return null;
+
+    const groups: Record<
+      string,
+      {
+        intersectionName: string;
+        nodeId: string | null;
+        cycleTimeSeconds: number;
+        signals: (typeof signalResponse.data.intersections)[0]["roads"];
+        maxCongestion: number;
+      }
+    > = {};
+
+    for (const intersection of signalResponse.data.intersections) {
+      const key = intersection.name;
+      // Try to find node ID from location name
+      const nodeId = nodeIdByName[key.trim().toLowerCase()] ?? null;
+
+      // Calculate max congestion from roads
+      const maxCongestion = Math.max(
+        ...intersection.roads.map((r) => r.congestionPercent / 100),
+      );
+
+      groups[key] = {
+        intersectionName: key,
+        nodeId,
+        cycleTimeSeconds: intersection.cycleTimeSeconds,
+        signals: intersection.roads,
+        maxCongestion,
+      };
+    }
+
+    return groups;
+  }, [signalResponse, nodeIdByName]);
+
+  // Get intersection severity color
+  const getIntersectionSeverityColor = (maxCongestion: number) => {
+    if (maxCongestion > 1.0) return "#ef4444"; // Red - critical
+    if (maxCongestion > 0.7) return "#f97316"; // Orange - high
+    if (maxCongestion > 0.5) return "#f59e0b"; // Yellow - moderate
+    return "#3b82f6"; // Blue - normal
+  };
+
+  // Get road congestion color (similar to maintenance priority)
+  const getRoadCongestionColor = (congestionPercent: number) => {
+    if (congestionPercent > 100) return "#ef4444"; // red - critical
+    if (congestionPercent > 70) return "#f97316"; // orange - high
+    if (congestionPercent > 50) return "#f59e0b"; // yellow - moderate
+    return "#22c55e"; // green - normal
+  };
+
+  // Check if road is in signal response and get its congestion
+  const getRoadCongestionFromSignal = (road: Road) => {
+    if (!signalResponse?.success) return null;
+
+    for (const intersection of signalResponse.data.intersections) {
+      for (const signalRoad of intersection.roads) {
+        // Try matching by location names
+        const fromNode = nodeLookup[road.fromNodeId];
+        const toNode = nodeLookup[road.toNodeId];
+        if (!fromNode || !toNode) continue;
+
+        const fromMatch =
+          fromNode.name.trim().toLowerCase() ===
+          signalRoad.from.trim().toLowerCase();
+        const toMatch =
+          toNode.name.trim().toLowerCase() ===
+          signalRoad.to.trim().toLowerCase();
+
+        if (toMatch && fromMatch) {
+          return signalRoad.congestionPercent;
+        }
+      }
+    }
+
+    return null;
+  };
+
   const resultClassName = "ml-1 font-medium text-black";
   return (
     <div className="relative h-full w-full">
@@ -407,12 +521,13 @@ function MapInner({ nodes, edges }: MapViewProps) {
           <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
             Algorithm
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {[
               { key: "dijkstra", label: "Dijkstra" },
               { key: "astar", label: "A*" },
               { key: "time-varying", label: "Time-Varying" },
               { key: "maintenance", label: "Maintenance" },
+              { key: "signals", label: "Signals" },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -483,6 +598,54 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* Signal Optimization (only for signals) */}
+        {algorithm === "signals" && (
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              Period
+            </p>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm mb-2"
+            >
+              {PERIODS.map((p) => (
+                <option key={p} value={p}>
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </option>
+              ))}
+            </select>
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              Top N Roads
+            </p>
+            <input
+              type="number"
+              min="1"
+              max="50"
+              step="1"
+              value={topN}
+              onChange={(e) => setTopN(Number(e.target.value))}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={handleCalculateSignals}
+                className="flex-1 rounded bg-blue-500 px-2 py-2 text-xs font-medium text-white hover:bg-blue-600"
+                disabled={loading}
+              >
+                Calculate
+              </button>
+              <button
+                onClick={handleResetSignals}
+                className="flex-1 rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                disabled={loading}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* MST Toggle */}
         <div className="mb-4">
           <button
@@ -546,6 +709,117 @@ function MapInner({ nodes, edges }: MapViewProps) {
                     {selectedNode.isCritical ? "Yes" : "No"}
                   </span>
                 </div>
+                {/* Signal Optimization Data (when available) */}
+                {(
+                  selectedNode as Node & {
+                    signalData?: typeof intersectionSignals extends Record<
+                      string,
+                      infer V
+                    >
+                      ? V
+                      : never;
+                  }
+                ).signalData && (
+                  <>
+                    <div className="pt-2 border-t border-gray-200 mt-2">
+                      <span className="font-semibold text-gray-700">
+                        Signal Optimization:
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Intersection:</span>
+                      <span className="ml-1 font-medium text-black">
+                        {
+                          (
+                            selectedNode as Node & {
+                              signalData: { intersectionName: string };
+                            }
+                          ).signalData.intersectionName
+                        }
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Cycle Time:</span>
+                      <span className="ml-1 font-medium text-black">
+                        {
+                          (
+                            selectedNode as Node & {
+                              signalData: { cycleTimeSeconds: number };
+                            }
+                          ).signalData.cycleTimeSeconds
+                        }
+                        s
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Roads Optimized:</span>
+                      <span className="ml-1 font-medium text-black">
+                        {
+                          (
+                            selectedNode as Node & {
+                              signalData: { signals: unknown[] };
+                            }
+                          ).signalData.signals.length
+                        }
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Max Congestion:</span>
+                      <span className="ml-1 font-medium text-black">
+                        {(
+                          (
+                            selectedNode as Node & {
+                              signalData: { maxCongestion: number };
+                            }
+                          ).signalData.maxCongestion * 100
+                        ).toFixed(0)}
+                        %
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <span className="font-semibold text-gray-600 text-xs">
+                        Signal Phases:
+                      </span>
+                      {(
+                        selectedNode as Node & {
+                          signalData: {
+                            signals: Array<{
+                              from: string;
+                              to: string;
+                              congestionPercent: number;
+                              priority: number;
+                              greenTimeSeconds: number;
+                            }>;
+                          };
+                        }
+                      ).signalData.signals.map((signal, idx) => (
+                        <div
+                          key={idx}
+                          className="mt-1 pl-2 border-l-2 border-blue-300"
+                        >
+                          <p className="text-xs font-medium text-black">
+                            {signal.from} → {signal.to}
+                          </p>
+                          <p className="text-xs text-gray-600 text-black">
+                            Green: {signal.greenTimeSeconds}s (Cycle:{" "}
+                            {
+                              (
+                                selectedNode as Node & {
+                                  signalData: { cycleTimeSeconds: number };
+                                }
+                              ).signalData.cycleTimeSeconds
+                            }
+                            s)
+                          </p>
+                          <p className="text-xs text-gray-600 text-black">
+                            Congestion: {signal.congestionPercent.toFixed(0)}%
+                            (Priority #{signal.priority})
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
             {selectedRoad && (
@@ -759,6 +1033,85 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* Signal Optimization Results Dashboard */}
+        {algorithm === "signals" && signalResponse && (
+          <div className="mb-3 rounded-md bg-blue-50 p-3 text-xs">
+            <p className="mb-1 font-semibold text-gray-700">
+              Signal Optimization:
+            </p>
+            <p className="mb-2 text-xs text-gray-600">
+              Period: {signalResponse.data.period}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-gray-500">Intersections:</span>
+                <span className={resultClassName}>
+                  {signalResponse.data.summary.optimizedIntersections}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Roads:</span>
+                <span className={resultClassName}>
+                  {signalResponse.data.summary.roadsAnalyzed}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Wait Reduction:</span>
+                <span className={resultClassName}>
+                  {signalResponse.data.summary.estimatedWaitTimeReductionPercent.toFixed(
+                    1,
+                  )}
+                  %
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Analyzed:</span>
+                <span className={resultClassName}>
+                  {signalResponse.data.summary.intersectionsAnalyzed}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-blue-200">
+              <p className="font-semibold text-gray-700">Top Intersections:</p>
+              {signalResponse.data.intersections
+                .sort((a, b) => {
+                  const maxA = Math.max(
+                    ...a.roads.map((r) => r.congestionPercent / 100),
+                  );
+                  const maxB = Math.max(
+                    ...b.roads.map((r) => r.congestionPercent / 100),
+                  );
+                  return maxB - maxA;
+                })
+                .slice(0, 5)
+                .map((intersection) => {
+                  const maxCongestion = Math.max(
+                    ...intersection.roads.map((r) => r.congestionPercent / 100),
+                  );
+                  return (
+                    <div key={intersection.name} className="mt-1">
+                      <span
+                        className="inline-block w-2 h-2 rounded-full mr-1"
+                        style={{
+                          backgroundColor:
+                            getIntersectionSeverityColor(maxCongestion),
+                        }}
+                      />
+                      <span className="text-gray-600">
+                        {intersection.name} ({intersection.roads.length} roads,{" "}
+                        {intersection.cycleTimeSeconds}s cycle,{" "}
+                        {(maxCongestion * 100).toFixed(0)}% max)
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+            {signalResponse.message && (
+              <p className="mt-2 text-gray-600">{signalResponse.message}</p>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         {(startId || endId) && (
           <button
@@ -809,11 +1162,30 @@ function MapInner({ nodes, edges }: MapViewProps) {
               weight = 3;
               opacity = 0.8;
             }
+          } else if (algorithm === "signals" && signalResponse) {
+            // Show roads by congestion from signal response
+            const congestion = getRoadCongestionFromSignal(edge);
+            if (congestion !== null) {
+              color = getRoadCongestionColor(congestion);
+              weight =
+                congestion > 100
+                  ? 5
+                  : congestion > 70
+                    ? 4
+                    : congestion > 50
+                      ? 3
+                      : 2;
+              opacity = 0.9;
+            } else {
+              color = "#d1d5db"; // lighter gray for roads not in signal response
+              weight = 1;
+              opacity = 0.3;
+            }
           }
 
           return (
             <Polyline
-              key={`${i}-${algorithm}-${maintenanceResponse?.data?.selectedRoadCount ?? 0}-${highlightSelected ? 1 : 0}`}
+              key={`${i}-${algorithm}-${maintenanceResponse?.data?.selectedRoadCount ?? 0}-${highlightSelected ? 1 : 0}-${signalResponse?.data.summary.optimizedIntersections ?? 0}`}
               positions={pos}
               pathOptions={{ color, weight, opacity }}
               eventHandlers={{
@@ -844,6 +1216,62 @@ function MapInner({ nodes, edges }: MapViewProps) {
             opacity={0.9}
           />
         )}
+
+        {/* Signal Intersection Markers (when signals algorithm active) */}
+        {algorithm === "signals" &&
+          intersectionSignals &&
+          Object.values(intersectionSignals).map((intersection) => {
+            if (!intersection.nodeId) return null;
+            const node = nodeLookup[intersection.nodeId];
+            if (!node) return null;
+
+            const color = getIntersectionSeverityColor(
+              intersection.maxCongestion,
+            );
+            const size = 12 + intersection.signals.length * 2; // Larger for more signals
+
+            return (
+              <Marker
+                key={`signal-${intersection.nodeId}`}
+                position={[node.y, node.x]}
+                icon={
+                  leaflet
+                    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      (leaflet as any).divIcon({
+                        className: "custom-signal-marker",
+                        html: `<div style="background-color:${color};width:${size}px;height:${size}px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px ${color};"></div>`,
+                        iconSize: [size, size],
+                        iconAnchor: [size / 2, size / 2],
+                      })
+                    : undefined
+                }
+                eventHandlers={{
+                  click: () => {
+                    setSelectedNode({
+                      ...node,
+                      signalData: intersection,
+                    } as Node & { signalData: typeof intersection });
+                    setSelectedRoad(null);
+                  },
+                }}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">
+                      {intersection.intersectionName}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {intersection.signals.length} roads need optimization
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Max congestion:{" "}
+                      {(intersection.maxCongestion * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
 
         {/* Nodes */}
         {nodes.map((node) => (

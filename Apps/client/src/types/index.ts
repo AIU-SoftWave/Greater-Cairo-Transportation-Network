@@ -196,24 +196,25 @@ export interface RouteAllocationDto {
 
 export interface TrafficSignalResultDto {
   period: string;
-  roadsAnalyzed: number;
-  intersectionsAnalyzed: number;
-  intersectionsWithSignalRecommendations: number;
-  signalRecommendations: number;
-  totalCongestionScore: number;
-  estimatedWaitTimeReductionPercent: number;
-  signalTimings: SignalTimingDto[];
+  summary: {
+    roadsAnalyzed: number;
+    intersectionsAnalyzed: number;
+    optimizedIntersections: number;
+    estimatedWaitTimeReductionPercent: number;
+  };
+  intersections: IntersectionSignalPlan[];
 }
 
-export interface SignalTimingDto {
-  roadId: number;
-  fromLocation?: string;
-  toLocation?: string;
-  currentFlow: number;
-  roadCapacity: number;
-  congestionRatio: number;
-  priorityRank: number;
-  recommendedGreenDurationSeconds: number;
-  recommendedCycleTimeSeconds: number;
-  reason: string;
+export interface IntersectionSignalPlan {
+  name: string;
+  cycleTimeSeconds: number;
+  roads: SignalPhaseDto[];
+}
+
+export interface SignalPhaseDto {
+  from: string;
+  to: string;
+  congestionPercent: number;
+  priority: number;
+  greenTimeSeconds: number;
 }
