@@ -1,4 +1,4 @@
-using CairoTransportation.Services.Algorithms.AStar.Contracts;
+using CairoTransportation.Services.Routing.Contracts;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 

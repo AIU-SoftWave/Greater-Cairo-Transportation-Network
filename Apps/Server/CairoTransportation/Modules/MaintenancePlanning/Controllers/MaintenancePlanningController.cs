@@ -1,5 +1,5 @@
 using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.Contracts;
+using CairoTransportation.Services.MaintenancePlanning.Contracts;
 using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
 using Microsoft.AspNetCore.Mvc;
 

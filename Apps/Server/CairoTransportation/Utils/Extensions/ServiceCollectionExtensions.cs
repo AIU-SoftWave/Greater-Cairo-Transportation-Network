@@ -1,20 +1,23 @@
+using CairoTransportation.Algorithms.DynamicProgramming;
+using CairoTransportation.Algorithms.DynamicProgramming.Contracts;
+using CairoTransportation.Algorithms.Greedy;
+using CairoTransportation.Algorithms.Greedy.Contracts;
+using CairoTransportation.Algorithms.NetworkExpansion;
+using CairoTransportation.Algorithms.NetworkExpansion.Contracts;
+using CairoTransportation.Algorithms.ShortestPath;
+using CairoTransportation.Algorithms.ShortestPath.Contracts;
 using CairoTransportation.Data;
 using CairoTransportation.Services;
-using CairoTransportation.Services.Algorithms.AStar;
-using CairoTransportation.Services.Algorithms.AStar.Contracts;
-using CairoTransportation.Services.Algorithms.Dijkstra;
-using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.Contracts;
-using CairoTransportation.Services.Algorithms.Mst;
-using CairoTransportation.Services.Algorithms.Mst.Contracts;
-using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra;
-using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra.Contracts;
-using CairoTransportation.Services.Algorithms.TrafficSignal;
-using CairoTransportation.Services.Algorithms.TrafficSignal.Contracts;
-using CairoTransportation.Services.Algorithms.TransitScheduling;
-using CairoTransportation.Services.Algorithms.TransitScheduling.Contracts;
 using CairoTransportation.Services.Graph;
+using CairoTransportation.Services.MaintenancePlanning;
+using CairoTransportation.Services.MaintenancePlanning.Contracts;
+using CairoTransportation.Services.Algorithms.Common.Instrumentation;
+using CairoTransportation.Services.Routing;
+using CairoTransportation.Services.Routing.Contracts;
+using CairoTransportation.Services.TrafficControl;
+using CairoTransportation.Services.TrafficControl.Contracts;
+using CairoTransportation.Services.TransitScheduling;
+using CairoTransportation.Services.TransitScheduling.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace CairoTransportation.Utils.Extensions;
@@ -36,14 +39,30 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddProjectApplicationServices(this IServiceCollection services)
     {
+        services.AddMemoryCache();
+
+        // Infrastructure Services
+        services.AddScoped<AlgorithmExecutionMetrics>();
         services.AddScoped<ILocationService, LocationService>();
         services.AddScoped<IRoadService, RoadService>();
         services.AddScoped<ITrafficService, TrafficService>();
         services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<IGraphService, GraphService>();
+        services.AddSingleton<ISimulationService, SimulationService>();
+
+        // Pure Algorithm Layer
+        services.AddScoped<IDijkstraRoutePlanner, DijkstraRoutePlanner>();
+        services.AddScoped<IAStarPathFinder, AStarPathFinder>();
+        services.AddScoped<ITimeVaryingRoutePlanner, TimeVaryingRoutePlanner>();
+        services.AddScoped<IPrimNetworkExpander, PrimNetworkExpander>();
+        services.AddScoped<IKnapsackMaintenanceOptimizer, KnapsackMaintenanceOptimizer>();
+        services.AddScoped<IResourceAllocationScheduler, ResourceAllocationScheduler>();
+        services.AddScoped<IGreedySignalOptimizer, GreedySignalOptimizer>();
+
+        // Business Service Layer (SRP)
         services.AddScoped<IDijkstraService, DijkstraService>();
         services.AddScoped<IAStarService, AStarService>();
-        services.AddScoped<IMstService, MstService>();
+        services.AddScoped<INetworkExpansionService, NetworkExpansionService>();
         services.AddScoped<ITimeVaryingDijkstraService, TimeVaryingDijkstraService>();
         services.AddScoped<IMaintenancePlanningService, MaintenancePlanningService>();
         services.AddScoped<ITransitSchedulingService, TransitSchedulingService>();
