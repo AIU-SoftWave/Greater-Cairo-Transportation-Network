@@ -2,13 +2,38 @@ using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Algorithms.Common.Instrumentation;
 using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
 using CairoTransportation.Services.Graph;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CairoTransportation.Services.Algorithms.Dijkstra;
 
-public class DijkstraService(IGraphService graphService) : IDijkstraService
+/// <summary>
+/// Dijkstra's shortest-path algorithm with top-down memoization.
+///
+/// Memoization strategy (top-down):
+///   The computed path for any (from, to) pair is stored in IMemoryCache with a 60-second TTL.
+///   On a cache hit the full result is returned immediately without re-running the algorithm.
+///   This is the standard top-down memoization pattern applied to the route-planning problem:
+///     memo[(u,v)] = cheapest path from u to v
+///   Unlike pure bottom-up DP (which pre-computes all pairs), this approach is lazy — only
+///   pairs that are actually requested are ever stored.
+///
+/// Complexity:
+///   Time  – O((V + E) log V) per unique (from, to) query; O(1) on subsequent cache hits.
+///   Space – O(V + E) for the graph + O(P) for each cached path result (P = path length ≤ V).
+/// </summary>
+public class DijkstraService(IGraphService graphService, IMemoryCache cache) : IDijkstraService
 {
+    private static readonly TimeSpan PathCacheTtl = TimeSpan.FromSeconds(60);
+
     public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId)
     {
+        // Top-down memoization: return cached path if available
+        string cacheKey = $"dijkstra:{fromNodeId}:{toNodeId}";
+        if (cache.TryGetValue(cacheKey, out AlgorithmResponseDto<ShortestPathResultDto>? cachedResult) && cachedResult is not null)
+        {
+            return cachedResult;
+        }
+
         var metrics = new AlgorithmExecutionMetrics();
         CairoTransportation.Services.Graph.Graph graph = await graphService.GetGraphAsync();
 
@@ -130,7 +155,7 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             .Select(roadId => MapRoad(graph.EdgeIndex[roadId]))
             .ToList();
 
-        return CreateSuccessResponse(
+        AlgorithmResponseDto<ShortestPathResultDto> result = CreateSuccessResponse(
             new ShortestPathResultDto
             {
                 FromNodeId = fromNodeId,
@@ -142,6 +167,11 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
             },
             "Shortest path found using Dijkstra's algorithm.",
             metrics);
+
+        // Store computed path in top-down memo cache
+        cache.Set(cacheKey, result, PathCacheTtl);
+
+        return result;
     }
 
     private static AlgorithmResponseDto<ShortestPathResultDto> CreateSuccessResponse(
@@ -199,4 +229,3 @@ public class DijkstraService(IGraphService graphService) : IDijkstraService
         ConstructionCost = edge.ConstructionCost
     };
 }
-
