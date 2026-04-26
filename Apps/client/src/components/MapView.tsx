@@ -10,6 +10,7 @@ import type {
   AlgorithmResponse,
   ShortestPathResultDto,
   MstResultDto,
+  MaintenancePlanningResultDto,
 } from "@/types";
 import {
   getShortestPath,
@@ -17,6 +18,7 @@ import {
 } from "@/services/routes/routePlanning";
 import { getEmergencyRoute } from "@/services/routes/emergencyRouting";
 import { getCheapestNetwork } from "@/services/network/networkExpansion";
+import { getMaintenancePlan } from "@/services/maintenance/maintenanceStrategy";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -44,7 +46,7 @@ interface MapViewProps {
   edges: Road[];
 }
 
-type AlgorithmType = "dijkstra" | "astar" | "time-varying";
+type AlgorithmType = "dijkstra" | "astar" | "time-varying" | "maintenance";
 
 const PERIODS = ["morning", "evening", "night"];
 
@@ -55,11 +57,16 @@ function MapInner({ nodes, edges }: MapViewProps) {
   const [pathDistance, setPathDistance] = useState<number | null>(null);
   const [algorithm, setAlgorithm] = useState<AlgorithmType>("dijkstra");
   const [period, setPeriod] = useState<string>("morning");
+  const [budget, setBudget] = useState<number>(50);
   const [response, setResponse] =
     useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
+  const [maintenanceResponse, setMaintenanceResponse] =
+    useState<AlgorithmResponse<MaintenancePlanningResultDto> | null>(null);
   const [loading, setLoading] = useState(false);
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
   const [mstEdges, setMstEdges] = useState<Road[]>([]);
+  const [selectedRoad, setSelectedRoad] = useState<Road | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showMst, setShowMst] = useState(false);
   const [mstResponse, setMstResponse] =
     useState<AlgorithmResponse<MstResultDto> | null>(null);
@@ -95,7 +102,6 @@ function MapInner({ nodes, edges }: MapViewProps) {
           capacity: r.capacity,
           condition: r.condition,
           isExisting: r.isExisting,
-          isTwoWay: true,
           constructionCost: r.constructionCost,
         }));
         setMstEdges(mstRoads);
@@ -130,6 +136,11 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
   // Fetch shortest path based on selected algorithm
   useEffect(() => {
+    if (algorithm === "maintenance") {
+      // Maintenance doesn't need start/end nodes
+      return;
+    }
+
     if (!startId || !endId) {
       // eslint-disable-next-line
       setPathNodes([]);
@@ -184,8 +195,28 @@ function MapInner({ nodes, edges }: MapViewProps) {
     };
   }, [startId, endId, algorithm, period]);
 
+  const handleCalculateMaintenance = async () => {
+    setLoading(true);
+    try {
+      const res = await getMaintenancePlan(budget);
+      setMaintenanceResponse(res);
+    } catch {
+      // Silently handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetMaintenance = () => {
+    setMaintenanceResponse(null);
+  };
+
   // Marker click logic
   const handleMarkerClick = (id: string) => {
+    const node = nodeLookup[id];
+    setSelectedNode(node || null);
+    setSelectedRoad(null);
+
     if (!startId) {
       setStartId(id);
     } else if (!endId) {
@@ -205,6 +236,12 @@ function MapInner({ nodes, edges }: MapViewProps) {
     }
   };
 
+  // Road click logic
+  const handleRoadClick = (edge: Road) => {
+    setSelectedRoad(edge);
+    setSelectedNode(null);
+  };
+
   const handleReset = () => {
     setStartId(null);
     setEndId(null);
@@ -218,6 +255,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     setPathNodes([]);
     setPathDistance(null);
     setResponse(null);
+    setMaintenanceResponse(null);
   };
 
   // Lookup for nodes
@@ -227,20 +265,31 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return map;
   }, [nodes]);
 
+  const nodeIdByName = useMemo(() => {
+    const map: Record<string, string> = {};
+    nodes.forEach((n) => {
+      map[n.name.trim().toLowerCase()] = n.id;
+    });
+    return map;
+  }, [nodes]);
+
   // Draw all roads
-  const edgePositions = useMemo(() => {
+  const edgeSegments = useMemo(() => {
     return edges
       .map((edge) => {
         const from = nodeLookup[edge.fromNodeId];
         const to = nodeLookup[edge.toNodeId];
         if (!from || !to) return null;
 
-        return [
-          [from.y, from.x],
-          [to.y, to.x],
-        ] as [number, number][];
+        return {
+          edge,
+          pos: [
+            [from.y, from.x],
+            [to.y, to.x],
+          ] as [number, number][],
+        };
       })
-      .filter(Boolean) as [number, number][][];
+      .filter(Boolean) as { edge: Road; pos: [number, number][] }[];
   }, [edges, nodeLookup]);
 
   // Draw shortest path
@@ -276,15 +325,78 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return icons.default;
   };
 
-  const statusText = !startId
-    ? "Click a location to set start"
-    : !endId
-      ? "Click a location to set destination"
-      : loading
-        ? "Calculating..."
-        : pathNodes.length > 0 && pathDistance !== null
-          ? `Path: ${pathDistance.toFixed(1)} km`
-          : "No path found";
+  // Get road color based on priority (for maintenance mode)
+  const getRoadPriorityColor = (road: Road) => {
+    if (!road.maintenancePriority) return "#9ca3af"; // gray if no priority
+    if (road.maintenancePriority >= 7) return "#ef4444"; // red for high priority
+    if (road.maintenancePriority >= 4) return "#f59e0b"; // yellow for medium priority
+    return "#22c55e"; // green for low priority
+  };
+
+  // Check if road is selected for maintenance
+  const isRoadSelectedForMaintenance = (road: Road) => {
+    if (!maintenanceResponse) return false;
+
+    // Try matching by road ID first
+    const matchById = maintenanceResponse.data.selectedRoads.some(
+      (r) => r.roadId === Math.abs(road.id),
+    );
+    if (matchById) return true;
+
+    // Fallback: try matching by from/to location names
+    const fromNode = nodeLookup[road.fromNodeId];
+    const toNode = nodeLookup[road.toNodeId];
+    if (fromNode && toNode) {
+      const fromName = fromNode.name.trim().toLowerCase();
+      const toName = toNode.name.trim().toLowerCase();
+
+      const matchByLocation = maintenanceResponse.data.selectedRoads.some(
+        (r) =>
+          (r.fromLocation ?? "").trim().toLowerCase() === fromName &&
+          (r.toLocation ?? "").trim().toLowerCase() === toName,
+      );
+      if (matchByLocation) return true;
+
+      // Try reverse direction
+      const matchByLocationReverse =
+        maintenanceResponse.data.selectedRoads.some(
+          (r) =>
+            (r.fromLocation ?? "").trim().toLowerCase() === toName &&
+            (r.toLocation ?? "").trim().toLowerCase() === fromName,
+        );
+      if (matchByLocationReverse) return true;
+    }
+
+    // Fallback 2: map maintenance from/to names to node IDs and match by endpoints
+    for (const r of maintenanceResponse.data.selectedRoads) {
+      const fromId = nodeIdByName[(r.fromLocation ?? "").trim().toLowerCase()];
+      const toId = nodeIdByName[(r.toLocation ?? "").trim().toLowerCase()];
+
+      if (!fromId || !toId) continue;
+
+      if (road.fromNodeId === fromId && road.toNodeId === toId) return true;
+      if (road.fromNodeId === toId && road.toNodeId === fromId) return true;
+    }
+
+    return false;
+  };
+
+  const statusText =
+    algorithm === "maintenance"
+      ? loading
+        ? "Calculating maintenance plan..."
+        : maintenanceResponse?.success
+          ? `Selected: ${maintenanceResponse.data.selectedRoadCount} roads`
+          : "Adjust budget and calculate"
+      : !startId
+        ? "Click a location to set start"
+        : !endId
+          ? "Click a location to set destination"
+          : loading
+            ? "Calculating..."
+            : pathNodes.length > 0 && pathDistance !== null
+              ? `Path: ${pathDistance.toFixed(1)} km`
+              : "No path found";
   const resultClassName = "ml-1 font-medium text-black";
   return (
     <div className="relative h-full w-full">
@@ -300,6 +412,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
               { key: "dijkstra", label: "Dijkstra" },
               { key: "astar", label: "A*" },
               { key: "time-varying", label: "Time-Varying" },
+              { key: "maintenance", label: "Maintenance" },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -336,6 +449,40 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* Budget Selection (only for maintenance) */}
+        {algorithm === "maintenance" && (
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              Budget ($)
+            </p>
+            <input
+              type="number"
+              min="10"
+              max="1000"
+              step="1"
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={handleCalculateMaintenance}
+                className="flex-1 rounded bg-orange-500 px-2 py-2 text-xs font-medium text-white hover:bg-orange-600"
+                disabled={loading}
+              >
+                Calculate Plan
+              </button>
+              <button
+                onClick={handleResetMaintenance}
+                className="flex-1 rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                disabled={loading}
+              >
+                Reset View
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* MST Toggle */}
         <div className="mb-4">
           <button
@@ -352,6 +499,133 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
         {/* Status */}
         <p className="mb-3 text-sm font-medium text-gray-800">{statusText}</p>
+
+        {/* Selected Info Panel */}
+        {(selectedNode || selectedRoad) && (
+          <div className="mb-3 rounded-md bg-blue-50 p-3 text-xs">
+            <p className="mb-2 font-semibold text-gray-700">
+              {selectedNode ? "Node Info" : "Road Info"}
+            </p>
+            {selectedNode && (
+              <div className="space-y-1">
+                <div>
+                  <span className="text-gray-500">Name:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedNode.name}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">ID:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedNode.id}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Type:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedNode.type}
+                  </span>
+                </div>
+                {selectedNode.population && (
+                  <div>
+                    <span className="text-gray-500">Population:</span>
+                    <span className="ml-1 font-medium text-black">
+                      {selectedNode.population.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-500">Coordinates:</span>
+                  <span className="ml-1 font-medium text-black">
+                    ({selectedNode.y.toFixed(4)}, {selectedNode.x.toFixed(4)})
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Critical:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedNode.isCritical ? "Yes" : "No"}
+                  </span>
+                </div>
+              </div>
+            )}
+            {selectedRoad && (
+              <div className="space-y-1">
+                <div>
+                  <span className="text-gray-500">From:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {nodeLookup[selectedRoad.fromNodeId]?.name ||
+                      selectedRoad.fromNodeId}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">To:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {nodeLookup[selectedRoad.toNodeId]?.name ||
+                      selectedRoad.toNodeId}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Distance:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedRoad.distance.toFixed(2)} km
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Capacity:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedRoad.capacity.toLocaleString()}
+                  </span>
+                </div>
+                {selectedRoad.condition && (
+                  <div>
+                    <span className="text-gray-500">Condition:</span>
+                    <span className="ml-1 font-medium text-black">
+                      {selectedRoad.condition}/10
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-500">Existing:</span>
+                  <span className="ml-1 font-medium text-black">
+                    {selectedRoad.isExisting ? "Yes" : "No"}
+                  </span>
+                </div>
+                {selectedRoad.constructionCost && (
+                  <div>
+                    <span className="text-gray-500">Construction Cost:</span>
+                    <span className="ml-1 font-medium text-black">
+                      ${selectedRoad.constructionCost.toFixed(0)}
+                    </span>
+                  </div>
+                )}
+                {selectedRoad.maintenancePriority && (
+                  <div className="pt-2 border-t border-gray-200">
+                    <span className="font-semibold text-gray-700">
+                      Maintenance Info:
+                    </span>
+                  </div>
+                )}
+                {selectedRoad.maintenancePriority && (
+                  <div>
+                    <span className="text-gray-500">Priority:</span>
+                    <span className="ml-1 font-medium text-black">
+                      {selectedRoad.maintenancePriority}/10
+                    </span>
+                  </div>
+                )}
+                {selectedRoad.maintenanceCost && (
+                  <div>
+                    <span className="text-gray-500">Est. Cost:</span>
+                    <span className="ml-1 font-medium text-black">
+                      ${selectedRoad.maintenanceCost.toFixed(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Results Dashboard */}
         {response && (
           <div className="mb-3 rounded-md bg-gray-50 p-3 text-xs">
@@ -436,6 +710,55 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* Maintenance Results Dashboard */}
+        {algorithm === "maintenance" && maintenanceResponse && (
+          <div className="mb-3 rounded-md bg-orange-50 p-3 text-xs">
+            <p className="mb-1 font-semibold text-gray-700">
+              Maintenance Plan:
+            </p>
+            <p className="mb-2 text-xs text-gray-600">
+              Matched roads on map:{" "}
+              {
+                edgeSegments.filter(({ edge }) =>
+                  isRoadSelectedForMaintenance(edge),
+                ).length
+              }
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-gray-500">Budget:</span>
+                <span className={resultClassName}>
+                  ${maintenanceResponse.data.budget.toLocaleString()}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Condition Imp:</span>
+                <span className={resultClassName}>
+                  +
+                  {maintenanceResponse.data.expectedConditionImprovement.toFixed(
+                    1,
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-orange-200">
+              <p className="font-semibold text-gray-700">Selected Roads:</p>
+              {maintenanceResponse.data.selectedRoads.map((r) => (
+                <div key={r.roadId} className="mt-1">
+                  <span className="text-gray-600">
+                    {r.fromLocation} → {r.toLocation} (ID: {r.roadId})
+                  </span>
+                </div>
+              ))}
+            </div>
+            {maintenanceResponse.message && (
+              <p className="mt-2 text-gray-600">
+                {maintenanceResponse.message}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         {(startId || endId) && (
           <button
@@ -458,15 +781,47 @@ function MapInner({ nodes, edges }: MapViewProps) {
         />
 
         {/* Roads */}
-        {edgePositions.map((pos, i) => (
-          <Polyline
-            key={i}
-            positions={pos}
-            color="#9ca3af"
-            weight={2}
-            opacity={0.6}
-          />
-        ))}
+        {edgeSegments.map(({ edge, pos }, i) => {
+          let color = "#9ca3af";
+          let weight = 2;
+          let opacity = 0.6;
+
+          const highlightSelected =
+            algorithm === "maintenance" &&
+            !!maintenanceResponse &&
+            isRoadSelectedForMaintenance(edge);
+
+          if (algorithm === "maintenance") {
+            if (maintenanceResponse) {
+              // After calculation: show selected roads in orange, others in gray
+              if (isRoadSelectedForMaintenance(edge)) {
+                color = "#f97316"; // orange for selected
+                weight = 6;
+                opacity = 1.0;
+              } else {
+                color = "#d1d5db"; // lighter gray for not selected
+                weight = 1;
+                opacity = 0.2;
+              }
+            } else {
+              // Before calculation: show roads by priority
+              color = getRoadPriorityColor(edge);
+              weight = 3;
+              opacity = 0.8;
+            }
+          }
+
+          return (
+            <Polyline
+              key={`${i}-${algorithm}-${maintenanceResponse?.data?.selectedRoadCount ?? 0}-${highlightSelected ? 1 : 0}`}
+              positions={pos}
+              pathOptions={{ color, weight, opacity }}
+              eventHandlers={{
+                click: () => handleRoadClick(edge),
+              }}
+            />
+          );
+        })}
 
         {/* MST */}
         {showMst &&
@@ -502,7 +857,6 @@ function MapInner({ nodes, edges }: MapViewProps) {
           >
             <Popup>
               <p className="font-medium">{node.name}</p>
-              <p className="text-xs text-gray-500">{node.type}</p>
             </Popup>
           </Marker>
         ))}

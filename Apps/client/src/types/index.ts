@@ -10,9 +10,16 @@ export interface Node {
 }
 
 export interface Road {
+  id: number;
   fromNodeId: string;
   toNodeId: string;
   distance: number;
+  capacity: number;
+  condition?: number;
+  isExisting: boolean;
+  constructionCost?: number;
+  maintenancePriority?: number;
+  maintenanceCost?: number;
 }
 
 export interface Trace {
