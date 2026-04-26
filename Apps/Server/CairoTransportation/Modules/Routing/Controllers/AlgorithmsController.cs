@@ -1,7 +1,6 @@
 using CairoTransportation.Services;
 using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Dijkstra.Contracts;
-using CairoTransportation.Services.Algorithms.TimeVaryingDijkstra.Contracts;
+using CairoTransportation.Services.Routing.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CairoTransportation.Controllers;
