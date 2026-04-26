@@ -8,8 +8,9 @@ namespace CairoTransportation.Services.Graph;
 /// <summary>
 /// Shared graph service implementation.
 /// Assembles transportation network data from database and provides graph structures for algorithms.
-/// Results are memoized in an in-memory cache for the lifetime of each HTTP request scope so that
-/// multiple algorithms called within the same request do not re-query the database.
+/// The built graph is stored in an application-level in-memory cache (shared across all requests)
+/// with a 30-second TTL. This means any request within the same 30-second window reuses the same
+/// graph object and skips all database round-trips.
 /// </summary>
 public class GraphService(TransportationDbContext dbContext, IMemoryCache cache) : IGraphService
 {
