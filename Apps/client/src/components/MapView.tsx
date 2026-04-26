@@ -9,12 +9,14 @@ import type {
   ShortestPathNodeDto,
   AlgorithmResponse,
   ShortestPathResultDto,
+  MstResultDto,
 } from "@/types";
 import {
   getShortestPath,
   getTimeVaryingShortestPath,
 } from "@/services/routes/routePlanning";
 import { getEmergencyRoute } from "@/services/routes/emergencyRouting";
+import { getCheapestNetwork } from "@/services/network/networkExpansion";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -57,6 +59,10 @@ function MapInner({ nodes, edges }: MapViewProps) {
     useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
   const [loading, setLoading] = useState(false);
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
+  const [mstEdges, setMstEdges] = useState<Road[]>([]);
+  const [showMst, setShowMst] = useState(false);
+  const [mstResponse, setMstResponse] =
+    useState<AlgorithmResponse<MstResultDto> | null>(null);
 
   // Import Leaflet only on client side
   useEffect(() => {
@@ -76,6 +82,27 @@ function MapInner({ nodes, edges }: MapViewProps) {
     });
   }, []);
 
+  // Fetch MST data on component load
+  useEffect(() => {
+    getCheapestNetwork().then((res) => {
+      setMstResponse(res);
+      if (res.success && res.data.selectedRoads) {
+        const mstRoads: Road[] = res.data.selectedRoads.map((r) => ({
+          id: r.id,
+          fromNodeId: r.fromNodeId,
+          toNodeId: r.toNodeId,
+          distance: r.distance,
+          capacity: r.capacity,
+          condition: r.condition,
+          isExisting: r.isExisting,
+          isTwoWay: true,
+          constructionCost: r.constructionCost,
+        }));
+        setMstEdges(mstRoads);
+      }
+    });
+  }, []);
+
   // Icons (IMPORTANT: always return a valid icon)
   const icons = useMemo(() => {
     if (!leaflet) return null;
@@ -87,16 +114,16 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
       green: L.divIcon({
         className: "custom-marker",
-        html: `<div style="background-color:#22c55e;width:20px;height:20px;border-radius:50%;border:2px solid white;"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        html: `<div style="background-color:#22c55e;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
       }),
 
       red: L.divIcon({
         className: "custom-marker",
-        html: `<div style="background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:2px solid white;"></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        html: `<div style="background-color:#ef4444;width:12px;height:12px;border-radius:50%;border:2px solid white;"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
       }),
     };
   }, [leaflet]);
@@ -226,6 +253,22 @@ function MapInner({ nodes, edges }: MapViewProps) {
       .map((n) => [n.y, n.x] as [number, number]);
   }, [pathNodes]);
 
+  // Draw MST roads
+  const mstPositions = useMemo(() => {
+    return mstEdges
+      .map((edge) => {
+        const from = nodeLookup[edge.fromNodeId];
+        const to = nodeLookup[edge.toNodeId];
+        if (!from || !to) return null;
+
+        return [
+          [from.y, from.x],
+          [to.y, to.x],
+        ] as [number, number][];
+      })
+      .filter(Boolean) as [number, number][][];
+  }, [mstEdges, nodeLookup]);
+
   const getMarkerIcon = (id: string) => {
     if (!icons) return undefined;
     if (id === startId) return icons.green;
@@ -293,6 +336,20 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* MST Toggle */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowMst(!showMst)}
+            className={`w-full rounded px-3 py-2 text-xs font-medium ${
+              showMst
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {showMst ? "Hide MST" : "Show MST"}
+          </button>
+        </div>
+
         {/* Status */}
         <p className="mb-3 text-sm font-medium text-gray-800">{statusText}</p>
         {/* Results Dashboard */}
@@ -343,6 +400,42 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* MST Results Dashboard */}
+        {showMst && mstResponse && (
+          <div className="mb-3 rounded-md bg-green-50 p-3 text-xs">
+            <p className="mb-1 font-semibold text-gray-700">MST Results:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-gray-500">Connected:</span>
+                <span className={resultClassName}>
+                  {mstResponse.data.connected ? "Yes" : "No"}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Total Cost:</span>
+                <span className={resultClassName}>
+                  ${mstResponse.data.totalConstructionCost.toFixed(0)}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Total Nodes:</span>
+                <span className={resultClassName}>
+                  {mstResponse.data.totalNodes}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Selected Roads:</span>
+                <span className={resultClassName}>
+                  {mstResponse.data.selectedRoadCount}
+                </span>
+              </div>
+            </div>
+            {mstResponse.message && (
+              <p className="mt-2 text-gray-600">{mstResponse.message}</p>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         {(startId || endId) && (
           <button
@@ -360,8 +453,8 @@ function MapInner({ nodes, edges }: MapViewProps) {
         className="h-full w-full"
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
         {/* Roads */}
@@ -375,11 +468,23 @@ function MapInner({ nodes, edges }: MapViewProps) {
           />
         ))}
 
+        {/* MST */}
+        {showMst &&
+          mstPositions.map((pos, i) => (
+            <Polyline
+              key={`mst-${i}`}
+              positions={pos}
+              color="#16a34a"
+              weight={4}
+              opacity={0.9}
+            />
+          ))}
+
         {/* Shortest Path */}
         {pathPositions.length > 1 && (
           <Polyline
             positions={pathPositions}
-            color="#16a34a"
+            color="#3b82f6"
             weight={5}
             opacity={0.9}
           />
