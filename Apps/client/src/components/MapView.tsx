@@ -12,6 +12,7 @@ import type {
   MstResultDto,
   MaintenancePlanningResultDto,
   TrafficSignalResultDto,
+  TransitSchedulingResultDto,
 } from "@/types";
 import {
   getShortestPath,
@@ -21,6 +22,7 @@ import { getEmergencyRoute } from "@/services/routes/emergencyRouting";
 import { getCheapestNetwork } from "@/services/network/networkExpansion";
 import { getMaintenancePlan } from "@/services/maintenance/maintenanceStrategy";
 import { getSignalOptimization } from "@/services/traffic/signalOptimization";
+import { getTransitSchedule } from "@/services/transit/transitOperations";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -53,7 +55,8 @@ type AlgorithmType =
   | "astar"
   | "time-varying"
   | "maintenance"
-  | "signals";
+  | "signals"
+  | "transit";
 
 const PERIODS = ["morning", "evening", "night"];
 
@@ -71,7 +74,10 @@ function MapInner({ nodes, edges }: MapViewProps) {
     useState<AlgorithmResponse<MaintenancePlanningResultDto> | null>(null);
   const [signalResponse, setSignalResponse] =
     useState<AlgorithmResponse<TrafficSignalResultDto> | null>(null);
+  const [transitResponse, setTransitResponse] =
+    useState<AlgorithmResponse<TransitSchedulingResultDto> | null>(null);
   const [topN, setTopN] = useState<number>(10);
+  const [vehicles, setVehicles] = useState<number>(50);
   const [loading, setLoading] = useState(false);
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
   const [mstEdges, setMstEdges] = useState<Road[]>([]);
@@ -235,6 +241,22 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
   const handleResetSignals = () => {
     setSignalResponse(null);
+  };
+
+  const handleCalculateTransit = async () => {
+    setLoading(true);
+    try {
+      const res = await getTransitSchedule(vehicles);
+      setTransitResponse(res);
+    } catch {
+      // Silently handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetTransit = () => {
+    setTransitResponse(null);
   };
 
   // Marker click logic
@@ -421,15 +443,21 @@ function MapInner({ nodes, edges }: MapViewProps) {
           : signalResponse?.success
             ? `${signalResponse.data.summary.optimizedIntersections} intersections optimized`
             : "Select period and calculate"
-        : !startId
-          ? "Click a location to set start"
-          : !endId
-            ? "Click a location to set destination"
-            : loading
-              ? "Calculating..."
-              : pathNodes.length > 0 && pathDistance !== null
-                ? `Path: ${pathDistance.toFixed(1)} km`
-                : "No path found";
+        : algorithm === "transit"
+          ? loading
+            ? "Calculating transit schedule..."
+            : transitResponse?.success
+              ? `${transitResponse.data.activeRoutes} routes active, ${(transitResponse.data.coverageRatio * 100).toFixed(1)}% coverage`
+              : "Enter vehicles and calculate"
+          : !startId
+            ? "Click a location to set start"
+            : !endId
+              ? "Click a location to set destination"
+              : loading
+                ? "Calculating..."
+                : pathNodes.length > 0 && pathDistance !== null
+                  ? `Path: ${pathDistance.toFixed(1)} km`
+                  : "No path found";
 
   // Map intersection signals from API response with node lookup
   const intersectionSignals = useMemo(() => {
@@ -511,6 +539,32 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return null;
   };
 
+  // Get route allocation from transit response
+  const getRouteAllocationFromTransit = (road: Road) => {
+    if (!transitResponse?.success) return null;
+
+    for (const route of transitResponse.data.routeAllocations) {
+      // Try matching by route ID (if road has route info)
+      if (String(road.id) === route.routeId) {
+        return route;
+      }
+    }
+
+    return null;
+  };
+
+  // Get route color based on vehicle allocation
+  const getRouteAllocationColor = (
+    assignedVehicles: number,
+    efficiencyScore: number,
+  ) => {
+    // Color by efficiency: green = high efficiency, red = low efficiency
+    if (efficiencyScore > 80) return "#22c55e"; // green
+    if (efficiencyScore > 60) return "#3b82f6"; // blue
+    if (efficiencyScore > 40) return "#f59e0b"; // yellow
+    return "#ef4444"; // red
+  };
+
   const resultClassName = "ml-1 font-medium text-black";
   return (
     <div className="relative h-full w-full">
@@ -528,6 +582,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
               { key: "time-varying", label: "Time-Varying" },
               { key: "maintenance", label: "Maintenance" },
               { key: "signals", label: "Signals" },
+              { key: "transit", label: "Transit" },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -637,6 +692,40 @@ function MapInner({ nodes, edges }: MapViewProps) {
               </button>
               <button
                 onClick={handleResetSignals}
+                className="flex-1 rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                disabled={loading}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Transit Scheduling (only for transit) */}
+        {algorithm === "transit" && (
+          <div className="mb-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">
+              Vehicles
+            </p>
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              step="1"
+              value={vehicles}
+              onChange={(e) => setVehicles(Number(e.target.value))}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-black"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={handleCalculateTransit}
+                className="flex-1 rounded bg-purple-500 px-2 py-2 text-xs font-medium text-white hover:bg-purple-600"
+                disabled={loading}
+              >
+                Calculate
+              </button>
+              <button
+                onClick={handleResetTransit}
                 className="flex-1 rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200"
                 disabled={loading}
               >
@@ -1112,6 +1201,84 @@ function MapInner({ nodes, edges }: MapViewProps) {
           </div>
         )}
 
+        {/* Transit Scheduling Results Dashboard */}
+        {algorithm === "transit" && transitResponse && (
+          <div className="mb-3 rounded-md bg-purple-50 p-3 text-xs">
+            <p className="mb-1 font-semibold text-gray-700">
+              Transit Scheduling:
+            </p>
+            <p className="mb-2 text-xs text-gray-500 italic">
+              Note: Map visualization requires route-to-road mapping data.
+              Routes are shown in dashboard only.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-gray-500">Total Vehicles:</span>
+                <span className={resultClassName}>
+                  {transitResponse.data.totalVehicles}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Assigned:</span>
+                <span className={resultClassName}>
+                  {transitResponse.data.assignedVehicles} (
+                  {(
+                    (transitResponse.data.assignedVehicles /
+                      transitResponse.data.totalVehicles) *
+                    100
+                  ).toFixed(1)}
+                  %)
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Coverage:</span>
+                <span className={resultClassName}>
+                  {(transitResponse.data.coverageRatio * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Active Routes:</span>
+                <span className={resultClassName}>
+                  {transitResponse.data.activeRoutes}/
+                  {transitResponse.data.totalRoutes}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Passengers Served:</span>
+                <span className={resultClassName}>
+                  {transitResponse.data.estimatedPassengersServed.toLocaleString()}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Total Demand:</span>
+                <span className={resultClassName}>
+                  {transitResponse.data.totalDemand.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-purple-200">
+              <p className="font-semibold text-gray-700">Route Allocations:</p>
+              {transitResponse.data.routeAllocations
+                .sort((a, b) => b.assignedVehicles - a.assignedVehicles)
+                .slice(0, 5)
+                .map((route) => (
+                  <div key={route.routeId} className="mt-1">
+                    <span className="text-gray-600">
+                      {route.routeId} ({route.routeType}):{" "}
+                      {route.assignedVehicles} vehicles,{" "}
+                      {route.estimatedServed.toLocaleString()} passengers,{" "}
+                      {route.efficiencyScore.toLocaleString()}{" "}
+                      passengers/vehicle
+                    </span>
+                  </div>
+                ))}
+            </div>
+            {transitResponse.message && (
+              <p className="mt-2 text-gray-600">{transitResponse.message}</p>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         {(startId || endId) && (
           <button
@@ -1181,6 +1348,12 @@ function MapInner({ nodes, edges }: MapViewProps) {
               weight = 1;
               opacity = 0.3;
             }
+          } else if (algorithm === "transit") {
+            // Transit routes cannot be visualized on road map without route-to-road mapping
+            // Show all roads in gray
+            color = "#9ca3af";
+            weight = 2;
+            opacity = 0.4;
           }
 
           return (
