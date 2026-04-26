@@ -416,21 +416,30 @@ function MapInner({ nodes, edges }: MapViewProps) {
       .map((n) => [n.y, n.x] as [number, number]);
   }, [pathNodes]);
 
-  // Draw MST roads
-  const mstPositions = useMemo(() => {
+  // Draw MST roads - separate existing and potential
+  const mstRoadsData = useMemo(() => {
     return mstEdges
       .map((edge) => {
         const from = nodeLookup[edge.fromNodeId];
         const to = nodeLookup[edge.toNodeId];
         if (!from || !to) return null;
 
-        return [
-          [from.y, from.x],
-          [to.y, to.x],
-        ] as [number, number][];
+        return {
+          edge,
+          pos: [
+            [from.y, from.x],
+            [to.y, to.x],
+          ] as [number, number][],
+          isNewRoad: !edge.isExisting,
+        };
       })
-      .filter(Boolean) as [number, number][][];
+      .filter(Boolean) as { edge: Road; pos: [number, number][]; isNewRoad: boolean }[];
   }, [mstEdges, nodeLookup]);
+
+  // Legacy mstPositions for backward compatibility
+  const mstPositions = useMemo(() => {
+    return mstRoadsData.map((item) => item.pos);
+  }, [mstRoadsData]);
 
   const getMarkerIcon = (id: string) => {
     if (!icons) return undefined;
@@ -1189,7 +1198,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
               <div>
                 <span className="text-gray-500">Total Cost:</span>
                 <span className={resultClassName}>
-                  ${mstResponse.data.totalConstructionCost.toFixed(0)}
+                  ${mstResponse.data.totalConstructionCost.toLocaleString()}
                 </span>
               </div>
               <div>
@@ -1205,6 +1214,47 @@ function MapInner({ nodes, edges }: MapViewProps) {
                 </span>
               </div>
             </div>
+            
+            {/* Show breakdown of existing vs new roads */}
+            {mstRoadsData.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-green-200">
+                <p className="font-semibold text-gray-700 mb-1">Road Breakdown:</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#16a34a" }} />
+                    <span className="text-gray-600">
+                      Existing Roads: {mstRoadsData.filter(r => !r.isNewRoad).length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: "#f97316" }} />
+                    <span className="text-gray-600">
+                      New Roads (Potential): {mstRoadsData.filter(r => r.isNewRoad).length}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Show new roads with construction costs */}
+                {mstRoadsData.filter(r => r.isNewRoad).length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-orange-200">
+                    <p className="font-semibold text-orange-700 mb-1">New Infrastructure:</p>
+                    {mstRoadsData
+                      .filter(r => r.isNewRoad)
+                      .map((roadData, idx) => (
+                        <div key={idx} className="text-[10px] text-gray-600 mb-1 flex justify-between">
+                          <span>
+                            {nodeLookup[roadData.edge.fromNodeId]?.name} → {nodeLookup[roadData.edge.toNodeId]?.name}
+                          </span>
+                          <span className="font-semibold text-orange-600">
+                            ${(roadData.edge.constructionCost || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             {mstResponse.message && (
               <p className="mt-2 text-gray-600">{mstResponse.message}</p>
             )}
@@ -1522,15 +1572,20 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
         {/* MST */}
         {showMst &&
-          mstPositions.map((pos, i) => (
-            <Polyline
-              key={`mst-${i}`}
-              positions={pos}
-              color="#16a34a"
-              weight={4}
-              opacity={0.9}
-            />
-          ))}
+          mstRoadsData.map((roadData, i) => {
+            // Existing roads: green, New roads: orange
+            const color = roadData.isNewRoad ? "#f97316" : "#16a34a";
+            const weight = roadData.isNewRoad ? 5 : 4;
+            return (
+              <Polyline
+                key={`mst-${i}-${roadData.isNewRoad ? 'new' : 'existing'}`}
+                positions={roadData.pos}
+                color={color}
+                weight={weight}
+                opacity={0.9}
+              />
+            );
+          })}
 
         {/* Shortest Path */}
         {pathPositions.length > 1 && (

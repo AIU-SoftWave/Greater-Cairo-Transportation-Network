@@ -20,7 +20,6 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
         }
 
         // 2. Prepare edges: Prim's requires undirected edges with custom weights
-
         Dictionary<long, UndirectedEdge> edgeByRoadId = [];
         foreach (GraphEdge edge in graph.Edges)
         {
@@ -29,13 +28,11 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
                 continue;
             }
 
-
             long roadId = Math.Abs(edge.Id);
             if (edgeByRoadId.ContainsKey(roadId))
             {
                 continue;
             }
-
 
             GraphNode from = graph.NodeIndex[edge.FromNodeId];
             GraphNode to = graph.NodeIndex[edge.ToNodeId];
@@ -46,7 +43,6 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             {
                 continue;
             }
-
 
             (string a, string b) = NormalizePair(edge.FromNodeId, edge.ToNodeId);
             edgeByRoadId[roadId] = new UndirectedEdge(a, b, cost, edge);
@@ -77,7 +73,6 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             frontier.Enqueue(e, e.Cost);
         }
 
-
         while (frontier.Count > 0 && visited.Count < graph.NodeCount)
         {
             UndirectedEdge candidate = frontier.Dequeue();
@@ -93,7 +88,6 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             }
 
             // The node we are now connecting to the network
-
             string next = aVisited ? candidate.B : candidate.A;
             if (!visited.Add(next))
             {
@@ -101,9 +95,12 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             }
             metrics.MarkDiscovered(next);
 
-
             selectedEdges.Add(candidate.Representative);
-            totalCost += candidate.Cost;
+            
+            // IMPORTANT: Count actual construction cost (not the weight used for Prim's selection)
+            // This way we show the real cost to build selected roads
+            double actualCost = candidate.Representative.IsExisting ? 0 : (candidate.Representative.ConstructionCost ?? 0);
+            totalCost += actualCost;
 
             // Add new possible roads from the newly connected node to the frontier
             foreach (UndirectedEdge e in adjacency[next])
@@ -112,7 +109,6 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
                 {
                     continue;
                 }
-
 
                 frontier.Enqueue(e, e.Cost);
             }
@@ -132,30 +128,58 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
     // Weight Calculation: Lower weight means higher priority for construction
     private static double GetMstWeight(GraphEdge edge, GraphNode from, GraphNode to)
     {
-        // Existing roads are "free" because they don't need building
-        double baseCost = edge.IsExisting ? 0 : (edge.ConstructionCost ?? double.PositiveInfinity);
-        if (double.IsInfinity(baseCost))
-        {
-            return baseCost;
-        }
-
-
-        double priorityMultiplier = 1.0;
+        // Strategy: Balance between using existing roads and expanding with potential roads
+        // Use a blended approach that considers distance, capacity, condition, and construction cost
         
-        // Strategy: Reduce cost weight for high-impact roads so Prim's picks them first
-        if (from.IsCritical || to.IsCritical)
+        double weight;
+        
+        if (edge.IsExisting)
         {
-            priorityMultiplier -= 0.25; // Critical facilities
+            // For existing roads: Use distance + capacity efficiency as weight
+            // This keeps them low-cost but not zero, allowing comparison with potential roads
+            // Weight = (Distance / Capacity) - lower means better efficiency
+            weight = edge.Distance / edge.Capacity;
+            
+            // Apply slight adjustment based on condition
+            if (edge.Condition.HasValue && edge.Condition > 0)
+            {
+                weight = weight / (1 + (edge.Condition.Value / 10.0)); // Better condition = lower weight
+            }
+        }
+        else
+        {
+            // For potential roads: Use construction cost normalized by distance and capacity
+            // This balances cost efficiency with network capacity
+            double baseCost = edge.ConstructionCost ?? double.PositiveInfinity;
+            
+            if (double.IsInfinity(baseCost))
+            {
+                return baseCost;
+            }
+            
+            // Normalize cost by distance and capacity for fair comparison
+            // Weight = (Cost / Distance) / Capacity - lower means better value
+            weight = (baseCost / Math.Max(edge.Distance, 0.1)) / edge.Capacity;
+            
+            // Apply strategic priority multipliers for critical paths
+            double priorityMultiplier = 1.0;
+            
+            // Critical facilities: significantly reduce weight to encourage selection
+            if (from.IsCritical || to.IsCritical)
+            {
+                priorityMultiplier *= 0.5; // 50% reduction for critical connections
+            }
+            
+            // High-population areas: reduce weight to ensure good connectivity
+            if ((from.Population ?? 0) > 350000 || (to.Population ?? 0) > 350000)
+            {
+                priorityMultiplier *= 0.7; // 30% reduction for major population centers
+            }
+            
+            weight = weight * priorityMultiplier;
         }
 
-
-        if ((from.Population ?? 0) > 100000 || (to.Population ?? 0) > 100000)
-        {
-            priorityMultiplier -= 0.2; // High density
-        }
-
-
-        return baseCost * Math.Max(0.1, priorityMultiplier);
+        return weight;
     }
 
     private static (string a, string b) NormalizePair(string x, string y)
