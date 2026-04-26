@@ -80,8 +80,8 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
 
         metrics.MarkExpanded();
 
-        // Generate signal timings based on congestion priority
-        List<SignalTimingDto> signalTimings = GenerateSignalTimings(prioritizedRoads);
+        // Generate intersection signal plans based on congestion priority
+        List<IntersectionSignalPlan> intersectionPlans = GenerateIntersectionSignalPlans(prioritizedRoads);
 
         int intersectionsAnalyzed = analyzedRoads
             .Select(r => r.IntersectionLocationId)
@@ -99,11 +99,11 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
             analyzedRoads.Count,
             intersectionsAnalyzed,
             intersectionsWithSignals,
-            signalTimings);
-        string message = signalTimings.Count > 0
+            intersectionPlans);
+        string message = intersectionPlans.Count > 0
             ? analyzeAllIntersections
-                ? $"Traffic signals optimized for {normalizedPeriod}: analyzed all intersections and generated {signalTimings.Count} road-level timings."
-                : $"Traffic signals optimized for {normalizedPeriod}: {signalTimings.Count} roads prioritized by congestion."
+                ? $"Traffic signals optimized for {normalizedPeriod}: analyzed all intersections and generated {intersectionPlans.Count} intersection plans."
+                : $"Traffic signals optimized for {normalizedPeriod}: {intersectionPlans.Count} intersections prioritized by congestion."
             : "No signal optimizations needed - traffic flow within normal limits.";
 
         return CreateSuccessResponse(result, message, metrics);
@@ -121,7 +121,7 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
                 RoadId = tf.Road.Id,
                 FromLocationName = tf.Road.FromLocation.Name,
                 ToLocationName = tf.Road.ToLocation.Name,
-                IntersectionLocationId = tf.Road.ToLocationId,
+                IntersectionLocationId = tf.Road.ToLocation.Name,
                 tf.Road.Capacity
             })
             .Select(g => new RoadCongestion(
@@ -137,41 +137,95 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
         return roads;
     }
 
-    private static List<SignalTimingDto> GenerateSignalTimings(List<RoadCongestion> prioritizedRoads)
+    private static List<IntersectionSignalPlan> GenerateIntersectionSignalPlans(List<RoadCongestion> prioritizedRoads)
     {
-        List<SignalTimingDto> timings = [];
-        int rank = 1;
+        // Group roads by intersection (ToLocation)
+        var intersectionGroups = prioritizedRoads
+            .GroupBy(r => r.IntersectionLocationId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        foreach (RoadCongestion road in prioritizedRoads)
+        var plans = new List<IntersectionSignalPlan>();
+
+        foreach (KeyValuePair<string, List<RoadCongestion>> kvp in intersectionGroups)
         {
-            // Greedy allocation: higher congestion = longer green light
-            // Base green: 30 seconds, max additional: 90 seconds based on congestion
-            int additionalGreen = (int)((road.CongestionRatio - 0.5) * 180);
-            int greenDuration = 30 + Math.Clamp(additionalGreen, 0, 90);
+            string intersectionId = kvp.Key;
+            List<RoadCongestion> roads = kvp.Value;
 
-            // Cycle time: 60 to 120 seconds based on congestion
-            int cycleTime = Math.Min(60 + rank * 5, 120);
+            // Sort roads by congestion ratio descending
+            var sortedRoads = roads.OrderByDescending(r => r.CongestionRatio).ToList();
 
-            string reason = road.CongestionRatio > 1.0
-                ? $"Critical congestion ({road.CongestionRatio:P0} of capacity) - maximum green time allocated"
-                : $"High congestion ({road.CongestionRatio:P0} of capacity) - priority green time";
+            // Calculate cycle time based on total congestion at this intersection
+            // Higher total congestion = longer cycle time (60-120 seconds)
+            double totalCongestion = sortedRoads.Sum(r => r.CongestionRatio);
+            int cycleTime = Math.Clamp(60 + (int)(totalCongestion * 10), 60, 120);
 
-            timings.Add(new SignalTimingDto
+            // Calculate green time allocation based on congestion priority
+            // Higher congestion = proportionally more green time
+            List<(RoadCongestion road, int greenTime)> greenTimes = new List<(RoadCongestion, int)>();
+            int rank = 1;
+
+            foreach (RoadCongestion road in sortedRoads)
             {
-                RoadId = road.RoadId,
-                FromLocation = road.FromLocation,
-                ToLocation = road.ToLocation,
-                CurrentFlow = road.Flow,
-                RoadCapacity = road.Capacity,
-                CongestionRatio = road.CongestionRatio,
-                PriorityRank = rank++,
-                RecommendedGreenDurationSeconds = greenDuration,
-                RecommendedCycleTimeSeconds = cycleTime,
-                Reason = reason
+                // Base green time proportional to congestion ratio
+                // Minimum 10 seconds, scales with congestion
+                double congestionWeight = road.CongestionRatio / totalCongestion;
+                int rawGreenTime = (int)(cycleTime * congestionWeight);
+
+                // Ensure minimum green time (10s) and cap at reasonable max
+                int greenTime = Math.Clamp(rawGreenTime, 10, cycleTime / 2);
+
+                greenTimes.Add((road, greenTime));
+                rank++;
+            }
+
+            // Normalize green times to sum exactly to cycle time
+            int totalGreen = greenTimes.Sum(g => g.greenTime);
+            if (totalGreen != cycleTime)
+            {
+                // Adjust proportionally
+                for (int i = 0; i < greenTimes.Count; i++)
+                {
+                    (RoadCongestion road, int originalGreen) = greenTimes[i];
+                    double ratio = (double)originalGreen / totalGreen;
+                    int adjustedGreen = (int)(cycleTime * ratio);
+                    greenTimes[i] = (road, adjustedGreen);
+                }
+
+                // Handle rounding errors by adding/subtracting from the highest priority road
+                int finalTotal = greenTimes.Sum(g => g.greenTime);
+                int diff = cycleTime - finalTotal;
+                if (diff != 0)
+                {
+                    (RoadCongestion road, int green) = greenTimes[0];
+                    greenTimes[0] = (road, green + diff);
+                }
+            }
+
+            // Create signal phases
+            var phases = new List<SignalPhaseDto>();
+            int priority = 1;
+
+            foreach ((RoadCongestion road, int greenTime) in greenTimes)
+            {
+                phases.Add(new SignalPhaseDto
+                {
+                    From = road.FromLocation ?? "Unknown",
+                    To = road.ToLocation ?? "Unknown",
+                    CongestionPercent = road.CongestionRatio * 100,
+                    Priority = priority++,
+                    GreenTimeSeconds = greenTime
+                });
+            }
+
+            plans.Add(new IntersectionSignalPlan
+            {
+                Name = intersectionId,
+                CycleTimeSeconds = cycleTime,
+                Roads = phases
             });
         }
 
-        return timings;
+        return plans;
     }
 
     private static TrafficSignalResultDto BuildResult(
@@ -179,25 +233,27 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
         int roadsAnalyzed,
         int intersectionsAnalyzed,
         int intersectionsWithSignalRecommendations,
-        List<SignalTimingDto> signalTimings)
+        List<IntersectionSignalPlan> intersectionPlans)
     {
-        double totalCongestion = signalTimings.Sum(s => s.CongestionRatio);
+        // Estimate wait time reduction based on total congestion and number of optimized intersections
+        double totalCongestion = intersectionPlans
+            .Sum(p => p.Roads.Sum(r => r.CongestionPercent) / 100);
 
-        // Estimate wait time reduction: each optimized signal reduces wait by ~10-20%
-        double estimatedReduction = signalTimings.Count > 0
-            ? signalTimings.Average(s => Math.Min((s.CongestionRatio - 0.5) * 30, 20))
+        double estimatedReduction = intersectionPlans.Count > 0
+            ? Math.Min(totalCongestion * 2, 15) // Cap at 15% reduction
             : 0;
 
         return new TrafficSignalResultDto
         {
             Period = period,
-            RoadsAnalyzed = roadsAnalyzed,
-            IntersectionsAnalyzed = intersectionsAnalyzed,
-            IntersectionsWithSignalRecommendations = intersectionsWithSignalRecommendations,
-            SignalRecommendations = signalTimings.Count,
-            TotalCongestionScore = totalCongestion,
-            EstimatedWaitTimeReductionPercent = estimatedReduction,
-            SignalTimings = signalTimings
+            Summary = new SignalSummary
+            {
+                RoadsAnalyzed = roadsAnalyzed,
+                IntersectionsAnalyzed = intersectionsAnalyzed,
+                OptimizedIntersections = intersectionsWithSignalRecommendations,
+                EstimatedWaitTimeReductionPercent = estimatedReduction
+            },
+            Intersections = intersectionPlans
         };
     }
 
@@ -209,16 +265,17 @@ public class TrafficSignalService(TransportationDbContext dbContext) : ITrafficS
             new TrafficSignalResultDto
             {
                 Period = period,
-                RoadsAnalyzed = analyzedRoads.Count,
-                IntersectionsAnalyzed = analyzedRoads
-                    .Select(r => r.IntersectionLocationId)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Count(),
-                IntersectionsWithSignalRecommendations = 0,
-                SignalRecommendations = 0,
-                TotalCongestionScore = 0,
-                EstimatedWaitTimeReductionPercent = 0,
-                SignalTimings = []
+                Summary = new SignalSummary
+                {
+                    RoadsAnalyzed = analyzedRoads.Count,
+                    IntersectionsAnalyzed = analyzedRoads
+                        .Select(r => r.IntersectionLocationId)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Count(),
+                    OptimizedIntersections = 0,
+                    EstimatedWaitTimeReductionPercent = 0
+                },
+                Intersections = new List<IntersectionSignalPlan>()
             },
             $"No congested roads found for period '{period}'.",
             metrics);
