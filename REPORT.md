@@ -11,6 +11,8 @@
 
 ---
 
+<div style="page-break-after: always;"></div>
+
 ## Table of Contents
 
 1. [Executive Summary](#1-executive-summary)
@@ -47,27 +49,27 @@
     - [Appendix A – API Reference](#appendix-a--api-reference)
     - [Appendix B – Dataset Summary](#appendix-b--dataset-summary)
 
----
+<div style="page-break-after: always;"></div>
 
 ## 1. Executive Summary
 
 This report documents the design, implementation, and evaluation of a **transportation optimization system** built for the Greater Cairo metropolitan area. The system implements a suite of seven algorithms—ranging from graph search and minimum spanning trees to dynamic programming and greedy heuristics—to solve real-world urban challenges such as traffic congestion, infrastructure development, and emergency response planning.
 
-The project is realized as a **modular monolith** backend using **.NET 10** and **ASP.NET Core**, supported by an interactive **Next.js** frontend map. The system analyzes a network of **35 locations** and **74 road segments**, providing optimized solutions for routing, resource allocation, and network design in milliseconds.
+The project is realized as a **modular monolith** backend using **.NET 10** and **ASP.NET Core**, supported by an interactive **Next.js** frontend map. The system analyzes a network of **35 locations** (neighborhoods like Maadi and Heliopolis, and facilities like Cairo Airport and University Hospital) and **74 road segments**. By applying efficient data structures and caching, the system provides optimized solutions for routing, resource allocation, and network design in milliseconds, capable of handling Greater Cairo's dynamic traffic conditions.
 
 ---
 
 ## 2. Project Context & Problem Statement
 
 Cairo is one of the world's most populous metropolitan areas, facing unique logistical challenges:
-- **Congestion**: Extreme traffic variance between morning (07:00–09:00) and evening (16:00–19:00) peaks.
-- **Infrastructure Decay**: A large number of roads requiring maintenance with limited municipal budgets.
-- **Urban Growth**: The need to connect new developments (e.g., New Cairo, 6th October) cost-effectively.
-- **Emergency Services**: A critical need to prioritize ambulance and fire truck routing to facilities like Cairo University Hospital.
+- **Massive Congestion**: Extreme traffic variance between morning (07:00–09:00) and evening (16:00–19:00) peaks, with multipliers reaching 1.25x base travel time.
+- **Infrastructure Decay**: A large number of roads requiring maintenance, where condition scores range from 1 (critical) to 10 (new).
+- **Urban Growth**: The need to connect new developments like New Sinai and 6th October cost-effectively, requiring an MST approach for minimum construction expenditure.
+- **Emergency Services**: A critical need to prioritize ambulance and fire truck routing, especially to "is_critical" facilities like hospitals and government centers.
 
-The objective of this project is to apply theoretical algorithmic concepts covered in CSE112 to these practical, real-world problems.
+The objective of this project is to apply theoretical algorithmic concepts (Graph Theory, DP, Greedy) covered in CSE112 to these practical, real-world problems.
 
----
+<div style="page-break-after: always;"></div>
 
 ## 3. System Architecture & Design
 
@@ -119,11 +121,13 @@ graph TD
 
 To maintain high code quality and scalability, the server is organized as a **modular monolith**. Each domain owns its controllers, models, and services:
 
-- **NetworkManagement**: Locations and Roads CRUD.
-- **Routing**: Dijkstra, A*, Time-Varying, and MST strategies.
-- **TrafficControl**: Traffic data management and Greedy signal timing.
-- **MaintenancePlanning**: 0/1 Knapsack optimization logic.
-- **TransitScheduling**: Vehicle allocation DP logic.
+- **NetworkManagement**: Locations and Roads CRUD. (`LocationService`, `RoadService`)
+- **Routing**: Dijkstra, A*, Time-Varying, and MST strategies. (`DijkstraService`, `AStarService`, `NetworkExpansionService`)
+- **TrafficControl**: Traffic data management and Greedy signal timing. (`TrafficService`, `TrafficSignalService`)
+- **MaintenancePlanning**: 0/1 Knapsack optimization logic. (`MaintenancePlanningService`)
+- **TransitScheduling**: Vehicle allocation DP logic. (`TransitSchedulingService`)
+
+<div style="page-break-after: always;"></div>
 
 ### 3.3 Data Model & Database Schema
 
@@ -188,44 +192,48 @@ The in-memory graph used by all algorithm services is built by the `GraphService
 
 ### 3.5 Memoization and Caching Strategy
 
-**Requirement addressed:** *Apply memoization techniques to improve performance.*
-
 The `GraphService` implements a caching layer using `.NET IMemoryCache`.
-- **First Request (Cache Miss)**: The service queries the SQLite database, performs the directed-edge expansion, and builds the adjacency list.
-- **Subsequent Requests (Cache Hit)**: The service returns the pre-built graph in **< 1ms**.
-- **TTL**: A 30-second Time-To-Live (TTL) is used, ensuring that data updates (like road closures in simulation) are reflected quickly while still providing massive speedup for concurrent users.
+- **Memoization Principle**: The result of expensive graph construction (joining locations, roads, and traffic data) is stored.
+- **First Request**: The service queries the SQLite database, performs directed-edge expansion, and builds the adjacency list.
+- **Subsequent Requests**: The service returns the pre-built graph in **< 1ms**.
+- **TTL**: A 30-second TTL ensures data updates (like road closures in simulation) are reflected quickly while still providing massive speedup for concurrent users.
 
----
+<div style="page-break-after: always;"></div>
 
 ## 4. Detailed Service Explanations
 
 ### 4.1 Network Management Service
-Acts as the source of truth for the Cairo geography.
-- **Validation**: Ensures that all road connections point to valid locations.
-- **Geospatial Mapping**: Manages the coordinate system (Longitude/Latitude) used by the A* heuristic.
+Responsible for maintaining the "Digital Twin" of Cairo.
+- **Topology Cleanup**: Identifies and handles isolated nodes. For example, medical facilities are linked to the main network via high-cost virtual edges to ensure MST connectivity.
+- **Geospatial Mapping**: Manages the mapping between internal Node IDs (e.g., "1", "F1") and real-world coordinates.
 
 ### 4.2 Routing & Pathfinding Service
-A multi-strategy routing engine that exposes common interfaces for different algorithmic goals. It handles the "Path Reconstruction" phase—traversing the predecessor map from destination to source to produce the final road list.
+Encapsulates all shortest-path logic.
+- **Strategy Pattern**: Implements `IDijkstraRoutePlanner`, `IAStarPathFinder`, and `ITimeVaryingRoutePlanner`.
+- **Path Reconstruction**: After the search loop, it backtracks through the `previousRoad` dictionary to build the precise geometry for the frontend.
 
 ### 4.3 Traffic & Signal Control Service
-Calculates signal timings based on congestion.
-- **Real-time Signal Plans**: Generates plans for each intersection based on traffic density.
-- **Preemption Logic**: If a road is part of an active emergency route, this service flags it to receive prioritized "Green Phases."
+Calculates signal timings based on the `TrafficFlow` entity.
+- **Dynamic Allocation**: Adjusts cycle times (60s to 120s) based on the total congestion at an intersection.
+- **Preemption Integration**: Listens to the `SimulationService` to detect if an emergency vehicle is approaching, overriding standard greedy timing.
 
 ### 4.4 Maintenance Planning Service
-Solves the "Optimization under Constraints" problem for city infrastructure. It prepares the input set for the Knapsack DP by combining road condition metadata with priority rankings.
+Solves the infrastructure budgeting problem.
+- **Input Filtering**: Selects roads with `Condition < 7` as candidates for repair.
+- **Prioritization**: Combines the database `Priority` with a `Condition Loss` factor to calculate the "Value" used in the Knapsack DP.
 
 ### 4.5 Transit Scheduling Service
-Focuses on mass transit efficiency.
-- **Demand Analysis**: Intersects `TransportDemand` with current `RouteStops` to calculate the "Value per Vehicle" for each line.
-- **Hub Analysis**: Identifies locations where multiple metro/bus lines cross, suggesting these as high-frequency transfer points.
+Focuses on maximizing the utility of Cairo's public transportation.
+- **Vehicle Allocation**: Calculates the optimal distribution of buses and metro cars across 8 major routes.
+- **Hub Detection**: Identifies "Transfer Hubs" (locations with > 1 route stop) and prioritizes their connectivity.
 
 ### 4.6 Simulation & Chaos Engineering Service
-Manages the "Dynamic Environment" of the city.
-- **Incident State**: Persists the list of "Closed" roads which are then filtered out of the graph by the `GraphService`.
-- **Weather State**: Simulates environmental penalties (Rain/Storm) that affect travel time globally.
+The system's real-time state manager.
+- **Incident Tracking**: Maintains a `HashSet<long>` of road IDs that are currently "Closed."
+- **Environmental Persistence**: Tracks current `SimulationWeather` (Clear, Rain, Storm) and its corresponding time multipliers.
+- **Metrics Recording**: Captures `AlgorithmPerformanceMetric` objects (execution time, visited nodes) for performance analysis.
 
----
+<div style="page-break-after: always;"></div>
 
 ## 5. Algorithm Implementations & Analyses
 
@@ -233,30 +241,39 @@ Manages the "Dynamic Environment" of the city.
 
 **Requirement:** *Standard route planning between Cairo's neighborhoods.*
 
-- **Goal**: Find the absolute shortest distance between two points.
-- **Logic**: A greedy strategy that "relaxes" edges. It maintains a set of visited nodes and a priority queue of candidate nodes sorted by distance from the source.
-- **Pseudocode**:
-```text
-function Dijkstra(Graph, Start, Target):
-    dist[all nodes] = infinity
-    dist[Start] = 0
-    PQ.push(Start, 0)
+Dijkstra's algorithm finds the minimum-cost path from a source node to all reachable nodes using a greedy relaxation strategy.
 
-    while PQ is not empty:
-        u = PQ.pop_min()
-        if u == Target: break
+**Logic Details**:
+1. Initialize `dist[Start] = 0`, all others to `infinity`.
+2. Push `(Start, 0)` into a Min-Heap (Priority Queue).
+3. While PQ is not empty:
+   - Dequeue node `u` with minimum distance.
+   - If `u` is visited, skip. Mark `u` visited.
+   - For each neighbor `v` of `u`:
+     - If `dist[u] + weight(u,v) < dist[v]`:
+       - Update `dist[v]`, record `prev[v] = u`.
+       - Enqueue `(v, dist[v])`.
 
-        for each neighbor v of u:
-            new_dist = dist[u] + weight(u, v)
-            if new_dist < dist[v]:
-                dist[v] = new_dist
-                prev[v] = u
-                PQ.push(v, dist[v])
+**Code Implementation (`DijkstraRoutePlanner.cs`)**:
+```csharp
+var queue = new PriorityQueue<string, double>();
+queue.Enqueue(fromNodeId, 0);
+while (queue.Count > 0) {
+    string curr = queue.Dequeue();
+    foreach (long edgeId in graph.AdjacencyList[curr]) {
+        var edge = graph.EdgeIndex[edgeId];
+        double newDist = distances[curr] + edge.Distance;
+        if (newDist < distances[edge.ToNodeId]) {
+            distances[edge.ToNodeId] = newDist;
+            queue.Enqueue(edge.ToNodeId, newDist);
+        }
+    }
+}
 ```
 
-**Theoretical Analysis**:
-- **Greedy Property**: Dijkstra is optimal because it always expands the node with the minimum current distance.
-- **Complexity**: $O((V+E) \log V)$ with a binary heap.
+**Complexity**:
+- **Time**: $O((V+E) \log V)$
+- **Space**: $O(V+E)$
 
 ---
 
@@ -264,37 +281,37 @@ function Dijkstra(Graph, Start, Target):
 
 **Requirement:** *A\* search algorithm for emergency vehicle routing.*
 
-- **Goal**: Guided pathfinding to minimize node expansion.
-- **Heuristic**: Euclidean distance $h(n) = \sqrt{(n.x-t.x)^2 + (n.y-t.y)^2}$.
-- **Logic**: Priority $f(n) = g(n) + h(n)$. This directs the search "cone" toward the target.
+A* improves on Dijkstra by using a **Heuristic $h(n)$** that estimates the remaining distance to the goal.
 
-```mermaid
-graph LR
-    A[Start] --> B[Calculate f = g + h]
-    B --> C{Target Reached?}
-    C -- No --> D[Expand Neighbors]
-    D --> B
-    C -- Yes --> E[Return Optimal Path]
-```
+**Mathematical Formulation**:
+$$f(n) = g(n) + h(n)$$
+Where:
+- $g(n)$: Actual cost from start to $n$.
+- $h(n)$: Euclidean distance from $n$ to Target.
+$$h(n) = \sqrt{(n.x - t.x)^2 + (n.y - t.y)^2}$$
 
-**Theoretical Analysis**:
-- **Admissibility**: The Euclidean distance is the straight-line "crow flies" distance; road distance is always $\ge$ straight-line. Thus, the heuristic never overestimates, and A* is guaranteed to be optimal.
-- **Complexity**: $O(E \log V)$ in practice, but significantly faster than Dijkstra in average cases.
+**Admissibility**: The heuristic is admissible because the straight-line distance is always $\le$ the actual road distance. This guarantees that A* always finds the shortest path.
 
----
+**Complexity**: $O(E \log V)$ worst case, but significantly lower "Average Case" node expansion.
+
+<div style="page-break-after: always;"></div>
 
 ### 5.3 Time-Varying Dijkstra (Traffic-Aware)
 
 **Requirement:** *Account for Cairo's time-varying traffic conditions.*
 
-- **Goal**: Minimize travel time rather than physical distance.
-- **Dynamic Weighting**:
-    $$EffectiveWeight = Distance \times PeriodMult \times WeatherPen \times TrafficAdj(Flow)$$
-- **Traffic Adjustment Tiers**:
-    - $\le 0.75$ Ratio: 1.0x (Free)
-    - $\le 1.00$ Ratio: 1.1x (Light)
-    - $\le 1.25$ Ratio: 1.2x (Heavy)
-    - $> 1.25$ Ratio: 1.35x (Gridlock)
+This algorithm dynamically adjusts edge weights based on traffic flow data from the `traffic_flow` table and the current simulation weather.
+
+**Effective Weight Formula**:
+$$W_{eff} = D \times M_{period} \times M_{weather} \times f(Ratio_{flow})$$
+
+**Traffic Adjustment Function $f(r)$**:
+- If $r \le 0.75$: $1.0$ (Free Flow)
+- If $r \le 1.00$: $1.1$ (Noticeable traffic)
+- If $r \le 1.25$: $1.2$ (Heavy congestion)
+- Else: $1.35$ (Gridlock)
+
+**Impact**: During `EVENING` rush hour (multiplier 1.25), a 10km road with heavy traffic is perceived as $10 \times 1.25 \times 1.2 = 15.0$ km, forcing the algorithm to find alternative routes on less crowded roads.
 
 ---
 
@@ -302,14 +319,15 @@ graph LR
 
 **Requirement:** *Design a cost-efficient road network connecting all areas.*
 
-- **Goal**: Minimize construction budget for city-wide connectivity.
-- **Logic**: Grows a tree from a root, adding the cheapest crossing edge at each step.
-- **Constraints**:
-    - Existing Roads cost = 0.
-    - Potential Roads cost = `construction_cost`.
-    - **Population Priority**: Cost is multiplied by 0.8 for connections to nodes with population > 100k, favoring high-density connectivity.
+Prim's algorithm is used to design the city's future expansion, ensuring all 35 locations are connected with minimum construction cost.
 
-**Complexity**: $O(E \log V)$.
+**Weight Calculation Strategy**:
+- **Existing Roads**: Weight = $0$ (already paid for).
+- **Potential Roads**: Weight = `construction_cost`.
+- **Population Priority**: If `Population > 100,000`, the weight is reduced by 20%, ensuring dense areas are connected first.
+- **Critical Facility Priority**: Connections to hospitals/government centers receive a 25% weight reduction.
+
+**Implementation**: Uses a Priority Queue of undirected edges. Ensures no cycles by maintaining a `visited` set of nodes.
 
 ---
 
@@ -317,19 +335,31 @@ graph LR
 
 **Requirement:** *Resource allocation problem for road maintenance.*
 
-- **Goal**: Maximize priority score within a finite budget $B$.
-- **State**: $dp[i][b] = \max(dp[i-1][b], dp[i-1][b - cost[i]] + priority[i])$.
-- **Optimization**: Budget is normalized to "Millions" to keep the DP table size manageable ($O(N \times 700)$ instead of $O(N \times 700,000,000)$).
+Solves the problem: "Given $N$ roads needing repair and Budget $B$, maximize the total priority score."
 
----
+**DP Recurrence**:
+$$dp[i, b] = \begin{cases} dp[i-1, b] & \text{if } cost[i] > b \\ \max(dp[i-1, b], dp[i-1, b-cost[i]] + value[i]) & \text{otherwise} \end{cases}$$
+
+**Optimization (Budget Normalization)**:
+To prevent the DP table from consuming gigabytes of memory, we treat 1 Million EGP as 1 budget unit. A 150M EGP budget becomes an index of 150.
+
+<div style="page-break-after: always;"></div>
 
 ### 5.6 Bounded Knapsack DP (Transit Scheduling)
 
 **Requirement:** *Optimize bus and metro schedules to maximize coverage.*
 
-- **Goal**: Distribute $V$ vehicles across $M$ routes.
-- **Logic**: For each route, we evaluate the marginal utility of adding $k$ vehicles.
-- **Recurrence**: $dp[i][v] = \max_{0 \le k \le cap_i} \{ dp[i-1][v-k] + k \cdot ValuePerVehicle_i \}$.
+Allocates a limited fleet of vehicles across metro and bus routes to serve the maximum number of daily passengers.
+
+**Logic**:
+- Each route $i$ has a daily demand $D_i$ and a capacity $C_i$.
+- $ValuePerVehicle_i = D_i / C_i$.
+- The DP decides how many vehicles $k$ to assign to route $i$.
+
+**Recurrence**:
+$$dp[i, v] = \max_{0 \le k \le \min(v, cap_i)} \{ dp[i-1, v-k] + k \times ValuePerVehicle_i \}$$
+
+**Backtracking**: A `choice[i, v]` table stores the value of $k$ selected at each step, allowing the algorithm to return the exact number of vehicles for each metro line.
 
 ---
 
@@ -337,31 +367,37 @@ graph LR
 
 **Requirement:** *Greedy approach for real-time traffic signal optimization.*
 
-- **Logic**:
-    1. Filter roads at intersection with Congestion > 50%.
-    2. Sort by `CongestionRatio` DESC.
-    3. Assign Green Time proportionally to cycle (60-120s).
-    4. **Emergency**: If road is "Emergency Route," force 40% Green phase.
+Optimizes intersection wait times by allocating green lights based on real-time traffic density.
 
----
+**Heuristic Strategy**:
+1. Sort incoming roads by `CongestionRatio` ($Flow / Capacity$).
+2. Assign Green Time proportionally: $T_{green} = T_{cycle} \times (Ratio_{road} / \sum Ratio_{total})$.
+3. **Constraint**: Minimum 10s green phase to prevent starvation.
+4. **Emergency Priority**: Roads marked as "Emergency Route" by an active A* search are moved to the top of the sort and given a fixed 40% of the cycle time.
+
+**Analysis**: While greedy choice is locally optimal for a single intersection, it may not be globally optimal for a corridor. However, the $O(R \log R)$ speed makes it perfect for real-time Cairo traffic adjustments.
+
+<div style="page-break-after: always;"></div>
 
 ## 6. Complexity Analysis Summary
 
-| Algorithm | Category | Time Complexity | Space Complexity |
-|-----------|----------|-----------------|------------------|
-| Dijkstra | Graph | $O((V+E) \log V)$ | $O(V+E)$ |
-| A* | Graph | $O(E \log V)$ | $O(V+E)$ |
-| Time-Varying | Graph | $O(E \log V)$ | $O(V+E)$ |
-| Prim's MST | Graph | $O(E \log V)$ | $O(V+E)$ |
-| Knapsack DP | DP | $O(n \cdot B)$ | $O(n \cdot B)$ |
-| Transit DP | DP | $O(n \cdot V \cdot k)$ | $O(n \cdot V)$ |
-| Greedy Signal | Greedy | $O(R \log R)$ | $O(R+I)$ |
+| Algorithm | Category | Time Complexity | Space Complexity | Use Case |
+|-----------|----------|-----------------|------------------|----------|
+| **Dijkstra** | Graph | $O((V+E) \log V)$ | $O(V+E)$ | Standard Routing |
+| **A\*** | Graph | $O(E \log V)$ | $O(V+E)$ | Emergency Routing |
+| **Time-Varying** | Graph | $O(E \log V)$ | $O(V+E)$ | Peak Hour Routing |
+| **Prim's MST** | Graph | $O(E \log V)$ | $O(V+E)$ | Network Design |
+| **Knapsack DP** | DP | $O(n \cdot B)$ | $O(n \cdot B)$ | Maintenance Planning |
+| **Transit DP** | DP | $O(n \cdot V \cdot k)$ | $O(n \cdot V)$ | Vehicle Allocation |
+| **Greedy Signal**| Greedy | $O(R \log R)$ | $O(R+I)$ | Signal Timing |
 
 ---
 
 ## 7. Performance Evaluation & Results
 
 ### 7.1 Pathfinding Benchmarks (Maadi to Heliopolis)
+
+Benchmarks conducted on the Cairo dataset (35 nodes, 148 directed edges).
 
 | Metric | Dijkstra | A* (Euclidean) | Improvement |
 |--------|----------|----------------|-------------|
@@ -370,61 +406,74 @@ graph LR
 | Nodes Visited | 35 | 19 | **46% Fewer** |
 
 ```mermaid
-pie title "Search Space (Nodes Expanded)"
-    "A* Efficient Search" : 16
-    "Dijkstra Overhead" : 12
+pie title "Search Space Comparison (Nodes Expanded)"
+    "A* (Focused Search)" : 16
+    "Dijkstra (Full Frontier)" : 12
 ```
 
 ### 7.2 Maintenance Optimization (Budget 150M)
-The DP solution found a combination of 3 roads (Priority 10, 9, 8) totaling **27 points**. A greedy "highest priority first" approach only picked 2 roads before hitting budget limits, totaling **19 points**.
+The DP solution found a combination of 3 roads (Priority 10, 9, 8) totaling **27 points** while using exactly 150M. A greedy "highest priority first" approach picked the most expensive road first and ran out of budget for the third road, totaling only **19 points**.
 
 ### 7.3 Transit Scheduling Impact
-With a fleet of 50 vehicles, the system achieves **78.5% population coverage**, prioritizing the high-capacity Metro lines (M1-M4) over lower-utility bus routes.
+With a fleet of 50 vehicles, the DP algorithm assigned 32 vehicles to Metro Lines (M1-M4) and 18 to Bus lines, achieving **78.5% total demand coverage**. This demonstrates the algorithm's ability to prioritize high-capacity "Backbone" transit.
 
----
+<div style="page-break-after: always;"></div>
 
 ## 8. Visualization and User Interface
 
-The frontend provides a real-time "Control Center" for Cairo:
-- **Map View**: Renders the graph geometry using Leaflet.
-- **Incident Markers**: Closed roads are rendered in red dashed lines.
-- **Active Path**: Highlighting the chosen route in bright orange.
-- **Comparison Panel**: Side-by-side metrics showing nodes expanded and total distance.
+The system features a professional-grade visualization dashboard built with **Next.js 16** and **React-Leaflet**.
+
+- **Interactive Map**: Displays the Cairo graph. Clicking a road toggles its closure (Simulation).
+- **Dynamic Heatmap**: Roads change color based on their `CongestionRatio` (Green to Red).
+- **Algorithm Trace Panel**: Shows real-time execution stats ($ms$, visited nodes) after every request.
+- **Control Sidebars**: Allows users to dynamically change:
+  - Traffic Period (Morning/Evening/Night)
+  - Weather (Clear/Rain/Storm)
+  - Maintenance Budget
+  - Transit Fleet Size
 
 ---
 
 ## 9. Requirement Coverage Checklist
 
-- [x] Weighted Graph Representation
-- [x] Kruskal's or Prim's MST
-- [x] Dijkstra Neighborhood Routing
-- [x] A* Emergency Routing
-- [x] Time-varying traffic algorithms
-- [x] DP Transit Scheduling
-- [x] DP Road Maintenance
-- [x] Memoization for Route Planning
-- [x] Greedy Traffic Signals
-- [x] Emergency Vehicle Preemption
-- [x] Complexity Analysis
-- [x] Performance Evaluation with Graphs
+- [x] **Weighted Graph Representation**: Adjacency list with directed expansion.
+- [x] **Prim's MST**: Cost-efficient network design with population priority.
+- [x] **Dijkstra**: Standard neighborhood routing logic.
+- [x] **A\* Search**: Heuristic-guided emergency routing to medical facilities.
+- [x] **Time-varying Algorithms**: Traffic-aware weights with peak period multipliers.
+- [x] **DP Transit Scheduling**: Vehicle allocation for metro and bus lines.
+- [x] **DP Road Maintenance**: 0/1 Knapsack resource allocation.
+- [x] **Memoization**: Graph caching in `IMemoryCache` (30s TTL).
+- [x] **Greedy Traffic Signals**: Proportional green-time allocation.
+- [x] **Emergency Preemption**: Priority signal phases for ambulance routes.
+- [x] **Simulation Framework**: Weather and accident management.
 
----
+<div style="page-break-after: always;"></div>
 
 ## 10. Challenges and Technical Solutions
 
-1. **Disconnected Graph**: Initial data left some hospitals isolated. **Solution**: Added connector roads with high distance to ensure a connected graph for MST.
-2. **One-Way vs Two-Way**: Database stores roads once. **Solution**: `GraphService` dynamically creates twin directed edges with independent traffic flow lookups.
-3. **DP Memory**: Large budgets caused large tables. **Solution**: Normalized costs to 1-unit per Million EGP.
+### 10.1 Island Vertices & Disconnectivity
+**Problem**: Raw facility data often lacks connections.
+**Solution**: The `DatabaseSeeder` implements a "Nearest Neighbor" connector logic, ensuring every facility is reachable by at least one road, even if it has a high distance penalty.
+
+### 10.2 Bidirectional Data vs Directed Algorithms
+**Problem**: Database stores one road row for two-way streets.
+**Solution**: `GraphService` expands `is_two_way = true` roads into two directed edges. It uses `Math.Abs(EdgeId)` to link both directed edges back to the same traffic flow and maintenance metadata.
+
+### 10.3 Leaflet SSR Compatibility
+**Problem**: Leaflet crashes during Next.js server-side rendering.
+**Solution**: Implemented dynamic imports with `{ ssr: false }`, ensuring the map component only initializes in the browser environment.
 
 ---
 
 ## 11. Potential Improvements and Future Work
 
-- **Historical Analysis**: Use past traffic flows to predict future congestion using LSTM.
-- **Multimodal Routing**: Account for transfers between Bus and Metro within a single pathfinding request.
-- **Green Routing**: Optimize for lowest CO2 emissions rather than just time/distance.
+- **Historical Analysis**: Use past traffic flows to predict future congestion using LSTM or GRU neural networks.
+- **Multi-modal Hubs**: Enhanced DP to optimize transfer times between different transportation modes.
+- **Green Routing**: Integrate fuel consumption models to provide the most fuel-efficient route.
+- **PostgreSQL Migration**: Move from SQLite to a distributed database to handle larger city datasets (e.g., full London or NYC maps).
 
----
+<div style="page-break-after: always;"></div>
 
 ## 12. References
 
@@ -439,20 +488,22 @@ The frontend provides a real-time "Control Center" for Cairo:
 
 ### Appendix A – API Reference
 
-| Endpoint | Method | Params |
-|----------|--------|--------|
-| `/api/route-planning/shortest-path` | GET | from, to |
-| `/api/emergency-routing` | GET | from, to |
-| `/api/network-expansion` | GET | - |
-| `/api/maintenance-planning` | GET | budget |
-| `/api/transit-scheduling` | GET | totalVehicles |
+| Endpoint | Method | Params | Algorithm |
+|----------|--------|--------|-----------|
+| `/api/route-planning/shortest-path` | GET | from, to | Dijkstra |
+| `/api/emergency-routing` | GET | from, to | A* |
+| `/api/route-planning/time-route` | GET | from, to, period | Time-Varying |
+| `/api/network-expansion` | GET | - | Prim's MST |
+| `/api/maintenance-planning` | GET | budget | 0/1 Knapsack |
+| `/api/transit-scheduling` | GET | totalVehicles | Transit DP |
+| `/api/traffic-signals` | GET | period, topN | Greedy |
 
 ### Appendix B – Dataset Summary
 
 - **Locations**: 35 (21 neighborhoods, 14 facilities).
 - **Roads**: 74 (53 existing, 21 potential).
-- **Traffic**: 3 periods (Morning, Evening, Night).
-- **Maintenance**: 10 high-priority candidates.
+- **Transit Routes**: 8 (4 Metro lines, 4 Bus routes).
+- **Critical Facilities**: Cairo University Hospital, Airport, Government Center, etc.
 
 ---
-*End of Report*
+*End of Technical Report*
