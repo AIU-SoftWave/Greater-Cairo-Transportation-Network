@@ -1,12 +1,12 @@
-import { fetchNetworkTopology } from "@/services/networkTopology";
+import { MapView } from "@/components";
+import { fetchNetworkTopology } from "@/services/network/networkTopology";
 
-export default  function Home() {
-  const data =  fetchNetworkTopology();  
-  console.log(data);
-  
+export default async function Home() {
+  const data = await fetchNetworkTopology();
+
   return (
-    <main className="flex h-screen items-center justify-center">
-      <h1 className="text-2xl font-bold">Cairo Transportation System</h1>
+    <main className="h-screen w-full">
+      <MapView nodes={data.nodes} edges={data.edges} />
     </main>
   );
 }
