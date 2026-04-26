@@ -49,13 +49,14 @@ public class TrafficSignalController(ITrafficSignalService signalService, ITraff
                 Data = new TrafficSignalResultDto
                 {
                     Period = period,
-                    RoadsAnalyzed = 0,
-                    IntersectionsAnalyzed = 0,
-                    IntersectionsWithSignalRecommendations = 0,
-                    SignalRecommendations = 0,
-                    TotalCongestionScore = 0,
-                    EstimatedWaitTimeReductionPercent = 0,
-                    SignalTimings = []
+                    Summary = new SignalSummary
+                    {
+                        RoadsAnalyzed = 0,
+                        IntersectionsAnalyzed = 0,
+                        OptimizedIntersections = 0,
+                        EstimatedWaitTimeReductionPercent = 0
+                    },
+                    Intersections = new List<IntersectionSignalPlan>()
                 }
             });
         }
@@ -71,13 +72,14 @@ public class TrafficSignalController(ITrafficSignalService signalService, ITraff
                 Data = new TrafficSignalResultDto
                 {
                     Period = period,
-                    RoadsAnalyzed = 0,
-                    IntersectionsAnalyzed = 0,
-                    IntersectionsWithSignalRecommendations = 0,
-                    SignalRecommendations = 0,
-                    TotalCongestionScore = 0,
-                    EstimatedWaitTimeReductionPercent = 0,
-                    SignalTimings = []
+                    Summary = new SignalSummary
+                    {
+                        RoadsAnalyzed = 0,
+                        IntersectionsAnalyzed = 0,
+                        OptimizedIntersections = 0,
+                        EstimatedWaitTimeReductionPercent = 0
+                    },
+                    Intersections = new List<IntersectionSignalPlan>()
                 }
             });
         }
