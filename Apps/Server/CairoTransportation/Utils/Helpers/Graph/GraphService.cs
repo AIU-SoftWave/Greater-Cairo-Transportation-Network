@@ -1,18 +1,29 @@
 using CairoTransportation.Data;
 using CairoTransportation.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CairoTransportation.Services.Graph;
 
 /// <summary>
 /// Shared graph service implementation.
 /// Assembles transportation network data from database and provides graph structures for algorithms.
-/// This will be extended incrementally as new algorithms require additional graph variants.
+/// Results are memoized in an in-memory cache for the lifetime of each HTTP request scope so that
+/// multiple algorithms called within the same request do not re-query the database.
 /// </summary>
-public class GraphService(TransportationDbContext dbContext) : IGraphService
+public class GraphService(TransportationDbContext dbContext, IMemoryCache cache) : IGraphService
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+
     public async Task<Graph> GetGraphAsync(bool includePotentialRoads = false)
     {
+        string cacheKey = $"graph:{includePotentialRoads}";
+        if (cache.TryGetValue(cacheKey, out Graph? cached) && cached is not null)
+        {
+            return cached;
+        }
+
+
         var graph = new Graph();
 
         // Load all nodes (locations)
@@ -59,6 +70,8 @@ public class GraphService(TransportationDbContext dbContext) : IGraphService
                 AddEdge(graph, road, maintenanceMap, road.ToLocationId, road.FromLocationId, -road.Id);
             }
         }
+
+        cache.Set(cacheKey, graph, CacheTtl);
 
         return graph;
     }

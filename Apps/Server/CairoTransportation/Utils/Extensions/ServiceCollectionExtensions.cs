@@ -36,6 +36,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddProjectApplicationServices(this IServiceCollection services)
     {
+        services.AddMemoryCache();
         services.AddScoped<ILocationService, LocationService>();
         services.AddScoped<IRoadService, RoadService>();
         services.AddScoped<ITrafficService, TrafficService>();

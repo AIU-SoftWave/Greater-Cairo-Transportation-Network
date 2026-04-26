@@ -7,16 +7,8 @@
 4. [Data Schemas](#4-data-schemas)
 5. [API Reference](#5-api-reference)
 6. [Algorithm Implementation Checklist](#6-algorithm-implementation-checklist)
-7. [How to Add Your Own Algorithm Module](#7-how-to-add-your-own-algorithm-module)
+7. [How to Run](#7-how-to-run)
 8. [Design Decisions](#8-design-decisions)
-9. [Diagrams](#9-diagrams)
-10. [How to Run](#10-how-to-run)
-
-> **v2.0 – Modular Monolith**: the codebase was refactored from a flat-package MVC layout into a
-> **modular monolith**. Each domain module (`neighborhood`, `facility`, `road`, `traffic`, `transit`,
-> `graph`) is self-contained with its own `model`, `repository`, `service`, and `controller`
-> sub-packages. Shared infrastructure lives in the `shared` module. Controllers expose
-> **GET /all** and **GET /{id}** endpoints for data access, plus one endpoint per algorithm.
 
 ---
 
@@ -29,12 +21,17 @@ Cairo is one of the world's largest metropolitan areas and faces serious challen
 - Ageing road infrastructure with variable quality
 - High cost of building new roads, requiring careful cost-benefit analysis
 
-This project builds a **REST API** that makes all of Cairo's transportation data available in a
-clean, structured form. The API serves as the backbone for the algorithmic modules
-(shortest path, MST, dynamic programming, greedy scheduling) described in the project brief.
+This project implements a **REST API** backed by a **Next.js interactive map** that makes all Cairo transportation data available and runs seven optimisation algorithms:
 
-Each student or sub-team implements exactly one algorithm module by following the steps in
-[Section 7](#7-how-to-add-your-own-algorithm-module).
+| # | Algorithm | Category |
+|---|-----------|----------|
+| 1 | Dijkstra's Shortest Path | Graph Search |
+| 2 | A\* Emergency Routing | Heuristic Search |
+| 3 | Time-Varying Dijkstra | Traffic-Aware Routing |
+| 4 | Prim's MST (network design) | Minimum Spanning Tree |
+| 5 | 0/1 Knapsack DP (road maintenance) | Dynamic Programming |
+| 6 | Vehicle Allocation DP (transit scheduling) | Dynamic Programming |
+| 7 | Greedy Traffic Signal Timing | Greedy Algorithm |
 
 ---
 
@@ -42,517 +39,372 @@ Each student or sub-team implements exactly one algorithm module by following th
 
 ```
 Greater-Cairo-Transportation-Network/
+├── PROJECT_REQUIREMENTS.md   ← course brief
+├── PROJECT_OVERVIEW.md       ← this file
+├── REPORT.md                 ← comprehensive technical report (PDF-ready)
+├── README.md                 ← quick-start instructions
 ├── Docs/
-│   ├── CSE112-Practical Project.txt        ← project brief
-│   ├── Project_Provided_Data.txt           ← raw data reference
-│   └── diagrams/                           ← PlantUML source files
-│       ├── entity-class-diagram.puml       ← JPA entity hierarchy
-│       ├── database-schema.puml            ← H2 table ER diagram
-│       ├── module-architecture.puml        ← component / module diagram
-│       └── api-flow-sequence.puml          ← Dijkstra request sequence
+│   ├── CSE112-Practical Project.txt   ← original project brief
+│   └── Project_Provided_Data.txt      ← raw data reference
 └── Apps/
-    └── transport-system-server/            ← Spring Boot application
-        ├── pom.xml
-        └── src/main/
-            ├── java/com/softwave/transportsystem/
-            │   ├── TransportSystemServerApplication.java   ← entry point
-            │   ├── HomeController.java                     ← API directory
-            │   ├── shared/                  ← cross-cutting infrastructure
-            │   │   ├── model/               (AbstractNode, AbstractEdge)
-            │   │   ├── repository/          (NodeRepository)
-            │   │   └── seeder/              (CsvDatabaseSeeder)
-            │   ├── neighborhood/            ← Neighborhood module
-            │   │   ├── model/               (Neighborhood)
-            │   │   ├── repository/          (NeighborhoodRepository)
-            │   │   ├── service/             (NeighborhoodService)
-            │   │   └── controller/          (NeighborhoodController)
-            │   ├── facility/                ← Facility module
-            │   │   ├── model/               (Facility)
-            │   │   ├── repository/          (FacilityRepository)
-            │   │   ├── service/             (FacilityService)
-            │   │   └── controller/          (FacilityController)
-            │   ├── road/                    ← Road & PotentialRoad module
-            │   │   ├── model/               (Road, PotentialRoad)
-            │   │   ├── repository/          (RoadRepository, PotentialRoadRepository)
-            │   │   ├── service/             (RoadService, DpMaintenanceService [PLACEHOLDER])
-            │   │   └── controller/          (RoadController, PotentialRoadController)
-            │   ├── traffic/                 ← Traffic module
-            │   │   ├── model/               (TrafficPattern)
-            │   │   ├── repository/          (TrafficPatternRepository)
-            │   │   ├── service/             (TrafficService, GreedySignalTimingService [PLACEHOLDER])
-            │   │   └── controller/          (TrafficController)
-            │   ├── transit/                 ← Transit module
-            │   │   ├── model/               (MetroLine, BusRoute, TransitDemand)
-            │   │   ├── repository/          (MetroLineRepository, BusRouteRepository, TransitDemandRepository)
-            │   │   ├── service/             (MetroService, BusService, DemandService, DpSchedulingService [PLACEHOLDER])
-            │   │   └── controller/          (MetroController, BusController, DemandController)
-            │   └── graph/                   ← Graph algorithm module
-            │       ├── model/               (GraphEdge, ShortestPathResult, MstResult)
-            │       ├── service/             (GraphService, DijkstraService [DONE],
-            │       │                         KruskalMstService [DONE], AStarService [PLACEHOLDER],
-            │       │                         TimeVaryingDijkstraService [PLACEHOLDER],
-            │       │                         PrimMstService [PLACEHOLDER])
-            │       └── controller/          (GraphController)
-            └── resources/
-                ├── application.properties
-                ├── db/migration/            ← Flyway SQL migrations
-                │   └── V1__initial_schema.sql
-                └── static/data/            ← all CSV files (the data store)
-                    ├── nodes.csv
-                    ├── facilities.csv
-                    ├── existing_roads.csv
-                    ├── potential_roads.csv
-                    ├── traffic_patterns.csv
-                    ├── metro_lines.csv
-                    ├── bus_routes.csv
-                    └── transit_demand.csv
+    ├── Server/CairoTransportation/    ← .NET 10 REST API
+    │   ├── CairoTransportation.csproj
+    │   ├── Program.cs                 ← entry point + DI composition
+    │   ├── appsettings.json
+    │   ├── Data/
+    │   │   ├── TransportationDbContext.cs
+    │   │   ├── DatabaseSeeder.cs
+    │   │   └── TablesData.sql         ← full Cairo seed dataset
+    │   ├── Migrations/                ← EF Core migrations
+    │   ├── Modules/
+    │   │   ├── NetworkManagement/     ← Locations + Roads CRUD
+    │   │   │   ├── Controllers/       (LocationsController, RoadsController, GraphController)
+    │   │   │   ├── Models/            (Location, Road)
+    │   │   │   └── Services/          (LocationService, RoadService)
+    │   │   ├── Routing/               ← Dijkstra, A*, Time-Varying, MST
+    │   │   │   ├── Controllers/       (AlgorithmsController, AStarController, MstController, RoutesController)
+    │   │   │   ├── Models/            (TransportRoute, RouteStop)
+    │   │   │   └── Services/
+    │   │   │       ├── Strategies/Dijkstra/      DijkstraService ✅
+    │   │   │       ├── Strategies/AStar/         AStarService ✅
+    │   │   │       └── Strategies/TimeVaryingDijkstra/ TimeVaryingDijkstraService ✅
+    │   │   ├── TrafficControl/        ← Traffic data + Greedy signal timing
+    │   │   │   ├── Controllers/       (TrafficController, TrafficSignalController, ...)
+    │   │   │   ├── Models/            (TrafficFlow, TrafficPeriodMultiplier)
+    │   │   │   └── Services/          (TrafficService, TrafficSignalService ✅)
+    │   │   ├── MaintenancePlanning/   ← 0/1 Knapsack DP
+    │   │   │   ├── Controllers/       (MaintenancePlanningController)
+    │   │   │   ├── Models/            (RoadMaintenance)
+    │   │   │   └── Services/          (MaintenancePlanningService ✅)
+    │   │   └── TransitScheduling/     ← Vehicle Allocation DP
+    │   │       ├── Controllers/       (TransitSchedulingController)
+    │   │       ├── Models/            (TransportDemand)
+    │   │       └── Services/          (TransitSchedulingService ✅)
+    │   └── Utils/
+    │       ├── Helpers/Graph/         ← GraphService (shared, cached with IMemoryCache)
+    │       ├── Helpers/Mst/           ← MstService (Prim's algorithm ✅)
+    │       ├── Helpers/Common/        ← AlgorithmResponseDto, AlgorithmTraceDto, Metrics
+    │       └── Extensions/            ← DI registration helpers
+    │
+    └── client/                        ← Next.js 16 frontend
+        ├── src/
+        │   ├── app/page.tsx           ← server component (fetches network topology)
+        │   ├── components/MapView.tsx ← interactive Leaflet map (1400+ lines)
+        │   ├── services/              ← typed API client functions
+        │   ├── types/index.ts         ← shared TypeScript types
+        │   └── utils/
+        └── tests/                     ← Jest unit tests (17 tests)
 ```
 
 ---
 
 ## 3. Architecture
 
-The application follows a **Modular Monolith** pattern:
+### 3.1 Technology Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Backend API | ASP.NET Core | .NET 10 |
+| ORM | Entity Framework Core | 9.x |
+| Database | SQLite | 3.x |
+| Frontend | Next.js + React | 16 + 19 |
+| Language (client) | TypeScript | 5.x |
+| Styling | Tailwind CSS | v4 |
+| Map | React-Leaflet | 4.x |
+| Testing (client) | Jest | 29.x |
+
+### 3.2 Modular Monolith
 
 ```
 HTTP Request
      │
      ▼
-┌─────────────┐   calls   ┌─────────────┐   reads   ┌──────────────────┐
-│  Controller │ ────────► │   Service   │ ────────► │   Repository     │
-│ (REST layer)│           │(business    │           │  (JPA / H2 DB)   │
-└─────────────┘           │  logic)     │           └──────────────────┘
-                          └─────────────┘                    ▲
-                                                             │ seeded once at startup
-                                                             │
-                                                  ┌──────────────────┐
-                                                  │  CsvDatabaseSeeder│
-                                                  │  (CSV → H2 DB)   │
-                                                  └──────────────────┘
+┌─────────────────┐   calls   ┌──────────────────┐   queries  ┌──────────────┐
+│   Controller    │──────────►│    Service        │───────────►│  EF Core     │
+│  (REST layer)   │           │  (algorithm /     │            │  (SQLite)    │
+└─────────────────┘           │   business logic) │            └──────────────┘
+                              └──────────────────┘
+                                       │ shared graph needed?
+                                       ▼
+                              ┌──────────────────┐
+                              │  GraphService     │
+                              │  + IMemoryCache   │  ← memoizes graph 30 s
+                              └──────────────────┘
 ```
 
-### Module Breakdown
+### 3.3 Response Envelope
 
-| Module | Package | Contents |
-|---|---|---|
-| **shared** | `com.softwave.transportsystem.shared` | `AbstractNode`, `AbstractEdge`, `NodeRepository`, `CsvDatabaseSeeder` |
-| **neighborhood** | `com.softwave.transportsystem.neighborhood` | `Neighborhood`, `NeighborhoodRepository`, `NeighborhoodService`, `NeighborhoodController` |
-| **facility** | `com.softwave.transportsystem.facility` | `Facility`, `FacilityRepository`, `FacilityService`, `FacilityController` |
-| **road** | `com.softwave.transportsystem.road` | `Road`, `PotentialRoad`, `RoadService`, `DpMaintenanceService`, `RoadController`, `PotentialRoadController` |
-| **traffic** | `com.softwave.transportsystem.traffic` | `TrafficPattern`, `TrafficService`, `GreedySignalTimingService`, `TrafficController` |
-| **transit** | `com.softwave.transportsystem.transit` | `MetroLine`, `BusRoute`, `TransitDemand`, their repositories, `MetroService`, `BusService`, `DemandService`, `DpSchedulingService`, `MetroController`, `BusController`, `DemandController` |
-| **graph** | `com.softwave.transportsystem.graph` | `GraphEdge`, `ShortestPathResult`, `MstResult`, `GraphService`, `DijkstraService`, `KruskalMstService`, `AStarService`, `TimeVaryingDijkstraService`, `PrimMstService`, `GraphController` |
+Every algorithm endpoint returns an `AlgorithmResponseDto<T>`:
 
-### Layer responsibilities
-
-| Layer | Responsibility |
-|---|---|
-| **Model** | Plain JPA entities that mirror the database tables. No behaviour, just data. |
-| **Repository** | Spring Data JPA interfaces. Each module owns its own repositories. |
-| **Service** | Business logic. Controllers never access repositories directly. |
-| **Controller** | Maps HTTP requests to service calls. |
+```json
+{
+  "algorithmName": "string",
+  "success": true,
+  "message": "string",
+  "trace": {
+    "visitedNodes": 22,
+    "expandedNodes": 18,
+    "executionTimeMs": 1
+  },
+  "data": { ... }
+}
+```
 
 ---
 
 ## 4. Data Schemas
 
-All CSV files live in `src/main/resources/static/data/`.
+All data lives in a single **SQLite** file, auto-created and seeded at startup from `Data/TablesData.sql`.
 
-### 4.1 nodes.csv – Neighborhoods / Districts
-
-| Column | Type | Description |
-|---|---|---|
-| `ID` | integer | Unique node identifier (1–15) |
-| `Name` | string | Human-readable district name |
-| `Population` | integer | Estimated resident population |
-| `Type` | enum | `Residential`, `Mixed`, `Business`, `Industrial`, `Government` |
-| `Longitude` | decimal | WGS-84 longitude |
-| `Latitude` | decimal | WGS-84 latitude |
-
-### 4.2 facilities.csv – Important Facilities
+### 4.1 locations
 
 | Column | Type | Description |
-|---|---|---|
-| `ID` | string | Identifier prefixed with "F" (F1–F10) |
-| `Name` | string | Full facility name |
-| `Type` | enum | `Airport`, `Transit Hub`, `Education`, `Tourism`, `Sports`, `Business`, `Commercial`, `Medical` |
-| `Longitude` | decimal | WGS-84 longitude |
-| `Latitude` | decimal | WGS-84 latitude |
+|--------|------|-------------|
+| `id` | TEXT PK | Node identifier (numeric for neighbourhoods, "F…" for facilities) |
+| `name` | TEXT | Human-readable location name |
+| `type` | TEXT | `NEIGHBORHOOD` or `FACILITY` |
+| `category` | TEXT | Sub-category (e.g., "Residential", "Medical", "Airport") |
+| `population` | INT | Resident/daily population |
+| `x` | REAL | Longitude (WGS-84, ~31) |
+| `y` | REAL | Latitude (WGS-84, ~30) |
+| `is_critical` | INT | 1 = critical facility (hospital, airport, etc.) |
 
-### 4.3 existing_roads.csv – Current Road Network
-
-| Column | Type | Description |
-|---|---|---|
-| `FromID` | string | Source node (integer or "F...") |
-| `ToID` | string | Destination node |
-| `Distance_km` | decimal | Road length in kilometres |
-| `Capacity_vph` | integer | Maximum flow in vehicles per hour |
-| `Condition` | integer | Road quality 1–10 (10 = perfect, ≤ 4 = needs maintenance) |
-
-### 4.4 potential_roads.csv – Proposed New Roads
+### 4.2 roads
 
 | Column | Type | Description |
-|---|---|---|
-| `FromID` | string | Source node |
-| `ToID` | string | Destination node |
-| `Distance_km` | decimal | Projected length |
-| `Capacity_vph` | integer | Projected capacity after construction |
-| `Construction_Cost_Million_EGP` | integer | Estimated cost in millions of Egyptian Pounds |
+|--------|------|-------------|
+| `id` | INT PK | Auto-generated road ID |
+| `from_location_id` | TEXT FK | Source location |
+| `to_location_id` | TEXT FK | Destination location |
+| `distance` | REAL | Length in km (> 0 constraint) |
+| `capacity` | INT | Max flow in vehicles/hour (> 0 constraint) |
+| `condition` | INT | Quality 1–10 (NULL for potential roads) |
+| `is_existing` | INT | 1 = existing road; 0 = potential |
+| `is_two_way` | INT | 1 = bidirectional |
+| `construction_cost` | REAL | Cost in million EGP (NULL for existing) |
 
-### 4.5 traffic_patterns.csv – Time-of-Day Traffic Volumes
-
-| Column | Type | Description |
-|---|---|---|
-| `RoadID` | string | Road identified as "FromID-ToID" (e.g. `"1-3"`) |
-| `Morning_Peak_vph` | integer | Volume 07:00–09:00 |
-| `Afternoon_vph` | integer | Volume 12:00–14:00 |
-| `Evening_Peak_vph` | integer | Volume 16:00–19:00 |
-| `Night_vph` | integer | Volume 22:00–05:00 |
-
-> **Why four time slots?**
-> Cairo's congestion-aware routing needs **time-varying edge weights**.
-> Formula: `effective_cost = distance_km * (volume_vph / capacity_vph)`.
-
-### 4.6 metro_lines.csv – Metro Lines
+### 4.3 traffic_period_multipliers
 
 | Column | Type | Description |
-|---|---|---|
-| `LineID` | string | `M1`, `M2`, `M3` |
-| `Name` | string | Descriptive name with termini |
-| `Stations` | comma list | Ordered node IDs from one terminus to the other |
-| `Daily_Passengers` | integer | Average daily ridership |
+|--------|------|-------------|
+| `period` | TEXT PK | `MORNING`, `EVENING`, `NIGHT` |
+| `multiplier` | REAL | Speed factor (MORNING: 1.15, EVENING: 1.25, NIGHT: 0.90) |
 
-### 4.7 bus_routes.csv – Bus Routes
+### 4.4 traffic_flow
 
 | Column | Type | Description |
-|---|---|---|
-| `RouteID` | string | `B1`–`B10` |
-| `Stops` | comma list | Ordered node IDs along the route |
-| `Buses_Assigned` | integer | Number of buses currently operating |
-| `Daily_Passengers` | integer | Average daily ridership |
+|--------|------|-------------|
+| `id` | INT PK | Auto-generated |
+| `road_id` | INT FK | → roads.id |
+| `period` | TEXT FK | → traffic_period_multipliers.period |
+| `flow` | INT | Observed vehicles/hour (unique constraint on road_id + period) |
 
-### 4.8 transit_demand.csv – Origin-Destination Demand
+### 4.5 transport_routes
 
 | Column | Type | Description |
-|---|---|---|
-| `FromID` | string | Origin node |
-| `ToID` | string | Destination node |
-| `Daily_Passengers` | integer | Daily trips on this OD pair |
+|--------|------|-------------|
+| `id` | TEXT PK | Route code (M1–M4 metro, B1–B4 bus) |
+| `type` | TEXT | `METRO` or `BUS` |
+| `daily_passengers` | INT | Total daily ridership |
+| `vehicles_assigned` | INT | Current fleet size (NULL = DP-managed) |
+| `capacity_per_unit` | INT | Passengers per vehicle (default 50) |
+
+### 4.6 route_stops
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `route_id` | TEXT FK | → transport_routes.id |
+| `location_id` | TEXT FK | → locations.id |
+| `stop_order` | INT | Stop sequence number |
+
+### 4.7 road_maintenance
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `road_id` | INT PK/FK | → roads.id (one-to-one) |
+| `priority` | INT | Urgency 1–10 |
+| `estimated_cost` | REAL | Repair cost in million EGP |
+
+### 4.8 transport_demand
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INT PK | Auto-generated |
+| `from_location_id` | TEXT FK | Origin |
+| `to_location_id` | TEXT FK | Destination |
+| `daily_passengers` | INT | Daily demand on this OD pair |
 
 ---
 
 ## 5. API Reference
 
-Start the server (`mvn spring-boot:run`) then open `http://localhost:8080/`.
+### Routing
 
-### 5.1 Root
+| Method | URL | Query params | Description |
+|--------|-----|-------------|-------------|
+| GET | `/api/route-planning/shortest-path` | `from`, `to` | Dijkstra shortest path |
+| GET | `/api/route-planning/time-route` | `from`, `to`, `period` | Traffic-aware route |
+| GET | `/api/emergency-routing` | `from`, `to` | A\* emergency route |
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | Returns a JSON directory of all endpoints |
+### Network Design
 
-### 5.2 Neighborhoods `/api/neighborhoods`
+| Method | URL | Query params | Description |
+|--------|-----|-------------|-------------|
+| GET | `/api/network-expansion` | _(none)_ | Prim's MST cheapest network |
+| GET | `/api/network-topology` | _(none)_ | Full graph for map rendering |
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/neighborhoods` | All districts |
-| `GET` | `/api/neighborhoods/{id}` | Single district by numeric ID |
+### Maintenance Planning
 
-### 5.3 Facilities `/api/facilities`
+| Method | URL | Query params | Description |
+|--------|-----|-------------|-------------|
+| GET | `/api/maintenance-planning` | `budget` | 0/1 Knapsack DP maintenance plan |
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/facilities` | All facilities |
-| `GET` | `/api/facilities/{id}` | Single facility (e.g. `/api/facilities/F9`) |
+### Transit Scheduling
 
-### 5.4 Roads `/api/roads`
+| Method | URL | Query params | Description |
+|--------|-----|-------------|-------------|
+| GET | `/api/transit-scheduling` | `totalVehicles` | Vehicle allocation DP |
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/roads` | All existing roads |
-| `GET` | `/api/roads/{id}` | Single road by numeric ID |
-| `GET` | `/api/roads/maintenance-plan?budget={millions}` | **[PLACEHOLDER]** DP maintenance budget |
+### Traffic Signal Optimisation
 
-### 5.5 Potential Roads `/api/potential-roads`
+| Method | URL | Query params | Description |
+|--------|-----|-------------|-------------|
+| GET | `/api/traffic-signals` | `period`, `topN`, `analyzeAllIntersections` | Greedy signal timing |
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/potential-roads` | All proposed new roads |
-| `GET` | `/api/potential-roads/{id}` | Single proposed road by numeric ID |
+### Data Access
 
-### 5.6 Traffic `/api/traffic`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/traffic` | All time-of-day traffic patterns |
-| `GET` | `/api/traffic/{id}` | Single traffic pattern by numeric ID |
-| `GET` | `/api/traffic/signal-timing?timeSlot={slot}` | **[PLACEHOLDER]** Greedy signal timing |
-
-### 5.7 Metro `/api/metro`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/metro` | All metro lines |
-| `GET` | `/api/metro/{id}` | One metro line (e.g. `M2`) |
-| `GET` | `/api/metro/frequency-optimisation` | **[PLACEHOLDER]** DP metro frequency scheduling |
-
-### 5.8 Bus `/api/bus`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/bus` | All bus routes |
-| `GET` | `/api/bus/{id}` | One bus route (e.g. `B4`) |
-| `GET` | `/api/bus/fleet-optimisation` | **[PLACEHOLDER]** DP bus fleet scheduling |
-
-### 5.9 Transit Demand `/api/demand`
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/demand` | All OD demand records |
-| `GET` | `/api/demand/{id}` | Single OD demand record by numeric ID |
-
-### 5.10 Graph Algorithms `/api/graph`
-
-| Method | Path | Status | Description |
-|---|---|---|---|
-| `GET` | `/api/graph/shortest-path?from={id}&to={id}` | ✅ **Implemented** | Dijkstra shortest path (`weight = distance_km`) |
-| `GET` | `/api/graph/mst` | ✅ **Implemented** | Kruskal MST of existing roads |
-| `GET` | `/api/graph/astar?from={id}&to={id}` | ⬜ Placeholder | A* emergency routing |
-| `GET` | `/api/graph/time-varying-shortest-path?from={id}&to={id}&timeSlot={slot}` | ⬜ Placeholder | Congestion-aware Dijkstra |
-| `GET` | `/api/graph/prim-mst` | ⬜ Placeholder | Prim's MST on potential roads |
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/locations` | All 35 locations |
+| GET | `/api/locations/{id}` | Single location |
+| GET | `/api/roads` | All 74 roads |
+| GET | `/api/roads/{id}` | Single road |
+| GET | `/api/roads/from/{locationId}` | Roads from a location |
+| GET | `/api/roads/{roadId}/maintenance` | Maintenance info for a road |
+| GET | `/api/traffic/road/{roadId}` | Traffic flows for a road |
+| GET | `/api/traffic/period/{period}` | All traffic flows for a period |
+| GET | `/api/routes` | All 8 transport routes |
+| GET | `/api/routes/{id}` | Single route |
+| GET | `/api/routes/{id}/stops` | Stops for a route |
 
 ---
 
 ## 6. Algorithm Implementation Checklist
 
-> ✅ = fully implemented and tested
-> ⬜ = placeholder – service returns `"Not implemented: <Algorithm Name>"`
+> ✅ = fully implemented  
+> ⬜ = not yet implemented
 
 ### 6.1 Shortest Path Algorithms
 
-| # | Algorithm | Endpoint | Status | Owner |
-|---|---|---|---|---|
-| 1 | **Dijkstra's Shortest Path** | `GET /api/graph/shortest-path` | ✅ Implemented | SoftWave core team |
-| 2 | **A* Emergency Routing** | `GET /api/graph/astar` | ⬜ Placeholder | _assign to student_ |
-| 3 | **Time-Varying Dijkstra** | `GET /api/graph/time-varying-shortest-path` | ⬜ Placeholder | _assign to student_ |
+| # | Algorithm | Endpoint | Status |
+|---|-----------|----------|--------|
+| 1 | **Dijkstra's Shortest Path** | `GET /api/route-planning/shortest-path` | ✅ Implemented |
+| 2 | **A\* Emergency Routing** | `GET /api/emergency-routing` | ✅ Implemented |
+| 3 | **Time-Varying Dijkstra** | `GET /api/route-planning/time-route` | ✅ Implemented |
 
 ### 6.2 Minimum Spanning Tree Algorithms
 
-| # | Algorithm | Endpoint | Status | Owner |
-|---|---|---|---|---|
-| 4 | **Kruskal's MST** (existing roads) | `GET /api/graph/mst` | ✅ Implemented | SoftWave core team |
-| 5 | **Prim's MST** (potential roads) | `GET /api/graph/prim-mst` | ⬜ Placeholder | _assign to student_ |
+| # | Algorithm | Endpoint | Status |
+|---|-----------|----------|--------|
+| 4 | **Prim's MST** (all roads) | `GET /api/network-expansion` | ✅ Implemented |
 
 ### 6.3 Dynamic Programming
 
-| # | Algorithm | Endpoint | Status | Owner |
-|---|---|---|---|---|
-| 6 | **DP Road Maintenance** (0/1 Knapsack) | `GET /api/roads/maintenance-plan` | ⬜ Placeholder | _assign to student_ |
-| 7 | **DP Bus Fleet Scheduling** | `GET /api/bus/fleet-optimisation` | ⬜ Placeholder | _assign to student_ |
-| 8 | **DP Metro Frequency Scheduling** | `GET /api/metro/frequency-optimisation` | ⬜ Placeholder | _assign to student_ |
+| # | Algorithm | Endpoint | Status |
+|---|-----------|----------|--------|
+| 5 | **DP Road Maintenance** (0/1 Knapsack) | `GET /api/maintenance-planning` | ✅ Implemented |
+| 6 | **DP Vehicle Allocation** (Transit Scheduling) | `GET /api/transit-scheduling` | ✅ Implemented |
+| 7 | **Memoization** (Graph caching) | via `IMemoryCache` in `GraphService` | ✅ Implemented |
 
 ### 6.4 Greedy Algorithms
 
-| # | Algorithm | Endpoint | Status | Owner |
-|---|---|---|---|---|
-| 9 | **Greedy Traffic Signal Timing** | `GET /api/traffic/signal-timing` | ⬜ Placeholder | _assign to student_ |
+| # | Algorithm | Endpoint | Status |
+|---|-----------|----------|--------|
+| 8 | **Greedy Traffic Signal Timing** | `GET /api/traffic-signals` | ✅ Implemented |
 
 ---
 
-## 7. How to Add Your Own Algorithm Module
+## 7. How to Run
 
-Each student implements one algorithm by replacing a placeholder service method
-with a real implementation. Follow the steps below.
+### Prerequisites
 
-### Step 1 – Understand the data
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Node.js 20+](https://nodejs.org/) + npm
 
-Read the project brief (`Docs/CSE112-Practical Project.txt`) and the API Reference
-(Section 5) to understand which CSV files your algorithm reads.
-
-Use the existing data endpoints to fetch the data your algorithm needs.
-For example, A* needs both roads and node coordinates:
+### 7.1 Start the API server
 
 ```bash
-curl http://localhost:8080/api/roads
-curl http://localhost:8080/api/neighborhoods
-curl http://localhost:8080/api/facilities
+cd Apps/Server/CairoTransportation
+dotnet run
 ```
 
-### Step 2 – Find the placeholder service
+The API starts on `http://localhost:5028`. Swagger UI is available at `http://localhost:5028/swagger` in development mode.
 
-All placeholder services are clearly marked with `[PLACEHOLDER]` in their Javadoc.
-Locate the service file for your algorithm:
+The database is created automatically, migrations are applied, and seed data is inserted on first run.
 
-| Algorithm | Service file | Method to implement |
-|---|---|---|
-| A* Emergency Routing | `graph/service/AStarService.java` | `findEmergencyPath(fromId, toId)` |
-| Time-Varying Dijkstra | `graph/service/TimeVaryingDijkstraService.java` | `findCongestedPath(fromId, toId, timeSlot)` |
-| Prim's MST | `graph/service/PrimMstService.java` | `computeMst()` |
-| DP Road Maintenance | `road/service/DpMaintenanceService.java` | `allocateBudget(budgetMillionEgp)` |
-| DP Bus Fleet | `transit/service/DpSchedulingService.java` | `optimizeBusFleet()` |
-| DP Metro Frequency | `transit/service/DpSchedulingService.java` | `optimizeMetroFrequency()` |
-| Greedy Signal Timing | `traffic/service/GreedySignalTimingService.java` | `computeSignalTiming(timeSlot)` |
+### 7.2 Start the frontend
 
-### Step 3 – Inject the repositories you need
-
-The placeholder services currently have **no constructor arguments**. Add the
-repositories or other services you need via **constructor injection**:
-
-```java
-// Example: AStarService needs roads and node coordinates
-@Service
-public class AStarService {
-
-    private final RoadRepository roadRepository;
-    private final NodeRepository nodeRepository;
-
-    public AStarService(RoadRepository roadRepository,
-                        NodeRepository nodeRepository) {
-        this.roadRepository = roadRepository;
-        this.nodeRepository = nodeRepository;
-    }
-
-    public String findEmergencyPath(String fromId, String toId) {
-        // TODO: implement A* here
-        return "Not implemented: A* Emergency Routing";
-    }
-}
+```bash
+cd Apps/client
+npm install
+npm run dev
 ```
 
-> **Rule**: never reach into another module's internals. Always go through the
-> service layer. Do not call a repository belonging to another module directly
-> from a controller.
+Open `http://localhost:3000` in your browser to view the interactive Cairo map.
 
-### Step 4 – Change the return type when you are ready
+### 7.3 Run client tests
 
-When your algorithm is ready to return real data, change the return type of
-the service method from `String` to a proper result class:
-
-1. Create a result class in the module's `model` package
-   (e.g. `AStarResult`, `MaintenancePlan`).
-2. Update the service method signature.
-3. Update the controller endpoint accordingly.
-4. Update the entry in Section 6 of this document to ✅.
-
-### Step 5 – Write unit tests
-
-Create a test class in
-`src/test/java/com/softwave/transportsystem/<module>/service/`.
-Use `@ExtendWith(MockitoExtension.class)` and mock all repositories with
-`@Mock` so the tests run without a Spring context or database.
-
-See `DijkstraServiceTest` and `KruskalMstServiceTest` for reference examples.
-
-### Step 6 – Update the API directory
-
-Add the new endpoint to `HomeController.java` and mark it as `[IMPLEMENTED]`
-instead of `[PLACEHOLDER]`.
+```bash
+cd Apps/client
+npm test
+```
 
 ---
 
 ## 8. Design Decisions
 
-### Why Modular Monolith?
-A modular monolith keeps the **simplicity of a single deployable** while enforcing
-clear domain boundaries. Each module owns its own stack (model -> repository ->
-service -> controller) and communicates with other modules only through well-defined
-service APIs. This makes the codebase easy to understand, test, and if needed,
-migrate to separate microservices later.
+### 8.1 .NET 10 / ASP.NET Core instead of Spring Boot
 
-### Why Spring Boot?
-Spring Boot auto-configures the web layer, JSON serialisation (Jackson), and the
-application lifecycle. A team can get a working REST API running in minutes without
-writing any boilerplate HTTP server code.
+The server was migrated from a Spring Boot / Java prototype to **.NET 10 / ASP.NET Core** to leverage:
+- **Faster startup** (no JVM warm-up)
+- **Simpler DI** with `AddScoped`, `AddSingleton`
+- **EF Core** as a lightweight alternative to Hibernate
+- **SQLite** for zero-configuration local development
 
-### Why H2 + Flyway?
-The project seeds a small, fixed dataset into an embedded H2 database at startup via
-`CsvDatabaseSeeder`. Flyway manages the schema migration so the DDL is version-controlled
-and repeatable. No external database or Docker setup is required.
+### 8.2 SQLite for persistence
 
-### Why SOLID?
+SQLite was chosen because:
+- Zero configuration – the database file is created automatically
+- Portable – the file can be committed for demos or deleted for a fresh start
+- EF Core migrations keep the schema in sync with the code
 
-| Principle | How it is applied |
-|---|---|
-| **S** – Single Responsibility | Each class has exactly one job: models hold data, repositories query data, services contain logic, controllers handle HTTP. |
-| **O** – Open/Closed | New algorithms can be added as new service methods without modifying existing ones. |
-| **L** – Liskov | All service classes are concrete; the Spring interfaces they implement (`@Service`) behave identically. |
-| **I** – Interface Segregation | Controllers only depend on the service they need, not a monolithic "god service". |
-| **D** – Dependency Inversion | All dependencies are injected via constructors; no `new` operator inside classes. |
+### 8.3 Modular Monolith
 
-### Why constructor injection (not `@Autowired` on fields)?
-Constructor injection makes dependencies explicit, improves testability (no Spring
-context needed in unit tests), and prevents null-injection errors at startup.
+The codebase is organised by domain module rather than technical layer. Each module (`NetworkManagement`, `Routing`, `TrafficControl`, etc.) owns its own controllers, models, and services. Shared infrastructure (`GraphService`, DTOs, metrics) lives in `Utils/`.
 
----
+This makes it easy to:
+- Locate all code related to a feature in one folder
+- Avoid cross-module coupling (controllers never reach into another module's internals)
+- Evolve individual modules independently
 
-## 9. Diagrams
+### 8.4 Shared Graph with Memoization
 
-PlantUML source files are in `Docs/diagrams/`. Convert them to PNG with:
+All routing and MST algorithms use the same `IGraphService`, which builds a directed adjacency-list graph from the database. The graph is cached in `IMemoryCache` with a 30-second TTL to avoid redundant database queries when multiple algorithm endpoints are called in quick succession (e.g., when the frontend loads MST data on startup).
 
-```bash
-# With PlantUML jar
-java -jar plantuml.jar Docs/diagrams/*.puml
+### 8.5 Standardised Algorithm Response
 
-# With Docker
-docker run --rm -v $(pwd):/data plantuml/plantuml -tpng /data/Docs/diagrams/*.puml
-```
+Every algorithm returns `AlgorithmResponseDto<T>` containing:
+- `algorithmName` – identifies which algorithm was executed
+- `success` / `message` – clear error reporting
+- `trace` – execution metrics (nodes visited/expanded, time in ms) for educational comparison
+- `data` – the algorithm-specific result payload
 
-| File | Contents |
-|---|---|
-| `entity-class-diagram.puml` | Full JPA entity hierarchy (inheritance, associations) |
-| `database-schema.puml` | H2 table ER diagram with foreign keys |
-| `module-architecture.puml` | Component diagram showing all modules and their dependencies |
-| `api-flow-sequence.puml` | Sequence diagram for a Dijkstra shortest-path request |
+This makes it easy for the frontend to display consistent result panels and for students to compare algorithm performance.
 
----
+### 8.6 Coordinate Convention
 
-## 10. How to Run
+Node coordinates follow:
+- `x` = **longitude** (~31 for Cairo)
+- `y` = **latitude** (~30 for Cairo)
 
-### Prerequisites
-- **Java 17** (or later)
-- **Maven 3.6+**
-- No database or Docker required
-
-### Steps
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/AIU-SoftWave/Greater-Cairo-Transportation-Network.git
-cd Greater-Cairo-Transportation-Network/Apps/transport-system-server
-
-# 2. Build
-mvn clean package
-
-# 3. Run
-mvn spring-boot:run
-# OR
-java -jar target/transport-system-server-0.0.1-SNAPSHOT.jar
-```
-
-The server starts on **http://localhost:8080**.
-Open that URL in a browser or use `curl` / Postman to see all endpoints.
-
-### Quick smoke-test
-
-```bash
-# API directory
-curl http://localhost:8080/
-
-# All neighborhoods
-curl http://localhost:8080/api/neighborhoods
-
-# Dijkstra shortest path: Maadi (1) to Heliopolis (5)
-curl "http://localhost:8080/api/graph/shortest-path?from=1&to=5"
-
-# Kruskal MST of existing roads
-curl http://localhost:8080/api/graph/mst
-
-# Placeholder endpoints (return "Not implemented: ...")
-curl "http://localhost:8080/api/graph/astar?from=8&to=F9"
-curl "http://localhost:8080/api/graph/time-varying-shortest-path?from=1&to=5&timeSlot=MORNING"
-curl http://localhost:8080/api/graph/prim-mst
-curl "http://localhost:8080/api/traffic/signal-timing?timeSlot=EVENING"
-curl "http://localhost:8080/api/roads/maintenance-plan?budget=500"
-curl http://localhost:8080/api/bus/fleet-optimisation
-curl http://localhost:8080/api/metro/frequency-optimisation
-```
+React-Leaflet uses `[lat, lng]` = `[node.y, node.x]` for marker and polyline positions.
