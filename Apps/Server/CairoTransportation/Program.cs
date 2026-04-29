@@ -5,7 +5,10 @@ using Microsoft.EntityFrameworkCore;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddOpenApi();
+}
 builder.Services
     .AddProjectInfrastructure(builder.Configuration)
     .AddProjectApplicationServices();
