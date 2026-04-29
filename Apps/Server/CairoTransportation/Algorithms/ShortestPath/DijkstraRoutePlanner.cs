@@ -3,10 +3,11 @@ using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Graph;
 
 using CairoTransportation.Services.Algorithms.Common.Instrumentation;
+using CairoTransportation.Services;
 
 namespace CairoTransportation.Algorithms.ShortestPath;
 
-public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics) : IDijkstraRoutePlanner
+public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : IDijkstraRoutePlanner
 {
     public ShortestPathResultDto FindShortestPath(Graph graph, string fromNodeId, string toNodeId)
     {
@@ -67,8 +68,14 @@ public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics) : IDijkstra
 
 
                 string neighbor = edge.ToNodeId;
-                double newDist = distances[curr] + edge.Distance;
-                
+                double weatherPenalty = simulationService.GetWeather() switch
+                {
+                    SimulationWeather.Rain => 1.3,
+                    SimulationWeather.Storm => 1.8,
+                    _ => 1.0
+                };
+                double newDist = distances[curr] + (edge.Distance * weatherPenalty);
+
                 // Relaxation: if we found a shorter way to reach the neighbor, update it
                 if (newDist < distances[neighbor])
                 {
@@ -101,14 +108,14 @@ public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics) : IDijkstra
         }
 
         // Reverse paths because we traced them backwards
-        nodePath.Reverse(); 
+        nodePath.Reverse();
         roadPath.Reverse();
 
         return new ShortestPathResultDto
         {
-            FromNodeId = fromNodeId, 
-            ToNodeId = toNodeId, 
-            Found = true, 
+            FromNodeId = fromNodeId,
+            ToNodeId = toNodeId,
+            Found = true,
             TotalDistance = distances[toNodeId],
             PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(),
             PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList()

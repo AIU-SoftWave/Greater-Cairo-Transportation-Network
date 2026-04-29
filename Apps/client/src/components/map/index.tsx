@@ -161,7 +161,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [startId, endId, algorithm, period]);
+  }, [startId, endId, algorithm, period, weather]);
 
   const handleCalculateMaintenance = async () => {
     setLoading(true);
@@ -316,15 +316,9 @@ function MapInner({ nodes, edges }: MapViewProps) {
   };
 
   const handleWeatherChange = async (w: number) => {
-    setWeatherState(w);
     await setWeather(w);
-    // Refresh current route if exists
-    if (startId && endId) {
-      // Small delay to let version propagate
-      setTimeout(() => {
-        setStartId(startId);
-      }, 50);
-    }
+    setWeatherState(w);
+    // useEffect will auto-refresh route since weather is in dependencies
   };
 
   const handleSignalMarkerClick = (
@@ -372,7 +366,11 @@ function MapInner({ nodes, edges }: MapViewProps) {
           ] as [number, number][],
         };
       })
-      .filter(Boolean) as { edge: Road; isClosed: boolean; pos: [number, number][] }[];
+      .filter(Boolean) as {
+      edge: Road;
+      isClosed: boolean;
+      pos: [number, number][];
+    }[];
   }, [edges, nodeLookup, closedRoadIds]);
 
   // Draw shortest path
@@ -402,7 +400,11 @@ function MapInner({ nodes, edges }: MapViewProps) {
           isNewRoad: !edge.isExisting,
         };
       })
-      .filter(Boolean) as { edge: Road; pos: [number, number][]; isNewRoad: boolean }[];
+      .filter(Boolean) as {
+      edge: Road;
+      pos: [number, number][];
+      isNewRoad: boolean;
+    }[];
   }, [mstEdges, nodeLookup]);
 
   // Map intersection signals from API response with node lookup

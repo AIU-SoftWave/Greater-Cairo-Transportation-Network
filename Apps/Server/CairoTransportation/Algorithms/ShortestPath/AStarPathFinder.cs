@@ -3,10 +3,11 @@ using CairoTransportation.Services.Algorithms.Common.DTOs;
 using CairoTransportation.Services.Graph;
 
 using CairoTransportation.Services.Algorithms.Common.Instrumentation;
+using CairoTransportation.Services;
 
 namespace CairoTransportation.Algorithms.ShortestPath;
 
-public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFinder
+public class AStarPathFinder(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : IAStarPathFinder
 {
     public ShortestPathResultDto FindShortestPath(Graph graph, string fromNodeId, string toNodeId)
     {
@@ -103,7 +104,13 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFind
                 }
 
 
-                double tentG = gScore[curr] + edge.Distance;
+                double weatherPenalty = simulationService.GetWeather() switch
+                {
+                    SimulationWeather.Rain => 1.3,
+                    SimulationWeather.Storm => 1.8,
+                    _ => 1.0
+                };
+                double tentG = gScore[curr] + (edge.Distance * weatherPenalty);
                 if (tentG < gScore[neighbor])
                 {
                     // Found a better path to the neighbor node
