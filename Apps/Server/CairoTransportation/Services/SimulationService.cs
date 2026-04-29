@@ -16,10 +16,14 @@ public class SimulationService : ISimulationService
         lock (_lock)
         {
             if (_closedRoadIds.Contains(roadId))
+            {
                 _closedRoadIds.Remove(roadId);
+            }
             else
+            {
                 _closedRoadIds.Add(roadId);
-            
+            }
+
             _version++;
         }
         return Task.CompletedTask;
@@ -66,7 +70,7 @@ public class SimulationService : ISimulationService
 
     public Task<bool> IsPreemptedAsync(long roadId) => Task.FromResult(_preemptedRoads.TryGetValue(roadId, out bool active) && active);
 
-    public void RecordMetrics(string algorithmName, long executionTimeMs, int visitedNodes, int expandedNodes)
+    public void RecordMetrics(string algorithmName, double executionTimeMs, int visitedNodes, int expandedNodes)
     {
         _metrics.Enqueue(new AlgorithmPerformanceMetric(
             algorithmName,

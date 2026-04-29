@@ -21,7 +21,7 @@ public sealed class AlgorithmExecutionMetrics
         {
             VisitedNodes = _discoveredNodes.Count,
             ExpandedNodes = ExpandedNodes,
-            ExecutionTimeMs = _stopwatch.ElapsedMilliseconds
+            ExecutionTimeMs = _stopwatch.Elapsed.TotalMilliseconds
         };
     }
 }

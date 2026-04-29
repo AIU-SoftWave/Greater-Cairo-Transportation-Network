@@ -16,7 +16,7 @@ public interface ISimulationService
     Task ResetClosuresAsync();
     Task<HashSet<long>> GetClosedRoadIdsAsync();
     int GetStateVersion();
-    
+
     // Weather
     Task SetWeatherAsync(SimulationWeather weather);
     SimulationWeather GetWeather();
@@ -26,13 +26,13 @@ public interface ISimulationService
     Task<bool> IsPreemptedAsync(long roadId);
 
     // Performance Metrics
-    void RecordMetrics(string algorithmName, long executionTimeMs, int visitedNodes, int expandedNodes);
+    void RecordMetrics(string algorithmName, double executionTimeMs, int visitedNodes, int expandedNodes);
     List<AlgorithmPerformanceMetric> GetPerformanceMetrics();
 }
 
 public record AlgorithmPerformanceMetric(
     string AlgorithmName,
-    long ExecutionTimeMs,
+    double ExecutionTimeMs,
     int VisitedNodes,
     int ExpandedNodes,
     DateTime Timestamp
