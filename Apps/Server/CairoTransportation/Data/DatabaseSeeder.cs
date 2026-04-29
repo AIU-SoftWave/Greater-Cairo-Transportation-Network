@@ -7,8 +7,6 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(TransportationDbContext dbContext, IWebHostEnvironment environment)
     {
-        bool hasPeriodMultipliers = await dbContext.TrafficPeriodMultipliers.AnyAsync();
-
         if (await dbContext.Locations.AnyAsync())
         {
             return;
@@ -26,9 +24,9 @@ public static class DatabaseSeeder
         await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
         foreach (string statement in statements)
         {
-            // Period multipliers can be pre-seeded by migrations; skip duplicate inserts.
-            if (hasPeriodMultipliers &&
-                statement.Contains("INSERT INTO traffic_period_multipliers", StringComparison.OrdinalIgnoreCase))
+            // Period multipliers are seeded by migrations; skip to avoid UNIQUE constraint errors.
+            if (statement.Contains("INSERT INTO", StringComparison.OrdinalIgnoreCase) &&
+                statement.Contains("traffic_period_multipliers", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

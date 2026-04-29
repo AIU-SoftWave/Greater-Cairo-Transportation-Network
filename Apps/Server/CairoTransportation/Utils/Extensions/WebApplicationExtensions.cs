@@ -7,11 +7,10 @@ public static class WebApplicationExtensions
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
-            app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "CairoTransportation API v1"));
         }
 
         app.MapControllers();
-        app.MapGet("/", () => Results.Redirect("/swagger"));
+        app.MapGet("/", () => Results.Redirect("/openapi/v1.json"));
 
         return app;
     }
