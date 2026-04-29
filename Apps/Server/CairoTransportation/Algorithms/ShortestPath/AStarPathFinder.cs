@@ -61,7 +61,7 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFind
         var closedSet = new HashSet<string>();
 
         gScore[fromNodeId] = 0;
-        
+
         // Priority = Cost so far (gScore) + Heuristic (estimated remaining distance)
         openSet.Enqueue(fromNodeId, Heuristic(graph, fromNodeId, toNodeId));
         metrics.MarkDiscovered(fromNodeId);
@@ -110,7 +110,7 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFind
                     cameFromNode[neighbor] = curr;
                     cameFromRoad[neighbor] = edge.Id;
                     gScore[neighbor] = tentG;
-                    
+
                     // Priority = cost so far + straight-line distance to goal
                     openSet.Enqueue(neighbor, tentG + Heuristic(graph, neighbor, toNodeId));
                     metrics.MarkDiscovered(neighbor);
@@ -125,29 +125,29 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFind
         }
 
         // Reconstruct the path by following 'cameFrom' links backwards
-        var nodePath = new List<string>(); 
+        var nodePath = new List<string>();
         var roadPath = new List<long>();
         string pathCurr = toNodeId;
-        
+
         nodePath.Add(pathCurr);
-        while (cameFromNode.TryGetValue(pathCurr, out string? prev)) 
-        { 
-            roadPath.Add(cameFromRoad[pathCurr]); 
-            nodePath.Add(prev); 
-            pathCurr = prev; 
+        while (cameFromNode.TryGetValue(pathCurr, out string? prev))
+        {
+            roadPath.Add(cameFromRoad[pathCurr]);
+            nodePath.Add(prev);
+            pathCurr = prev;
         }
-        
-        nodePath.Reverse(); 
+
+        nodePath.Reverse();
         roadPath.Reverse();
 
-        return new ShortestPathResultDto 
-        { 
-            FromNodeId = fromNodeId, 
-            ToNodeId = toNodeId, 
-            Found = true, 
-            TotalDistance = gScore[toNodeId], 
-            PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(), 
-            PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList() 
+        return new ShortestPathResultDto
+        {
+            FromNodeId = fromNodeId,
+            ToNodeId = toNodeId,
+            Found = true,
+            TotalDistance = gScore[toNodeId],
+            PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(),
+            PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList()
         };
     }
 
@@ -162,7 +162,8 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics) : IAStarPathFind
         }
 
 
-        double dx = f.X.Value - t.X.Value; double dy = f.Y.Value - t.Y.Value;
+        double dy = (f.Y.Value - t.Y.Value) * 111.0; // lat → km
+        double dx = (f.X.Value - t.X.Value) * 96.0;   // lon → km at ~30°N
         return Math.Sqrt(dx * dx + dy * dy);
     }
 

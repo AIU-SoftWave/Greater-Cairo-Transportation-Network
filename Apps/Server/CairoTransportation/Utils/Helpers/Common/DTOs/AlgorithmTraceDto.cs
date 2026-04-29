@@ -4,6 +4,6 @@ public class AlgorithmTraceDto
 {
     public int VisitedNodes { get; set; }
     public int ExpandedNodes { get; set; }
-    public long ExecutionTimeMs { get; set; }
+    public double ExecutionTimeMs { get; set; }
 }
 
