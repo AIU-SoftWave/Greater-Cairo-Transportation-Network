@@ -1,0 +1,87 @@
+@startuml CorrectnessProof
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam sequenceMessageAlign center
+skinparam sequence {
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    LifeLineBackgroundColor #E8F5E9
+    LifeLineBorderColor #2E7D32
+    NoteBackgroundColor #FFF9C4
+    NoteBorderColor #F9A825
+}
+
+title Correctness Proof — Induction on |S| (Visited Set)\n"When node u is dequeued from PQ, d[u] = δ(s, u)"
+
+participant "Source s" as S
+participant "Priority Queue\n(Min-Heap)" as PQ
+participant "Visited Set S\n(finalised nodes)" as VS
+participant "Current Node u" as U
+participant "Neighbour v" as V
+
+note over S, V
+  **Invariant (I):** For every node x ∈ S,  d[x] = δ(s, x)
+  **Claim:** The invariant holds after each Dequeue operation.
+end note
+
+S -> PQ : Enqueue(s, 0)\nd[s] ← 0
+
+note over S, PQ
+  **Base Case (|S| = 0 → 1):**
+  s is dequeued first with d[s] = 0 = δ(s, s). ✓
+  No negative weights ⇒ d[s] cannot be improved.
+end note
+
+PQ -> U  : Dequeue() → u  (min d[u] in PQ)
+U  -> VS : visited.Add(u)
+
+note over U, VS
+  **Inductive Step:**
+  Assume for all x ∈ S (|S|=k), d[x] = δ(s, x).
+  Suppose for contradiction d[u] > δ(s, u).
+end note
+
+note over PQ, VS
+  **Sub-lemma (triangle inequality):**
+  ∀ edge (x→y):  δ(s, y) ≤ δ(s, x) + w(x, y)
+  Proof: If a shorter path to y existed via x,
+  relaxation would have already set d[y] ≤ d[x]+w(x,y).
+end note
+
+note over U, VS
+  **Contradiction argument:**
+  Let p* = shortest path s → u.
+  Let (x, y) be the first edge on p* leaving S.
+  • d[x] = δ(s, x)  (by inductive hypothesis, x ∈ S)
+  • After relaxing (x,y): d[y] ≤ δ(s,x) + w(x,y) = δ(s,y) ≤ δ(s,u)
+  • But u was dequeued before y  ⇒  d[u] ≤ d[y] ≤ δ(s,u)
+  • Yet d[u] ≥ δ(s,u) (distances can only overestimate) ⇒ d[u] = δ(s,u) ✓
+  Contradiction. Therefore d[u] = δ(s,u). □
+end note
+
+U  -> V  : Relax edge (u → v):\nnewDist = d[u] + w(u,v)
+V  -> PQ : if newDist < d[v]:\n  d[v] ← newDist\n  Enqueue(v, newDist)
+
+note over V, PQ
+  **Relaxation Lemma:**
+  After Relax(u,v):  d[v] ≤ d[u] + w(u,v)
+  Combined with correctness of d[u], this preserves
+  the invariant for all neighbours of u.
+end note
+
+PQ -> U  : ... repeat until u == target or PQ empty ...
+
+note over S, V
+  **Termination:**
+  Each node enters S at most once (HashSet check).
+  |S| grows by 1 per iteration ⇒ at most V iterations.
+  ∴ Algorithm always terminates. □
+
+  **Optimal Substructure:**
+  If p* = s→...→u→...→t is shortest,
+  then the sub-path s→...→u is shortest for u too.
+  Proof: by cut-and-paste argument (standard). □
+end note
+
+@enduml

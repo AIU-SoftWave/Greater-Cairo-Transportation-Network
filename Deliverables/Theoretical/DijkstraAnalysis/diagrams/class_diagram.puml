@@ -1,0 +1,91 @@
+@startuml DijkstraClassDiagram
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FAFAFA
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    ArrowColor #1565C0
+    FontSize 12
+}
+skinparam interface {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+}
+
+title Dijkstra — Class Hierarchy & Dependencies
+
+interface IDijkstraRoutePlanner {
+    + FindShortestPath(graph: Graph, fromNodeId: string, toNodeId: string) : ShortestPathResultDto
+}
+
+class DijkstraRoutePlanner {
+    - metrics: AlgorithmExecutionMetrics
+    + FindShortestPath(graph: Graph, fromNodeId: string, toNodeId: string) : ShortestPathResultDto
+    - MapNode(n: GraphNode) : ShortestPathNodeDto
+    - MapRoad(e: GraphEdge) : ShortestPathRoadDto
+}
+
+class AlgorithmExecutionMetrics {
+    - nodesDiscovered: int
+    - nodesExpanded: int
+    - stopwatch: Stopwatch
+    + MarkDiscovered(nodeId: string) : void
+    + MarkExpanded() : void
+    + GetElapsedMs() : long
+}
+
+class Graph {
+    + Nodes: List<GraphNode>
+    + NodeIndex: Dictionary<string, GraphNode>
+    + EdgeIndex: Dictionary<long, GraphEdge>
+    + AdjacencyList: Dictionary<string, List<long>>
+}
+
+class GraphNode {
+    + Id: string
+    + Name: string
+    + Type: string
+    + X: double?
+    + Y: double?
+    + Population: int
+    + IsCritical: bool
+}
+
+class GraphEdge {
+    + Id: long
+    + FromNodeId: string
+    + ToNodeId: string
+    + Distance: double
+    + Capacity: int
+    + Condition: string
+    + IsExisting: bool
+    + ConstructionCost: double
+}
+
+class ShortestPathResultDto {
+    + FromNodeId: string
+    + ToNodeId: string
+    + Found: bool
+    + TotalDistance: double
+    + PathNodes: List<ShortestPathNodeDto>
+    + PathRoads: List<ShortestPathRoadDto>
+}
+
+DijkstraRoutePlanner ..|> IDijkstraRoutePlanner : implements
+DijkstraRoutePlanner --> AlgorithmExecutionMetrics : uses
+DijkstraRoutePlanner --> Graph : reads
+DijkstraRoutePlanner --> ShortestPathResultDto : produces
+Graph "1" *-- "many" GraphNode : contains
+Graph "1" *-- "many" GraphEdge : contains
+
+note right of DijkstraRoutePlanner
+  **Key Internal Data Structures**
+  (local to FindShortestPath):
+  • distances : Dictionary<string, double>
+  • visited   : HashSet<string>
+  • previousNode : Dictionary<string, string>
+  • previousRoad : Dictionary<string, long>
+  • queue : PriorityQueue<string, double>  ← Min-Heap
+end note
+
+@enduml

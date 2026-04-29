@@ -1,0 +1,53 @@
+@startuml DataStructures
+skinparam backgroundColor #FAFAFA
+skinparam rectangle {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+    FontSize 12
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+}
+
+title Dijkstra — Internal Data Structures & Memory Layout\n(Space Complexity: O(V + E) total)
+
+package "O(V) Structures — one slot per node" {
+    rectangle "distances[ ]\nDictionary<string, double>\n\nStores the shortest known distance\nfrom source s to every node.\nInitialised: dist[s]=0, all others ∞" as DIST
+    rectangle "visited\nHashSet<string>\n\nBit-set of finalised nodes.\nA node enters here exactly once\n→ guarantees termination." as VIS
+    rectangle "previousNode[ ]\nDictionary<string, string>\n\nStores the node predecessor on\nthe current best path.\nUsed for path reconstruction." as PREV_N
+    rectangle "previousRoad[ ]\nDictionary<string, long>\n\nStores the edge ID predecessor.\nPairs with previousNode[ ] to\nreconstruct full road sequence." as PREV_R
+}
+
+package "Priority Queue — O(E) entries in worst case" {
+    rectangle "queue\nPriorityQueue<string, double>\n(Binary Min-Heap)\n\nHolds (nodeId, tentativeDist) pairs.\nDequeue = extract-min in O(log E).\nMay hold stale entries → checked\nagainst visited on dequeue." as PQ
+}
+
+package "Read-only input — O(V + E)" {
+    rectangle "graph.NodeIndex\nDictionary<string, GraphNode>" as NI
+    rectangle "graph.AdjacencyList\nDictionary<string, List<long>>" as ADJ
+    rectangle "graph.EdgeIndex\nDictionary<long, GraphEdge>" as EI
+}
+
+DIST -[hidden]-> VIS
+VIS  -[hidden]-> PREV_N
+PREV_N -[hidden]-> PREV_R
+
+note bottom of PQ
+  Stale-entry pattern:
+  When dist[v] is improved, we push a NEW
+  entry into the heap rather than decrease-key.
+  Old entries are silently skipped via the
+  `visited` check on dequeue.
+  This trades heap size (up to O(E)) for
+  implementation simplicity — no decrease-key needed.
+end note
+
+note bottom of ADJ
+  Adjacency list encodes
+  the graph topology.
+  Each lookup: O(1) average.
+  Total edge traversal: O(E).
+end note
+
+@enduml
