@@ -11,6 +11,7 @@ import type {
   TrafficSignalResultDto,
 } from "@/types";
 import type { AlgorithmType, IntersectionSignal } from "./types";
+import { isRoadSelectedForMaintenance as checkRoadSelectedForMaintenance } from "./utils";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -163,45 +164,12 @@ export default function MapCanvas({
   // Check if road is selected for maintenance
   const isRoadSelectedForMaintenance = (road: Road): boolean => {
     if (!maintenanceResponse) return false;
-
-    const matchById = maintenanceResponse.data.selectedRoads.some(
-      (r) => r.roadId === Math.abs(road.id),
+    return checkRoadSelectedForMaintenance(
+      road,
+      maintenanceResponse,
+      nodeLookup,
+      nodeIdByName,
     );
-    if (matchById) return true;
-
-    const fromNode = nodeLookup[road.fromNodeId];
-    const toNode = nodeLookup[road.toNodeId];
-    if (fromNode && toNode) {
-      const fromName = fromNode.name.trim().toLowerCase();
-      const toName = toNode.name.trim().toLowerCase();
-
-      const matchByLocation = maintenanceResponse.data.selectedRoads.some(
-        (r) =>
-          (r.fromLocation ?? "").trim().toLowerCase() === fromName &&
-          (r.toLocation ?? "").trim().toLowerCase() === toName,
-      );
-      if (matchByLocation) return true;
-
-      const matchByLocationReverse =
-        maintenanceResponse.data.selectedRoads.some(
-          (r) =>
-            (r.fromLocation ?? "").trim().toLowerCase() === toName &&
-            (r.toLocation ?? "").trim().toLowerCase() === fromName,
-        );
-      if (matchByLocationReverse) return true;
-    }
-
-    for (const r of maintenanceResponse.data.selectedRoads) {
-      const fromId = nodeIdByName[(r.fromLocation ?? "").trim().toLowerCase()];
-      const toId = nodeIdByName[(r.toLocation ?? "").trim().toLowerCase()];
-
-      if (!fromId || !toId) continue;
-
-      if (road.fromNodeId === fromId && road.toNodeId === toId) return true;
-      if (road.fromNodeId === toId && road.toNodeId === fromId) return true;
-    }
-
-    return false;
   };
 
   // Check if road is in signal response and get its congestion
@@ -221,7 +189,7 @@ export default function MapCanvas({
           toNode.name.trim().toLowerCase() ===
           signalRoad.to.trim().toLowerCase();
 
-        if (toMatch && fromMatch) {
+        if (fromMatch && toMatch) {
           return signalRoad.congestionPercent;
         }
       }
