@@ -1,0 +1,722 @@
+[
+    {
+        "road_id": 1,
+        "period": "MORNING",
+        "predicted_congestion": 1.894962505323045
+    },
+    {
+        "road_id": 1,
+        "period": "EVENING",
+        "predicted_congestion": 1.8670566751820823
+    },
+    {
+        "road_id": 39,
+        "period": "MORNING",
+        "predicted_congestion": 0.8566197569537854
+    },
+    {
+        "road_id": 35,
+        "period": "EVENING",
+        "predicted_congestion": 0.766528895355342
+    },
+    {
+        "road_id": 37,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5403702754179311
+    },
+    {
+        "road_id": 29,
+        "period": "MORNING",
+        "predicted_congestion": 0.7417050255972365
+    },
+    {
+        "road_id": 44,
+        "period": "EVENING",
+        "predicted_congestion": 0.7414193613914315
+    },
+    {
+        "road_id": 12,
+        "period": "MORNING",
+        "predicted_congestion": 0.6934164609015494
+    },
+    {
+        "road_id": 47,
+        "period": "MORNING",
+        "predicted_congestion": 0.6934164609015494
+    },
+    {
+        "road_id": 17,
+        "period": "MORNING",
+        "predicted_congestion": 0.6913367090054257
+    },
+    {
+        "road_id": 48,
+        "period": "MORNING",
+        "predicted_congestion": 0.6896726754963471
+    },
+    {
+        "road_id": 6,
+        "period": "MORNING",
+        "predicted_congestion": 0.6976142973631162
+    },
+    {
+        "road_id": 26,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924737605406731
+    },
+    {
+        "road_id": 38,
+        "period": "MORNING",
+        "predicted_congestion": 0.6794998265745977
+    },
+    {
+        "road_id": 46,
+        "period": "MORNING",
+        "predicted_congestion": 0.7001851684038785
+    },
+    {
+        "road_id": 31,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924737605406731
+    },
+    {
+        "road_id": 15,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924737605406731
+    },
+    {
+        "road_id": 19,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924737605406731
+    },
+    {
+        "road_id": 33,
+        "period": "MORNING",
+        "predicted_congestion": 0.6976142973631162
+    },
+    {
+        "road_id": 45,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924737605406731
+    },
+    {
+        "road_id": 34,
+        "period": "MORNING",
+        "predicted_congestion": 0.6951613299168867
+    },
+    {
+        "road_id": 8,
+        "period": "MORNING",
+        "predicted_congestion": 0.6933676105927657
+    },
+    {
+        "road_id": 18,
+        "period": "MORNING",
+        "predicted_congestion": 0.7192322787762521
+    },
+    {
+        "road_id": 40,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924300561149748
+    },
+    {
+        "road_id": 43,
+        "period": "MORNING",
+        "predicted_congestion": 0.6909479428593653
+    },
+    {
+        "road_id": 2,
+        "period": "MORNING",
+        "predicted_congestion": 0.6895435414788271
+    },
+    {
+        "road_id": 32,
+        "period": "MORNING",
+        "predicted_congestion": 0.6954156291163383
+    },
+    {
+        "road_id": 41,
+        "period": "MORNING",
+        "predicted_congestion": 0.6966736272453637
+    },
+    {
+        "road_id": 7,
+        "period": "MORNING",
+        "predicted_congestion": 0.6940357840953802
+    },
+    {
+        "road_id": 16,
+        "period": "MORNING",
+        "predicted_congestion": 0.6867767021948137
+    },
+    {
+        "road_id": 30,
+        "period": "MORNING",
+        "predicted_congestion": 0.6938938070391891
+    },
+    {
+        "road_id": 37,
+        "period": "MORNING",
+        "predicted_congestion": 0.6955917087483201
+    },
+    {
+        "road_id": 3,
+        "period": "MORNING",
+        "predicted_congestion": 0.6960984652489639
+    },
+    {
+        "road_id": 20,
+        "period": "MORNING",
+        "predicted_congestion": 0.6873666711367098
+    },
+    {
+        "road_id": 27,
+        "period": "MORNING",
+        "predicted_congestion": 0.6928027793829511
+    },
+    {
+        "road_id": 36,
+        "period": "MORNING",
+        "predicted_congestion": 0.6952725306694018
+    },
+    {
+        "road_id": 42,
+        "period": "MORNING",
+        "predicted_congestion": 0.6958053353622387
+    },
+    {
+        "road_id": 10,
+        "period": "MORNING",
+        "predicted_congestion": 0.6971192412979581
+    },
+    {
+        "road_id": 14,
+        "period": "MORNING",
+        "predicted_congestion": 0.6968261114112329
+    },
+    {
+        "road_id": 23,
+        "period": "MORNING",
+        "predicted_congestion": 0.6968261114112329
+    },
+    {
+        "road_id": 28,
+        "period": "MORNING",
+        "predicted_congestion": 0.6971192412979581
+    },
+    {
+        "road_id": 44,
+        "period": "MORNING",
+        "predicted_congestion": 0.6914647667218479
+    },
+    {
+        "road_id": 11,
+        "period": "MORNING",
+        "predicted_congestion": 0.7092695262111646
+    },
+    {
+        "road_id": 4,
+        "period": "MORNING",
+        "predicted_congestion": 0.6946571834111566
+    },
+    {
+        "road_id": 25,
+        "period": "MORNING",
+        "predicted_congestion": 0.6965252236073911
+    },
+    {
+        "road_id": 5,
+        "period": "MORNING",
+        "predicted_congestion": 0.7207150051955281
+    },
+    {
+        "road_id": 13,
+        "period": "MORNING",
+        "predicted_congestion": 0.6919518993919391
+    },
+    {
+        "road_id": 24,
+        "period": "MORNING",
+        "predicted_congestion": 0.690904585249328
+    },
+    {
+        "road_id": 35,
+        "period": "MORNING",
+        "predicted_congestion": 0.690959960560796
+    },
+    {
+        "road_id": 9,
+        "period": "MORNING",
+        "predicted_congestion": 0.6924600941934185
+    },
+    {
+        "road_id": 22,
+        "period": "MORNING",
+        "predicted_congestion": 0.690959960560796
+    },
+    {
+        "road_id": 21,
+        "period": "MORNING",
+        "predicted_congestion": 0.690959960560796
+    },
+    {
+        "road_id": 12,
+        "period": "EVENING",
+        "predicted_congestion": 0.7495883176157933
+    },
+    {
+        "road_id": 47,
+        "period": "EVENING",
+        "predicted_congestion": 0.7495883176157933
+    },
+    {
+        "road_id": 17,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 48,
+        "period": "EVENING",
+        "predicted_congestion": 0.7389576284367435
+    },
+    {
+        "road_id": 6,
+        "period": "EVENING",
+        "predicted_congestion": 0.7506926747531044
+    },
+    {
+        "road_id": 26,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 38,
+        "period": "EVENING",
+        "predicted_congestion": 0.7504649829235784
+    },
+    {
+        "road_id": 46,
+        "period": "EVENING",
+        "predicted_congestion": 0.7466528758338703
+    },
+    {
+        "road_id": 31,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 15,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 19,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 33,
+        "period": "EVENING",
+        "predicted_congestion": 0.7506926747531044
+    },
+    {
+        "road_id": 45,
+        "period": "EVENING",
+        "predicted_congestion": 0.748219320243067
+    },
+    {
+        "road_id": 34,
+        "period": "EVENING",
+        "predicted_congestion": 0.742166939793432
+    },
+    {
+        "road_id": 8,
+        "period": "EVENING",
+        "predicted_congestion": 0.7486825332057184
+    },
+    {
+        "road_id": 18,
+        "period": "EVENING",
+        "predicted_congestion": 0.7466107060103689
+    },
+    {
+        "road_id": 29,
+        "period": "EVENING",
+        "predicted_congestion": 0.7765943958371188
+    },
+    {
+        "road_id": 40,
+        "period": "EVENING",
+        "predicted_congestion": 0.7406664805282998
+    },
+    {
+        "road_id": 43,
+        "period": "EVENING",
+        "predicted_congestion": 0.7455646606851855
+    },
+    {
+        "road_id": 2,
+        "period": "EVENING",
+        "predicted_congestion": 0.7474566665104675
+    },
+    {
+        "road_id": 32,
+        "period": "EVENING",
+        "predicted_congestion": 0.7488636550623146
+    },
+    {
+        "road_id": 41,
+        "period": "EVENING",
+        "predicted_congestion": 0.7494603640626144
+    },
+    {
+        "road_id": 7,
+        "period": "EVENING",
+        "predicted_congestion": 0.7495765320913872
+    },
+    {
+        "road_id": 16,
+        "period": "EVENING",
+        "predicted_congestion": 0.7483564880686557
+    },
+    {
+        "road_id": 30,
+        "period": "EVENING",
+        "predicted_congestion": 0.7485105248650092
+    },
+    {
+        "road_id": 37,
+        "period": "EVENING",
+        "predicted_congestion": 0.7438281331616451
+    },
+    {
+        "road_id": 39,
+        "period": "EVENING",
+        "predicted_congestion": 0.8319589493852797
+    },
+    {
+        "road_id": 3,
+        "period": "EVENING",
+        "predicted_congestion": 0.7468199573462359
+    },
+    {
+        "road_id": 20,
+        "period": "EVENING",
+        "predicted_congestion": 0.7498602313963243
+    },
+    {
+        "road_id": 27,
+        "period": "EVENING",
+        "predicted_congestion": 0.7464251732394755
+    },
+    {
+        "road_id": 36,
+        "period": "EVENING",
+        "predicted_congestion": 0.7496596704777932
+    },
+    {
+        "road_id": 42,
+        "period": "EVENING",
+        "predicted_congestion": 0.7506840656187256
+    },
+    {
+        "road_id": 10,
+        "period": "EVENING",
+        "predicted_congestion": 0.7453930806843952
+    },
+    {
+        "road_id": 14,
+        "period": "EVENING",
+        "predicted_congestion": 0.749257188956885
+    },
+    {
+        "road_id": 23,
+        "period": "EVENING",
+        "predicted_congestion": 0.749257188956885
+    },
+    {
+        "road_id": 28,
+        "period": "EVENING",
+        "predicted_congestion": 0.7453930806843952
+    },
+    {
+        "road_id": 11,
+        "period": "EVENING",
+        "predicted_congestion": 0.7478646810831623
+    },
+    {
+        "road_id": 4,
+        "period": "EVENING",
+        "predicted_congestion": 0.743175145486631
+    },
+    {
+        "road_id": 25,
+        "period": "EVENING",
+        "predicted_congestion": 0.7447045822120225
+    },
+    {
+        "road_id": 5,
+        "period": "EVENING",
+        "predicted_congestion": 0.7631870849052208
+    },
+    {
+        "road_id": 13,
+        "period": "EVENING",
+        "predicted_congestion": 0.7478861352976068
+    },
+    {
+        "road_id": 24,
+        "period": "EVENING",
+        "predicted_congestion": 0.7386913173157058
+    },
+    {
+        "road_id": 9,
+        "period": "EVENING",
+        "predicted_congestion": 0.7477559553779023
+    },
+    {
+        "road_id": 22,
+        "period": "EVENING",
+        "predicted_congestion": 0.7501990618628231
+    },
+    {
+        "road_id": 21,
+        "period": "EVENING",
+        "predicted_congestion": 0.7501990618628231
+    },
+    {
+        "road_id": 12,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399937600488267
+    },
+    {
+        "road_id": 47,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399937600488267
+    },
+    {
+        "road_id": 17,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 48,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5354997706930296
+    },
+    {
+        "road_id": 6,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5412856288053963
+    },
+    {
+        "road_id": 26,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 38,
+        "period": "NIGHT",
+        "predicted_congestion": 0.538651586417486
+    },
+    {
+        "road_id": 46,
+        "period": "NIGHT",
+        "predicted_congestion": 0.540466873977377
+    },
+    {
+        "road_id": 31,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 15,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 19,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 33,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5412856288053963
+    },
+    {
+        "road_id": 45,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5399566707325473
+    },
+    {
+        "road_id": 34,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5375646856125297
+    },
+    {
+        "road_id": 8,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5404198836951987
+    },
+    {
+        "road_id": 18,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5354995229293409
+    },
+    {
+        "road_id": 29,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5692639975434372
+    },
+    {
+        "road_id": 40,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5372086227845858
+    },
+    {
+        "road_id": 43,
+        "period": "NIGHT",
+        "predicted_congestion": 0.536741428309433
+    },
+    {
+        "road_id": 2,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5412739164028623
+    },
+    {
+        "road_id": 32,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5406122023335644
+    },
+    {
+        "road_id": 41,
+        "period": "NIGHT",
+        "predicted_congestion": 0.540637131686862
+    },
+    {
+        "road_id": 7,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5406656378710026
+    },
+    {
+        "road_id": 16,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5406825630430461
+    },
+    {
+        "road_id": 30,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5396872924892568
+    },
+    {
+        "road_id": 39,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5570746310455814
+    },
+    {
+        "road_id": 3,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5390673092592418
+    },
+    {
+        "road_id": 20,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5398562522485485
+    },
+    {
+        "road_id": 27,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5144249491522304
+    },
+    {
+        "road_id": 36,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5382134636021034
+    },
+    {
+        "road_id": 42,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5386660790960334
+    },
+    {
+        "road_id": 1,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5574936022180969
+    },
+    {
+        "road_id": 10,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5393754312945978
+    },
+    {
+        "road_id": 14,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5389742011313894
+    },
+    {
+        "road_id": 23,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5389742011313894
+    },
+    {
+        "road_id": 28,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5393754312945978
+    },
+    {
+        "road_id": 44,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5337145051572966
+    },
+    {
+        "road_id": 11,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5355270766167204
+    },
+    {
+        "road_id": 4,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5408411969566289
+    },
+    {
+        "road_id": 25,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5383068450184243
+    },
+    {
+        "road_id": 5,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5370762298165732
+    },
+    {
+        "road_id": 13,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5390833329742937
+    },
+    {
+        "road_id": 24,
+        "period": "NIGHT",
+        "predicted_congestion": 0.54065601919925
+    },
+    {
+        "road_id": 35,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5401457704403106
+    },
+    {
+        "road_id": 9,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5387525081414456
+    },
+    {
+        "road_id": 22,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5401457704403106
+    },
+    {
+        "road_id": 21,
+        "period": "NIGHT",
+        "predicted_congestion": 0.5401457704403106
+    }
+]
