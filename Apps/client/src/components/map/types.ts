@@ -5,9 +5,26 @@ export type AlgorithmType =
   | "maintenance"
   | "signals"
   | "transit"
-  | "simulation";
+  | "simulation"
+  | "compare";
 
 export const PERIODS = ["morning", "evening", "night"];
+
+export type CompareAlgorithmType = "dijkstra" | "astar" | "time-varying";
+
+export const COMPARE_ALGORITHMS: {
+  key: CompareAlgorithmType;
+  label: string;
+}[] = [
+  { key: "dijkstra", label: "Dijkstra" },
+  { key: "astar", label: "A*" },
+  { key: "time-varying", label: "Time-Varying" },
+];
+
+export interface AnimationSettings {
+  enabled: boolean;
+  speed: number; // 0.5 = slow, 1 = normal, 2 = fast
+}
 
 export interface IntersectionSignal {
   intersectionName: string;

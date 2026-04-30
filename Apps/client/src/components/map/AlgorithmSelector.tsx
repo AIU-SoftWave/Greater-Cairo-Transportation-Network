@@ -15,6 +15,7 @@ const ALGORITHMS: { key: AlgorithmType; label: string }[] = [
   { key: "signals", label: "Signals" },
   { key: "transit", label: "Transit" },
   { key: "simulation", label: "Simulation" },
+  { key: "compare", label: "Compare" },
 ];
 
 export default function AlgorithmSelector({

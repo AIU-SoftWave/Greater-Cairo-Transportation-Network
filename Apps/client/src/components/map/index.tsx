@@ -41,7 +41,14 @@ import SelectedInfoPanel from "./SelectedInfoPanel";
 import ResultsDashboard from "./ResultsDashboard";
 import PerformanceMetricsModal from "./PerformanceMetricsModal";
 import MapCanvas from "./MapCanvas";
-import type { AlgorithmType, IntersectionSignal } from "./types";
+import CompareResultsPanel from "./CompareResultsPanel";
+import {
+  COMPARE_ALGORITHMS,
+  type AlgorithmType,
+  type IntersectionSignal,
+  type CompareAlgorithmType,
+  type AnimationSettings,
+} from "./types";
 import { isRoadSelectedForMaintenance as checkRoadSelectedForMaintenance } from "./utils";
 
 interface MapViewProps {
@@ -82,6 +89,30 @@ function MapInner({ nodes, edges }: MapViewProps) {
   const [showMetrics, setShowMetrics] = useState(false);
   const [weather, setWeatherState] = useState<number>(0);
 
+  // Compare mode state
+  const [compareAlgoA, setCompareAlgoA] =
+    useState<CompareAlgorithmType>("dijkstra");
+  const [compareAlgoB, setCompareAlgoB] =
+    useState<CompareAlgorithmType>("astar");
+  const [compareResponseA, setCompareResponseA] =
+    useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
+  const [compareResponseB, setCompareResponseB] =
+    useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
+  const [comparePathNodesA, setComparePathNodesA] = useState<
+    ShortestPathNodeDto[]
+  >([]);
+  const [comparePathNodesB, setComparePathNodesB] = useState<
+    ShortestPathNodeDto[]
+  >([]);
+
+  // Animation settings for compare mode
+  const [animationSettings, setAnimationSettings] = useState<AnimationSettings>(
+    {
+      enabled: true,
+      speed: 1,
+    },
+  );
+
   // Fetch MST and Simulation data on component load
   useEffect(() => {
     getCheapestNetwork().then((res) => {
@@ -106,7 +137,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
 
   // Fetch shortest path based on selected algorithm
   useEffect(() => {
-    if (algorithm === "maintenance") {
+    if (algorithm === "maintenance" || algorithm === "compare") {
       return;
     }
 
@@ -162,6 +193,77 @@ function MapInner({ nodes, edges }: MapViewProps) {
       cancelled = true;
     };
   }, [startId, endId, algorithm, period, weather]);
+
+  // Fetch compare mode dual routes
+  useEffect(() => {
+    if (algorithm !== "compare") {
+      return;
+    }
+
+    if (!startId || !endId) {
+      setComparePathNodesA([]);
+      setComparePathNodesB([]);
+      setCompareResponseA(null);
+      setCompareResponseB(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+
+    const fetchCompareRoutes = async () => {
+      try {
+        // Fetch both algorithms in parallel
+        const fetchAlgo = async (
+          algo: CompareAlgorithmType,
+        ): Promise<AlgorithmResponse<ShortestPathResultDto>> => {
+          switch (algo) {
+            case "astar":
+              return await getEmergencyRoute(startId, endId);
+            case "time-varying":
+              return await getTimeVaryingShortestPath(startId, endId, period);
+            case "dijkstra":
+            default:
+              return await getShortestPath(startId, endId);
+          }
+        };
+
+        const [resA, resB] = await Promise.all([
+          fetchAlgo(compareAlgoA),
+          fetchAlgo(compareAlgoB),
+        ]);
+
+        if (cancelled) return;
+
+        setCompareResponseA(resA);
+        setCompareResponseB(resB);
+
+        if (resA.success && resA.data.found) {
+          setComparePathNodesA(resA.data.pathNodes);
+        } else {
+          setComparePathNodesA([]);
+        }
+
+        if (resB.success && resB.data.found) {
+          setComparePathNodesB(resB.data.pathNodes);
+        } else {
+          setComparePathNodesB([]);
+        }
+      } catch {
+        // Silently handle error
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCompareRoutes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [startId, endId, algorithm, compareAlgoA, compareAlgoB, period, weather]);
 
   const handleCalculateMaintenance = async () => {
     setLoading(true);
@@ -383,6 +485,26 @@ function MapInner({ nodes, edges }: MapViewProps) {
       .map((n) => [n.y, n.x] as [number, number]);
   }, [pathNodes]);
 
+  // Draw compare paths (Algorithm A - Blue)
+  const comparePathPositionsA = useMemo(() => {
+    return comparePathNodesA
+      .filter(
+        (n): n is ShortestPathNodeDto & { x: number; y: number } =>
+          n.x !== undefined && n.y !== undefined,
+      )
+      .map((n) => [n.y, n.x] as [number, number]);
+  }, [comparePathNodesA]);
+
+  // Draw compare paths (Algorithm B - Green)
+  const comparePathPositionsB = useMemo(() => {
+    return comparePathNodesB
+      .filter(
+        (n): n is ShortestPathNodeDto & { x: number; y: number } =>
+          n.x !== undefined && n.y !== undefined,
+      )
+      .map((n) => [n.y, n.x] as [number, number]);
+  }, [comparePathNodesB]);
+
   // Draw MST roads - separate existing and potential
   const mstRoadsData = useMemo(() => {
     return mstEdges
@@ -509,7 +631,31 @@ function MapInner({ nodes, edges }: MapViewProps) {
           onResetTransit={handleResetTransit}
           onResetSimulation={handleResetSimulation}
           onRefreshMetrics={handleRefreshMetrics}
+          compareAlgoA={compareAlgoA}
+          compareAlgoB={compareAlgoB}
+          onCompareAlgoAChange={setCompareAlgoA}
+          onCompareAlgoBChange={setCompareAlgoB}
+          animationSettings={animationSettings}
+          onAnimationSettingsChange={setAnimationSettings}
         />
+
+        {/* Compare Results Panel */}
+        {algorithm === "compare" && (
+          <CompareResultsPanel
+            responseA={compareResponseA}
+            responseB={compareResponseB}
+            algoA={
+              COMPARE_ALGORITHMS.find((a) => a.key === compareAlgoA)?.label ||
+              compareAlgoA
+            }
+            algoB={
+              COMPARE_ALGORITHMS.find((a) => a.key === compareAlgoB)?.label ||
+              compareAlgoB
+            }
+            colorA="#3b82f6"
+            colorB="#22c55e"
+          />
+        )}
 
         {/* MST Toggle */}
         <div className="mb-4">
@@ -577,6 +723,9 @@ function MapInner({ nodes, edges }: MapViewProps) {
         onRoadClick={handleRoadClick}
         onMarkerClick={handleMarkerClick}
         onSignalMarkerClick={handleSignalMarkerClick}
+        comparePathPositionsA={comparePathPositionsA}
+        comparePathPositionsB={comparePathPositionsB}
+        animationSettings={animationSettings}
       />
 
       <PerformanceMetricsModal
