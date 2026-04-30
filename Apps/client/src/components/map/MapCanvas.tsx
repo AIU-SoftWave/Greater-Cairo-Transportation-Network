@@ -10,7 +10,11 @@ import type {
   MaintenancePlanningResultDto,
   TrafficSignalResultDto,
 } from "@/types";
-import type { AlgorithmType, IntersectionSignal } from "./types";
+import type {
+  AlgorithmType,
+  IntersectionSignal,
+  AnimationSettings,
+} from "./types";
 import { isRoadSelectedForMaintenance as checkRoadSelectedForMaintenance } from "./utils";
 
 // Dynamically import Leaflet components only on client side
@@ -33,6 +37,9 @@ const Polyline = dynamic(
   () => import("react-leaflet").then((mod) => mod.Polyline),
   { ssr: false },
 );
+
+// Import animated components
+import AnimatedPolyline from "./AnimatedPolyline";
 
 interface EdgeSegment {
   edge: Road;
@@ -61,6 +68,7 @@ interface MapCanvasProps {
   // Compare mode paths
   comparePathPositionsA?: [number, number][];
   comparePathPositionsB?: [number, number][];
+  animationSettings?: AnimationSettings;
   endId: string | null;
   maintenanceResponse: AlgorithmResponse<MaintenancePlanningResultDto> | null;
   signalResponse: AlgorithmResponse<TrafficSignalResultDto> | null;
@@ -113,6 +121,7 @@ export default function MapCanvas({
   onSignalMarkerClick,
   comparePathPositionsA = [],
   comparePathPositionsB = [],
+  animationSettings = { enabled: true, speed: 1 },
 }: MapCanvasProps) {
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
 
@@ -316,22 +325,28 @@ export default function MapCanvas({
 
       {/* Compare Mode Paths - Algorithm A (Blue) */}
       {algorithm === "compare" && comparePathPositionsA.length > 1 && (
-        <Polyline
+        <AnimatedPolyline
           positions={comparePathPositionsA}
           color="#3b82f6"
           weight={5}
           opacity={0.9}
           dashArray="10, 10"
+          enabled={animationSettings.enabled}
+          duration={2 / animationSettings.speed}
+          delay={0}
         />
       )}
 
       {/* Compare Mode Paths - Algorithm B (Green) */}
       {algorithm === "compare" && comparePathPositionsB.length > 1 && (
-        <Polyline
+        <AnimatedPolyline
           positions={comparePathPositionsB}
           color="#22c55e"
           weight={5}
           opacity={0.9}
+          enabled={animationSettings.enabled}
+          duration={2 / animationSettings.speed}
+          delay={0.2}
         />
       )}
 

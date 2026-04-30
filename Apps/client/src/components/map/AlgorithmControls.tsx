@@ -5,6 +5,7 @@ import {
   COMPARE_ALGORITHMS,
   type AlgorithmType,
   type CompareAlgorithmType,
+  type AnimationSettings,
 } from "./types";
 
 interface AlgorithmControlsProps {
@@ -33,6 +34,9 @@ interface AlgorithmControlsProps {
   compareAlgoB?: CompareAlgorithmType;
   onCompareAlgoAChange?: (algo: CompareAlgorithmType) => void;
   onCompareAlgoBChange?: (algo: CompareAlgorithmType) => void;
+  // Animation settings
+  animationSettings?: AnimationSettings;
+  onAnimationSettingsChange?: (settings: AnimationSettings) => void;
 }
 
 export default function AlgorithmControls({
@@ -60,6 +64,8 @@ export default function AlgorithmControls({
   compareAlgoB = "astar",
   onCompareAlgoAChange,
   onCompareAlgoBChange,
+  animationSettings = { enabled: true, speed: 1 },
+  onAnimationSettingsChange,
 }: AlgorithmControlsProps) {
   return (
     <>
@@ -285,8 +291,53 @@ export default function AlgorithmControls({
               </select>
             </div>
           </div>
+          {/* Animation Controls */}
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-gray-500 uppercase">
+                Path Animation
+              </span>
+              <button
+                onClick={() =>
+                  onAnimationSettingsChange?.({
+                    ...animationSettings,
+                    enabled: !animationSettings.enabled,
+                  })
+                }
+                className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                  animationSettings.enabled
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {animationSettings.enabled ? "ON" : "OFF"}
+              </button>
+            </div>
+
+            {animationSettings.enabled && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-400">Slow</span>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.5"
+                  value={animationSettings.speed}
+                  onChange={(e) =>
+                    onAnimationSettingsChange?.({
+                      ...animationSettings,
+                      speed: parseFloat(e.target.value),
+                    })
+                  }
+                  className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="text-[10px] text-gray-400">Fast</span>
+              </div>
+            )}
+          </div>
+
           <p className="mt-2 text-[10px] text-gray-500 italic">
-            Select two locations to see algorithms race side-by-side.
+            Select two locations to see algorithms race side-by-side on the map.
           </p>
         </div>
       )}

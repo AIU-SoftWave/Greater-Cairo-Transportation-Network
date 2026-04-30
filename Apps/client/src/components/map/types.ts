@@ -21,6 +21,11 @@ export const COMPARE_ALGORITHMS: {
   { key: "time-varying", label: "Time-Varying" },
 ];
 
+export interface AnimationSettings {
+  enabled: boolean;
+  speed: number; // 0.5 = slow, 1 = normal, 2 = fast
+}
+
 export interface IntersectionSignal {
   intersectionName: string;
   nodeId: string | null;

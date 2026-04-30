@@ -47,6 +47,7 @@ import {
   type AlgorithmType,
   type IntersectionSignal,
   type CompareAlgorithmType,
+  type AnimationSettings,
 } from "./types";
 import { isRoadSelectedForMaintenance as checkRoadSelectedForMaintenance } from "./utils";
 
@@ -103,6 +104,14 @@ function MapInner({ nodes, edges }: MapViewProps) {
   const [comparePathNodesB, setComparePathNodesB] = useState<
     ShortestPathNodeDto[]
   >([]);
+
+  // Animation settings for compare mode
+  const [animationSettings, setAnimationSettings] = useState<AnimationSettings>(
+    {
+      enabled: true,
+      speed: 1,
+    },
+  );
 
   // Fetch MST and Simulation data on component load
   useEffect(() => {
@@ -626,6 +635,8 @@ function MapInner({ nodes, edges }: MapViewProps) {
           compareAlgoB={compareAlgoB}
           onCompareAlgoAChange={setCompareAlgoA}
           onCompareAlgoBChange={setCompareAlgoB}
+          animationSettings={animationSettings}
+          onAnimationSettingsChange={setAnimationSettings}
         />
 
         {/* Compare Results Panel */}
@@ -714,6 +725,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
         onSignalMarkerClick={handleSignalMarkerClick}
         comparePathPositionsA={comparePathPositionsA}
         comparePathPositionsB={comparePathPositionsB}
+        animationSettings={animationSettings}
       />
 
       <PerformanceMetricsModal
