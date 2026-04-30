@@ -58,6 +58,9 @@ interface MapCanvasProps {
   algorithm: AlgorithmType;
   showMst: boolean;
   startId: string | null;
+  // Compare mode paths
+  comparePathPositionsA?: [number, number][];
+  comparePathPositionsB?: [number, number][];
   endId: string | null;
   maintenanceResponse: AlgorithmResponse<MaintenancePlanningResultDto> | null;
   signalResponse: AlgorithmResponse<TrafficSignalResultDto> | null;
@@ -108,6 +111,8 @@ export default function MapCanvas({
   onRoadClick,
   onMarkerClick,
   onSignalMarkerClick,
+  comparePathPositionsA = [],
+  comparePathPositionsB = [],
 }: MapCanvasProps) {
   const [leaflet, setLeaflet] = useState<unknown | null>(null);
 
@@ -300,10 +305,31 @@ export default function MapCanvas({
         })}
 
       {/* Shortest Path */}
-      {pathPositions.length > 1 && (
+      {pathPositions.length > 1 && algorithm !== "compare" && (
         <Polyline
           positions={pathPositions}
           color="#3b82f6"
+          weight={5}
+          opacity={0.9}
+        />
+      )}
+
+      {/* Compare Mode Paths - Algorithm A (Blue) */}
+      {algorithm === "compare" && comparePathPositionsA.length > 1 && (
+        <Polyline
+          positions={comparePathPositionsA}
+          color="#3b82f6"
+          weight={5}
+          opacity={0.9}
+          dashArray="10, 10"
+        />
+      )}
+
+      {/* Compare Mode Paths - Algorithm B (Green) */}
+      {algorithm === "compare" && comparePathPositionsB.length > 1 && (
+        <Polyline
+          positions={comparePathPositionsB}
+          color="#22c55e"
           weight={5}
           opacity={0.9}
         />
