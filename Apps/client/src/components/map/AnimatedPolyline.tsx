@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Polyline } from "react-leaflet";
+import dynamic from "next/dynamic";
 import type { LatLngExpression } from "leaflet";
+
+const Polyline = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Polyline),
+  { ssr: false }
+);
 
 interface AnimatedPolylineProps {
   positions: LatLngExpression[];
