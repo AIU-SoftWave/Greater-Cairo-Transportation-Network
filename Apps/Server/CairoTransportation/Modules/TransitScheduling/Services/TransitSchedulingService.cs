@@ -1,12 +1,13 @@
-using CairoTransportation.Algorithms.DynamicProgramming.Contracts;
 using CairoTransportation.Data;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
-using CairoTransportation.Services.TransitScheduling.Contracts;
+using CairoTransportation.Modules.TransitScheduling.Services.Contracts;
+using CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
+using CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
-namespace CairoTransportation.Services.TransitScheduling;
+namespace CairoTransportation.Modules.TransitScheduling.Services;
 
 public class TransitSchedulingService(
     TransportationDbContext dbContext,

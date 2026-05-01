@@ -1,8 +1,8 @@
-using CairoTransportation.Models;
-using CairoTransportation.Services;
+using CairoTransportation.Modules.Routing.Models;
+using CairoTransportation.Modules.Routing.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.Routing.Controllers;
 
 /// <summary>
 /// Provides access to public transport route data and route stops.

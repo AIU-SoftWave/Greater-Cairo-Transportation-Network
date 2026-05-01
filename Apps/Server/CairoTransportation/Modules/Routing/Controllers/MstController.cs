@@ -1,9 +1,8 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Routing.Contracts;
-using CairoTransportation.Services.Algorithms.Mst.DTOs;
+using CairoTransportation.Modules.Routing.Services.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.Routing.Controllers;
 
 [ApiController]
 [Route("api/network-expansion")]

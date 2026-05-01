@@ -1,7 +1,7 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.TrafficControl.Contracts;
+namespace CairoTransportation.Modules.TrafficControl.Services.Contracts;
 
 /// <summary>
 /// Business service for real-time traffic signal optimization.

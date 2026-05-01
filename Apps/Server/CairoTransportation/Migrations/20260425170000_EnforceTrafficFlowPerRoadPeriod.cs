@@ -2,16 +2,16 @@
 
 #nullable disable
 
-namespace CairoTransportation.Migrations
+namespace CairoTransportation.Migrations;
+
+/// <inheritdoc />
+public partial class EnforceTrafficFlowPerRoadPeriod : Migration
 {
     /// <inheritdoc />
-    public partial class EnforceTrafficFlowPerRoadPeriod : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            // Consolidate duplicate road+period rows by summing flow.
-            migrationBuilder.Sql(@"
+        // Consolidate duplicate road+period rows by summing flow.
+        migrationBuilder.Sql(@"
                 CREATE TEMP TABLE tmp_traffic_flow_agg AS
                 SELECT
                     road_id,
@@ -29,8 +29,8 @@ namespace CairoTransportation.Migrations
                 DROP TABLE tmp_traffic_flow_agg;
             ");
 
-            // Ensure every existing road has a flow row for every configured period.
-            migrationBuilder.Sql(@"
+        // Ensure every existing road has a flow row for every configured period.
+        migrationBuilder.Sql(@"
                 INSERT INTO traffic_flow (road_id, period, flow)
                 SELECT
                     r.id,
@@ -43,16 +43,15 @@ namespace CairoTransportation.Migrations
                   AND tf.id IS NULL;
             ");
 
-            migrationBuilder.CreateIndex(
-                name: "uq_traffic_road_period",
-                table: "traffic_flow",
-                columns: new[] { "road_id", "period" },
-                unique: true);
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropIndex(
-                name: "uq_traffic_road_period",
-                table: "traffic_flow");
+        migrationBuilder.CreateIndex(
+            name: "uq_traffic_road_period",
+            table: "traffic_flow",
+            columns: new[] { "road_id", "period" },
+            unique: true);
     }
+
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropIndex(
+            name: "uq_traffic_road_period",
+            table: "traffic_flow");
 }

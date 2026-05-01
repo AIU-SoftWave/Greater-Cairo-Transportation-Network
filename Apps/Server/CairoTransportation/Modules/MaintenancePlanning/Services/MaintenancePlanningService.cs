@@ -1,15 +1,14 @@
-using CairoTransportation.Algorithms.DynamicProgramming.Contracts;
 using CairoTransportation.Data;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
-using CairoTransportation.Services.MaintenancePlanning.Contracts;
+using CairoTransportation.Modules.MaintenancePlanning.Services.Contracts;
+using CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
 using Microsoft.EntityFrameworkCore;
 
-namespace CairoTransportation.Services.MaintenancePlanning;
+namespace CairoTransportation.Modules.MaintenancePlanning.Services;
 
 public class MaintenancePlanningService(
-    TransportationDbContext dbContext, 
+    TransportationDbContext dbContext,
     IKnapsackMaintenanceOptimizer optimizer) : IMaintenancePlanningService
 {
     public async Task<AlgorithmResponseDto<MaintenancePlanningResultDto>> GenerateMaintenancePlanAsync(double budget)
@@ -22,13 +21,13 @@ public class MaintenancePlanningService(
 
         // 1. Fetch roads in need of maintenance from the database
         List<MaintenanceCandidate> candidates = await (from m in dbContext.RoadMaintenances.AsNoTracking()
-                                join r in dbContext.Roads.AsNoTracking() on m.RoadId equals r.Id
-                                join f in dbContext.Locations.AsNoTracking() on r.FromLocationId equals f.Id
-                                join t in dbContext.Locations.AsNoTracking() on r.ToLocationId equals t.Id
-                                where m.EstimatedCost > 0 && m.Priority > 0
-                                // Value = Priority * Condition Modifier
-                                let value = (int)((m.Priority ?? 1) * (1 + (100 - (r.Condition ?? 50)) / 100.0))
-                                select new MaintenanceCandidate(r.Id, f.Name, t.Name, r.Condition, (int)m.EstimatedCost!, m.Priority ?? 1, value))
+                                                       join r in dbContext.Roads.AsNoTracking() on m.RoadId equals r.Id
+                                                       join f in dbContext.Locations.AsNoTracking() on r.FromLocationId equals f.Id
+                                                       join t in dbContext.Locations.AsNoTracking() on r.ToLocationId equals t.Id
+                                                       where m.EstimatedCost > 0 && m.Priority > 0
+                                                       // Value = Priority * Condition Modifier
+                                                       let value = (int)((m.Priority ?? 1) * (1 + (100 - (r.Condition ?? 50)) / 100.0))
+                                                       select new MaintenanceCandidate(r.Id, f.Name, t.Name, r.Condition, (int)m.EstimatedCost!, m.Priority ?? 1, value))
                                .ToListAsync();
 
         // 2. Run Knapsack optimization to maximize priority score within budget

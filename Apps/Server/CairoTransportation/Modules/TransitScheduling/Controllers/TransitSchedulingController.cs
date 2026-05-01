@@ -1,9 +1,9 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.TransitScheduling.Contracts;
-using CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
+using CairoTransportation.Modules.TransitScheduling.Services.Contracts;
+using CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.TransitScheduling.Controllers;
 
 /// <summary>
 /// Provides transit vehicle scheduling optimization using Dynamic Programming (Resource Allocation).
@@ -83,7 +83,7 @@ public class TransitSchedulingController(ITransitSchedulingService schedulingSer
     [HttpGet("route/{id}/geometry")]
     public async Task<IActionResult> GetRouteGeometry(string id)
     {
-        var geometry = await schedulingService.GetRouteGeometryAsync(id);
+        List<ShortestPathNodeDto> geometry = await schedulingService.GetRouteGeometryAsync(id);
         return Ok(geometry);
     }
 
@@ -95,7 +95,7 @@ public class TransitSchedulingController(ITransitSchedulingService schedulingSer
     [HttpGet("transfer-hubs")]
     public async Task<IActionResult> GetTransferHubs()
     {
-        var hubs = await schedulingService.GetTransferHubsAsync();
+        List<TransferHubDto> hubs = await schedulingService.GetTransferHubsAsync();
         return Ok(hubs);
     }
 }

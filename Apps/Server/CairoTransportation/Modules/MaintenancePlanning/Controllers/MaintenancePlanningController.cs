@@ -1,9 +1,8 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.MaintenancePlanning.Contracts;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
+using CairoTransportation.Modules.MaintenancePlanning.Services.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.MaintenancePlanning.Controllers;
 
 /// <summary>
 /// Provides maintenance planning optimization using Dynamic Programming (0/1 Knapsack).

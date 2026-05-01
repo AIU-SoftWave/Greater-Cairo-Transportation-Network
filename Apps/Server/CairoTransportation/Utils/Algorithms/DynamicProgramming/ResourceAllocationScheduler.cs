@@ -1,7 +1,7 @@
-using CairoTransportation.Algorithms.DynamicProgramming.Contracts;
-using CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
+using CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
+using CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
 
-namespace CairoTransportation.Algorithms.DynamicProgramming;
+namespace CairoTransportation.Utils.Algorithms.DynamicProgramming;
 
 public class ResourceAllocationScheduler : IResourceAllocationScheduler
 {
@@ -13,12 +13,12 @@ public class ResourceAllocationScheduler : IResourceAllocationScheduler
             return new TransitSchedulingResultDto { TotalVehicles = totalVehicles };
         }
 
-        int n = routes.Count; 
+        int n = routes.Count;
         int V = totalVehicles;
-        
+
         // dp[i, v] = max passengers served using first 'i' routes with 'v' total vehicles
         int[,] dp = new int[n + 1, V + 1];
-        
+
         // choice[i, v] = records how many vehicles were assigned to route 'i' to reach the max value
         int[,] choice = new int[n + 1, V + 1];
 
@@ -29,8 +29,8 @@ public class ResourceAllocationScheduler : IResourceAllocationScheduler
             for (int v = 0; v <= V; v++)
             {
                 // Default: Assign 0 vehicles to this route
-                dp[i, v] = dp[i - 1, v]; 
-                
+                dp[i, v] = dp[i - 1, v];
+
                 // Try assigning k vehicles (1 to max capacity of the route)
                 int maxPossibleVehicles = Math.Min(r.CapacityPerRoute, v);
                 for (int k = 1; k <= maxPossibleVehicles; k++)

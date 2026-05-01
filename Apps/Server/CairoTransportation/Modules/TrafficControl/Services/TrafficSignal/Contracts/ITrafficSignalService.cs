@@ -1,7 +1,7 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.Algorithms.TrafficSignal.Contracts;
+namespace CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.Contracts;
 
 /// <summary>
 /// Service for optimizing traffic signal timing using Greedy algorithm.

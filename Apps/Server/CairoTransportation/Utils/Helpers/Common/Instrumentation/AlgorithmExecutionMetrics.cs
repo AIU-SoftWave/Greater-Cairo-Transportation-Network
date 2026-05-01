@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.Algorithms.Common.Instrumentation;
+namespace CairoTransportation.Utils.Helpers.Common.Instrumentation;
 
 public sealed class AlgorithmExecutionMetrics
 {

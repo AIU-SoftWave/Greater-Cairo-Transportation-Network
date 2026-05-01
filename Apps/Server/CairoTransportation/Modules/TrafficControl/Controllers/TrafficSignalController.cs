@@ -1,10 +1,10 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.TrafficControl.Contracts;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
-using CairoTransportation.Services;
+using CairoTransportation.Modules.TrafficControl.Services;
+using CairoTransportation.Modules.TrafficControl.Services.Contracts;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.TrafficControl.Controllers;
 
 /// <summary>
 /// Provides traffic signal timing optimization using Greedy algorithm.

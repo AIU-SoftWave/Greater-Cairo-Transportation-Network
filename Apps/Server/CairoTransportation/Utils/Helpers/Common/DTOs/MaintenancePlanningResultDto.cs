@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
+namespace CairoTransportation.Utils.Helpers.Common.DTOs;
 
 /// <summary>
 /// Result DTO for maintenance planning optimization.

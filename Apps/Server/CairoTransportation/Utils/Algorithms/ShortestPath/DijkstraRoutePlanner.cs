@@ -1,11 +1,10 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services;
-
-namespace CairoTransportation.Algorithms.ShortestPath;
+namespace CairoTransportation.Utils.Algorithms.ShortestPath;
 
 public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : IDijkstraRoutePlanner
 {
@@ -74,7 +73,7 @@ public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulation
                     SimulationWeather.Storm => 1.8,
                     _ => 1.0
                 };
-                double newDist = distances[curr] + (edge.Distance * weatherPenalty);
+                double newDist = distances[curr] + edge.Distance * weatherPenalty;
 
                 // Relaxation: if we found a shorter way to reach the neighbor, update it
                 if (newDist < distances[neighbor])

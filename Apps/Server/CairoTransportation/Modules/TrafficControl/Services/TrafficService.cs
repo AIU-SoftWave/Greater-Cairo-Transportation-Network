@@ -1,8 +1,8 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
+using CairoTransportation.Modules.TrafficControl.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CairoTransportation.Services;
+namespace CairoTransportation.Modules.TrafficControl.Services;
 
 public interface ITrafficService
 {

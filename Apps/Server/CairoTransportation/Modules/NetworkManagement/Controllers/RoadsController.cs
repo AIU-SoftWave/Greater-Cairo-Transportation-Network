@@ -1,8 +1,9 @@
-using CairoTransportation.Models;
-using CairoTransportation.Services;
+using CairoTransportation.Modules.MaintenancePlanning.Models;
+using CairoTransportation.Modules.NetworkManagement.Models;
+using CairoTransportation.Modules.NetworkManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.NetworkManagement.Controllers;
 
 /// <summary>
 /// Provides access to road data and road maintenance information.

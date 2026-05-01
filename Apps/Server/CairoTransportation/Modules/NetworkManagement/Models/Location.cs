@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using CairoTransportation.Modules.Routing.Models;
+using CairoTransportation.Modules.TransitScheduling.Models;
 
-namespace CairoTransportation.Models;
+namespace CairoTransportation.Modules.NetworkManagement.Models;
 
 [Table("locations")]
 public class Location

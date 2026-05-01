@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace CairoTransportation.Services;
+namespace CairoTransportation.Modules.Simulation.Services;
 
 public class SimulationService : ISimulationService
 {

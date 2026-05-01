@@ -1,15 +1,17 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Models;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Graph;
-using CairoTransportation.Services.Routing.Contracts;
+using CairoTransportation.Modules.Routing.Services.Contracts;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Modules.TrafficControl.Models;
+using CairoTransportation.Modules.TrafficControl.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 
-namespace CairoTransportation.Services.Routing;
+namespace CairoTransportation.Modules.Routing.Services;
 
 public class TimeVaryingDijkstraService(
-    IGraphService graphService, 
-    ITrafficService trafficService, 
+    IGraphService graphService,
+    ITrafficService trafficService,
     ITimeVaryingRoutePlanner planner,
     ISimulationService simulationService,
     AlgorithmExecutionMetrics metrics) : ITimeVaryingDijkstraService
@@ -17,9 +19,9 @@ public class TimeVaryingDijkstraService(
     public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string from, string to, string period)
     {
         // 1. Load city graph and traffic metadata
-        Graph.Graph graph = await graphService.GetGraphAsync();
+        Graph graph = await graphService.GetGraphAsync();
         TrafficPeriodMultiplier? periodMultiplier = await trafficService.GetPeriodMultiplierAsync(period);
-        
+
         if (periodMultiplier == null)
         {
             return new AlgorithmResponseDto<ShortestPathResultDto> { Success = false, Message = "Invalid period." };
@@ -33,7 +35,7 @@ public class TimeVaryingDijkstraService(
         // 3. Execute traffic-aware route planning
         ShortestPathResultDto data = planner.FindShortestPath(graph, from, to, traffic, periodMultiplier.Multiplier);
 
-        var trace = metrics.Complete();
+        AlgorithmTraceDto trace = metrics.Complete();
         simulationService.RecordMetrics("Time-Varying Dijkstra", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
 
         return new AlgorithmResponseDto<ShortestPathResultDto>

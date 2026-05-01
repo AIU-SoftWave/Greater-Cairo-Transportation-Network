@@ -1,12 +1,11 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Algorithms.TrafficSignal.Contracts;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.Contracts;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
 using Microsoft.EntityFrameworkCore;
 
-namespace CairoTransportation.Services.Algorithms.TrafficSignal;
+namespace CairoTransportation.Modules.TrafficControl.Services.TrafficSignal;
 
 /// <summary>
 /// Service for optimizing traffic signal timing using Greedy algorithm.

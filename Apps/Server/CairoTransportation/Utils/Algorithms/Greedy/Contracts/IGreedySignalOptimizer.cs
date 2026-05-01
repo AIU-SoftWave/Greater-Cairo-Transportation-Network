@@ -1,6 +1,6 @@
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
 
-namespace CairoTransportation.Algorithms.Greedy.Contracts;
+namespace CairoTransportation.Utils.Algorithms.Greedy.Contracts;
 
 public interface IGreedySignalOptimizer
 {

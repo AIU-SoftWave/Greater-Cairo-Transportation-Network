@@ -1,8 +1,8 @@
-using CairoTransportation.Models;
-using CairoTransportation.Services;
+using CairoTransportation.Modules.TrafficControl.Models;
+using CairoTransportation.Modules.TrafficControl.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.TrafficControl.Controllers;
 
 /// <summary>
 /// Provides read access to configured traffic period multipliers used by time-varying routing.

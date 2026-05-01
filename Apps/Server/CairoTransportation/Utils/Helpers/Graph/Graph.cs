@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Graph;
+namespace CairoTransportation.Utils.Helpers.Graph;
 
 /// <summary>
 /// Represents a complete transportation network graph.

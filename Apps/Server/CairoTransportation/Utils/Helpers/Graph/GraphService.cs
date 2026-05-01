@@ -1,9 +1,11 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
+using CairoTransportation.Modules.MaintenancePlanning.Models;
+using CairoTransportation.Modules.NetworkManagement.Models;
+using CairoTransportation.Modules.Simulation.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CairoTransportation.Services.Graph;
+namespace CairoTransportation.Utils.Helpers.Graph;
 
 /// <summary>
 /// Shared graph service implementation.
@@ -13,7 +15,7 @@ namespace CairoTransportation.Services.Graph;
 /// graph object and skips all database round-trips.
 /// </summary>
 public class GraphService(
-    TransportationDbContext dbContext, 
+    TransportationDbContext dbContext,
     IMemoryCache cache,
     ISimulationService simulationService) : IGraphService
 {
@@ -66,7 +68,7 @@ public class GraphService(
             .AsNoTracking()
             .ToDictionaryAsync(x => x.RoadId);
 
-        var closedRoadIds = await simulationService.GetClosedRoadIdsAsync();
+        HashSet<long> closedRoadIds = await simulationService.GetClosedRoadIdsAsync();
 
         foreach (Road? road in roads)
         {

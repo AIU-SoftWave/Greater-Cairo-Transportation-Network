@@ -1,7 +1,7 @@
-using CairoTransportation.Services;
+using CairoTransportation.Modules.TrafficControl.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.TrafficControl.Controllers;
 
 /// <summary>
 /// Provides access to traffic flow data for roads and time periods.

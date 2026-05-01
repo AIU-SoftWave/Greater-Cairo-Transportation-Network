@@ -1,7 +1,7 @@
-using CairoTransportation.Algorithms.DynamicProgramming.Contracts;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
+using CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Algorithms.DynamicProgramming;
+namespace CairoTransportation.Utils.Algorithms.DynamicProgramming;
 
 public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
 {
@@ -28,13 +28,13 @@ public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
             for (int b = 0; b <= B; b++)
             {
                 // Option A: Skip this road
-                dp[i, b] = dp[i - 1, b]; 
-                
+                dp[i, b] = dp[i - 1, b];
+
                 // Option B: Include this road (if budget allows)
                 if (item.Cost <= b)
                 {
                     int valIfIncluded = dp[i - 1, b - item.Cost] + item.Value;
-                    if (valIfIncluded > dp[i, b]) 
+                    if (valIfIncluded > dp[i, b])
                     {
                         dp[i, b] = valIfIncluded; // Take the better option
                     }
@@ -60,51 +60,54 @@ public class KnapsackMaintenanceOptimizer : IKnapsackMaintenanceOptimizer
 
     private static MaintenancePlanningResultDto BuildResult(List<MaintenanceCandidate> candidates, HashSet<long> selectedIds, double budget)
     {
-        double cost = 0; int priority = 0; double improvement = 0;
-        List<MaintenanceRoadDto> selected = []; List<MaintenanceRoadDto> notSelected = [];
+        double cost = 0;
+        int priority = 0;
+        double improvement = 0;
+        List<MaintenanceRoadDto> selected = [];
+        List<MaintenanceRoadDto> notSelected = [];
 
         foreach (MaintenanceCandidate c in candidates)
         {
             bool isSel = selectedIds.Contains(c.RoadId);
             double curr = c.Condition ?? 50;
             double next = Math.Min(100, curr + (100 - curr) * 0.5); // Heuristic: restore 50% of condition loss
-            
-            var dto = new MaintenanceRoadDto 
-            { 
-                RoadId = c.RoadId, 
-                FromLocation = c.From, 
-                ToLocation = c.To, 
-                CurrentCondition = curr, 
-                EstimatedCost = c.Cost, 
-                Priority = c.Priority, 
-                ExpectedNewCondition = next, 
-                Reason = isSel ? "Optimal selection for maximum impact" : "Exceeds budget for this priority level" 
+
+            var dto = new MaintenanceRoadDto
+            {
+                RoadId = c.RoadId,
+                FromLocation = c.From,
+                ToLocation = c.To,
+                CurrentCondition = curr,
+                EstimatedCost = c.Cost,
+                Priority = c.Priority,
+                ExpectedNewCondition = next,
+                Reason = isSel ? "Optimal selection for maximum impact" : "Exceeds budget for this priority level"
             };
 
-            if (isSel) 
-            { 
-                cost += c.Cost; 
-                priority += c.Priority; 
-                improvement += next - curr; 
-                selected.Add(dto); 
+            if (isSel)
+            {
+                cost += c.Cost;
+                priority += c.Priority;
+                improvement += next - curr;
+                selected.Add(dto);
             }
-            else 
+            else
             {
                 notSelected.Add(dto);
             }
         }
 
-        return new MaintenancePlanningResultDto 
-        { 
-            Budget = budget, 
-            TotalCost = cost, 
-            RemainingBudget = budget - cost, 
-            TotalPriorityScore = priority, 
-            SelectedRoadCount = selected.Count, 
-            TotalCandidateRoads = candidates.Count, 
-            ExpectedConditionImprovement = improvement, 
-            SelectedRoads = selected.OrderByDescending(x => x.Priority).ToList(), 
-            NotSelectedRoads = notSelected.OrderByDescending(x => x.Priority).ToList() 
+        return new MaintenancePlanningResultDto
+        {
+            Budget = budget,
+            TotalCost = cost,
+            RemainingBudget = budget - cost,
+            TotalPriorityScore = priority,
+            SelectedRoadCount = selected.Count,
+            TotalCandidateRoads = candidates.Count,
+            ExpectedConditionImprovement = improvement,
+            SelectedRoads = selected.OrderByDescending(x => x.Priority).ToList(),
+            NotSelectedRoads = notSelected.OrderByDescending(x => x.Priority).ToList()
         };
     }
 }

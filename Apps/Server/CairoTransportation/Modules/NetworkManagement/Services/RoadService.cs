@@ -1,8 +1,9 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
+using CairoTransportation.Modules.MaintenancePlanning.Models;
+using CairoTransportation.Modules.NetworkManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CairoTransportation.Services;
+namespace CairoTransportation.Modules.NetworkManagement.Services;
 
 public interface IRoadService
 {

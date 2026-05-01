@@ -1,7 +1,7 @@
-using CairoTransportation.Algorithms.Greedy.Contracts;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Algorithms.Greedy.Contracts;
 
-namespace CairoTransportation.Algorithms.Greedy;
+namespace CairoTransportation.Utils.Algorithms.Greedy;
 
 public class GreedySignalOptimizer : IGreedySignalOptimizer
 {
@@ -24,7 +24,7 @@ public class GreedySignalOptimizer : IGreedySignalOptimizer
         {
             var sortedInIntersection = g.OrderByDescending(r => r.IsEmergencyRoute).ThenByDescending(r => r.CongestionRatio).ToList();
             double totalLoad = sortedInIntersection.Sum(r => r.CongestionRatio);
-            
+
             // Adjust intersection cycle time (60-120s) based on total traffic load
             int cycle = Math.Clamp(60 + (int)(totalLoad * 10), 60, 120);
 
@@ -37,24 +37,24 @@ public class GreedySignalOptimizer : IGreedySignalOptimizer
                 // Strategy: 
                 // Emergency routes get a guaranteed 40% of the cycle.
                 // Others get time proportional to their traffic flow.
-                GreenTimeSeconds = r.IsEmergencyRoute 
-                    ? Math.Max(20, (int)(cycle * 0.4)) 
+                GreenTimeSeconds = r.IsEmergencyRoute
+                    ? Math.Max(20, (int)(cycle * 0.4))
                     : Math.Clamp((int)(cycle * (r.CongestionRatio / Math.Max(totalLoad, 0.1))), 10, cycle / 2)
             }).ToList();
 
             return new IntersectionSignalPlan { Name = g.Key, CycleTimeSeconds = cycle, Roads = phases };
         }).ToList();
 
-        return new TrafficSignalResultDto 
-        { 
-            Period = period, 
-            Summary = new SignalSummary 
-            { 
-                RoadsAnalyzed = roads.Count, 
-                OptimizedIntersections = plans.Count, 
-                EstimatedWaitTimeReductionPercent = plans.Count > 0 ? 10 : 0 
-            }, 
-            Intersections = plans 
+        return new TrafficSignalResultDto
+        {
+            Period = period,
+            Summary = new SignalSummary
+            {
+                RoadsAnalyzed = roads.Count,
+                OptimizedIntersections = plans.Count,
+                EstimatedWaitTimeReductionPercent = plans.Count > 0 ? 10 : 0
+            },
+            Intersections = plans
         };
     }
 }

@@ -1,7 +1,7 @@
-using CairoTransportation.Services;
+using CairoTransportation.Modules.Simulation.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.Simulation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -24,7 +24,7 @@ public class SimulationController(ISimulationService simulationService) : Contro
     [HttpGet("closed-roads")]
     public async Task<IActionResult> GetClosedRoads()
     {
-        var ids = await simulationService.GetClosedRoadIdsAsync();
+        HashSet<long> ids = await simulationService.GetClosedRoadIdsAsync();
         return Ok(ids);
     }
 

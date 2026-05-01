@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using CairoTransportation.Modules.MaintenancePlanning.Models;
+using CairoTransportation.Modules.TrafficControl.Models;
 
-namespace CairoTransportation.Models;
+namespace CairoTransportation.Modules.NetworkManagement.Models;
 
 [Table("roads")]
 public class Road

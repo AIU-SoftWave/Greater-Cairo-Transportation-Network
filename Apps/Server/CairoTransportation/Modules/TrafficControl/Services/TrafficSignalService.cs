@@ -1,15 +1,17 @@
-using CairoTransportation.Algorithms.Greedy.Contracts;
 using CairoTransportation.Data;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
-using CairoTransportation.Services.TrafficControl.Contracts;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Modules.TrafficControl.Services.Contracts;
+using CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
+using CairoTransportation.Utils.Algorithms.Greedy.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
-namespace CairoTransportation.Services.TrafficControl;
+namespace CairoTransportation.Modules.TrafficControl.Services;
 
 public class TrafficSignalService(
-    TransportationDbContext dbContext, 
+    TransportationDbContext dbContext,
     IGreedySignalOptimizer optimizer,
     ISimulationService simulationService) : ITrafficSignalService
 {
@@ -28,14 +30,15 @@ public class TrafficSignalService(
         var trafficFlows = await dbContext.TrafficFlows
             .AsNoTracking()
             .Where(tf => tf.Period == normalizedPeriod && tf.Road.IsExisting)
-            .Select(tf => new { 
-                tf.RoadId, 
-                FromName = tf.Road.FromLocation.Name, 
-                ToName = tf.Road.ToLocation.Name, 
-                tf.Flow, 
-                tf.Road.Capacity, 
-                FromCritical = tf.Road.FromLocation.IsCritical, 
-                ToCritical = tf.Road.ToLocation.IsCritical 
+            .Select(tf => new
+            {
+                tf.RoadId,
+                FromName = tf.Road.FromLocation.Name,
+                ToName = tf.Road.ToLocation.Name,
+                tf.Flow,
+                tf.Road.Capacity,
+                FromCritical = tf.Road.FromLocation.IsCritical,
+                ToCritical = tf.Road.ToLocation.IsCritical
             })
             .ToListAsync();
 
@@ -52,7 +55,8 @@ public class TrafficSignalService(
                 tf.Capacity,
                 (double)tf.Flow / tf.Capacity,
                 tf.FromCritical || tf.ToCritical || isPreempted
-            ) { IsEmergencyRoute = isPreempted });
+            )
+            { IsEmergencyRoute = isPreempted });
         }
 
         // 3. Run Greedy optimization to calculate signal timings and green light priority

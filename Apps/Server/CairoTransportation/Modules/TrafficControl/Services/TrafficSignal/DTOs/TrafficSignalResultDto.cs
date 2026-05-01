@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.TrafficSignal.DTOs;
+namespace CairoTransportation.Modules.TrafficControl.Services.TrafficSignal.DTOs;
 
 /// <summary>
 /// Result DTO for traffic signal optimization.

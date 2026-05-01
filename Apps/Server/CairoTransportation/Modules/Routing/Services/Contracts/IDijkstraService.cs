@@ -1,6 +1,6 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.Routing.Contracts;
+namespace CairoTransportation.Modules.Routing.Services.Contracts;
 
 /// <summary>
 /// Business service for shortest-path route planning using Dijkstra's algorithm.

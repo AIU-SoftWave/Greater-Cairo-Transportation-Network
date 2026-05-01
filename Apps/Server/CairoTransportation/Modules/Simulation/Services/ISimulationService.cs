@@ -1,6 +1,4 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-
-namespace CairoTransportation.Services;
+namespace CairoTransportation.Modules.Simulation.Services;
 
 public enum SimulationWeather
 {

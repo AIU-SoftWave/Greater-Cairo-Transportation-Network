@@ -1,7 +1,7 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
+using CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.Algorithms.TransitScheduling.Contracts;
+namespace CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.Contracts;
 
 /// <summary>
 /// Service for optimizing transit vehicle allocation across routes using Dynamic Programming.

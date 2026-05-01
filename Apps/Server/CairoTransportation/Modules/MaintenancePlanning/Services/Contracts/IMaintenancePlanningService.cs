@@ -1,7 +1,6 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Services.MaintenancePlanning.Contracts;
+namespace CairoTransportation.Modules.MaintenancePlanning.Services.Contracts;
 
 /// <summary>
 /// Business service for road maintenance strategy.

@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.Common.DTOs;
+namespace CairoTransportation.Utils.Helpers.Common.DTOs;
 
 public class AlgorithmResponseDto<TData>
 {

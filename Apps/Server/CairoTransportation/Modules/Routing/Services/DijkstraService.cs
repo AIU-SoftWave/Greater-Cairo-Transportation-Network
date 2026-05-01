@@ -1,15 +1,16 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Graph;
-using CairoTransportation.Services.Routing.Contracts;
+using CairoTransportation.Modules.Routing.Services.Contracts;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CairoTransportation.Services.Routing;
+namespace CairoTransportation.Modules.Routing.Services;
 
 public class DijkstraService(
-    IGraphService graphService, 
-    IMemoryCache cache, 
+    IGraphService graphService,
+    IMemoryCache cache,
     IDijkstraRoutePlanner planner,
     ISimulationService simulationService,
     AlgorithmExecutionMetrics metrics) : IDijkstraService
@@ -27,18 +28,18 @@ public class DijkstraService(
         }
 
         // 2. Load the city network graph
-        Graph.Graph graph = await graphService.GetGraphAsync();
+        Graph graph = await graphService.GetGraphAsync();
 
         // 3. Execute Dijkstra algorithm
         ShortestPathResultDto data = planner.FindShortestPath(graph, fromNodeId, toNodeId);
-        
+
         if (data.Found)
         {
             // Default multiplier for standard Dijkstra is 1.0 (Average traffic)
             data.EstimatedTravelTimeMinutes = data.TotalDistance * 1.0;
         }
 
-        var trace = metrics.Complete();
+        AlgorithmTraceDto trace = metrics.Complete();
         simulationService.RecordMetrics("Dijkstra", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
 
         var result = new AlgorithmResponseDto<ShortestPathResultDto>

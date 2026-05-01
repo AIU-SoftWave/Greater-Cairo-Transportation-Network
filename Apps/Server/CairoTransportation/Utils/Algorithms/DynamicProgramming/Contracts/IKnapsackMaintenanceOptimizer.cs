@@ -1,6 +1,6 @@
-using CairoTransportation.Services.Algorithms.MaintenancePlanning.DTOs;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
 
-namespace CairoTransportation.Algorithms.DynamicProgramming.Contracts;
+namespace CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
 
 public interface IKnapsackMaintenanceOptimizer
 {

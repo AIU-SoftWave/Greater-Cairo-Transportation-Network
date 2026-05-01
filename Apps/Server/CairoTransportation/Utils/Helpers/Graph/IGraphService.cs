@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Graph;
+namespace CairoTransportation.Utils.Helpers.Graph;
 
 /// <summary>
 /// Shared graph service that provides graph data structures for algorithms.

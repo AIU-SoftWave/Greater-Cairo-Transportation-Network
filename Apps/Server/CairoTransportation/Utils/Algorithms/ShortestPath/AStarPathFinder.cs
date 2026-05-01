@@ -1,11 +1,10 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services;
-
-namespace CairoTransportation.Algorithms.ShortestPath;
+namespace CairoTransportation.Utils.Algorithms.ShortestPath;
 
 public class AStarPathFinder(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : IAStarPathFinder
 {
@@ -110,7 +109,7 @@ public class AStarPathFinder(AlgorithmExecutionMetrics metrics, ISimulationServi
                     SimulationWeather.Storm => 1.8,
                     _ => 1.0
                 };
-                double tentG = gScore[curr] + (edge.Distance * weatherPenalty);
+                double tentG = gScore[curr] + edge.Distance * weatherPenalty;
                 if (tentG < gScore[neighbor])
                 {
                     // Found a better path to the neighbor node

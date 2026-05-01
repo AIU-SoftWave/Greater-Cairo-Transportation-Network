@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace CairoTransportation.Models;
+namespace CairoTransportation.Modules.Routing.Models;
 
 [Table("transport_routes")]
 public class TransportRoute
@@ -23,7 +23,7 @@ public class TransportRoute
     [Column("vehicles_assigned")]
     public int? VehiclesAssigned { get; set; }
 
-    [Column("capacity_per_unit" , TypeName = "int")]
+    [Column("capacity_per_unit", TypeName = "int")]
     public int CapacityPerUnit { get; set; } = 50; // Default capacity per vehicle/unit
     [JsonIgnore]
     public ICollection<RouteStop> RouteStops { get; set; } = [];

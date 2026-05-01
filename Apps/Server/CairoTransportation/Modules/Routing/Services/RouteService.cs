@@ -1,8 +1,8 @@
 using CairoTransportation.Data;
-using CairoTransportation.Models;
+using CairoTransportation.Modules.Routing.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CairoTransportation.Services;
+namespace CairoTransportation.Modules.Routing.Services;
 
 public interface IRouteService
 {

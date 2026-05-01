@@ -1,8 +1,7 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Mst.DTOs;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Graph;
 
-namespace CairoTransportation.Algorithms.NetworkExpansion.Contracts;
+namespace CairoTransportation.Utils.Algorithms.NetworkExpansion.Contracts;
 
 /// <summary>
 /// Pure algorithm implementation for Minimum Spanning Tree using Prim's algorithm.

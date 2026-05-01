@@ -1,11 +1,9 @@
-using CairoTransportation.Algorithms.NetworkExpansion.Contracts;
-using CairoTransportation.Services.Algorithms.Mst.DTOs;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Utils.Algorithms.NetworkExpansion.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-
-namespace CairoTransportation.Algorithms.NetworkExpansion;
+namespace CairoTransportation.Utils.Algorithms.NetworkExpansion;
 
 public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetworkExpander
 {
@@ -36,7 +34,7 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
 
             GraphNode from = graph.NodeIndex[edge.FromNodeId];
             GraphNode to = graph.NodeIndex[edge.ToNodeId];
-            
+
             // Weight = Construction Cost adjusted by population priority
             double cost = GetMstWeight(edge, from, to);
             if (!double.IsFinite(cost))
@@ -96,7 +94,7 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             metrics.MarkDiscovered(next);
 
             selectedEdges.Add(candidate.Representative);
-            
+
             // IMPORTANT: Count actual construction cost (not the weight used for Prim's selection)
             // This way we show the real cost to build selected roads
             double actualCost = candidate.Representative.IsExisting ? 0 : (candidate.Representative.ConstructionCost ?? 0);
@@ -130,20 +128,20 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
     {
         // Strategy: Balance between using existing roads and expanding with potential roads
         // Use a blended approach that considers distance, capacity, condition, and construction cost
-        
+
         double weight;
-        
+
         if (edge.IsExisting)
         {
             // For existing roads: Use distance + capacity efficiency as weight
             // This keeps them low-cost but not zero, allowing comparison with potential roads
             // Weight = (Distance / Capacity) - lower means better efficiency
             weight = edge.Distance / edge.Capacity;
-            
+
             // Apply slight adjustment based on condition
             if (edge.Condition.HasValue && edge.Condition > 0)
             {
-                weight = weight / (1 + (edge.Condition.Value / 10.0)); // Better condition = lower weight
+                weight /= 1 + edge.Condition.Value / 10.0; // Better condition = lower weight
             }
         }
         else
@@ -151,32 +149,32 @@ public class PrimNetworkExpander(AlgorithmExecutionMetrics metrics) : IPrimNetwo
             // For potential roads: Use construction cost normalized by distance and capacity
             // This balances cost efficiency with network capacity
             double baseCost = edge.ConstructionCost ?? double.PositiveInfinity;
-            
+
             if (double.IsInfinity(baseCost))
             {
                 return baseCost;
             }
-            
+
             // Normalize cost by distance and capacity for fair comparison
             // Weight = (Cost / Distance) / Capacity - lower means better value
-            weight = (baseCost / Math.Max(edge.Distance, 0.1)) / edge.Capacity;
-            
+            weight = baseCost / Math.Max(edge.Distance, 0.1) / edge.Capacity;
+
             // Apply strategic priority multipliers for critical paths
             double priorityMultiplier = 1.0;
-            
+
             // Critical facilities: significantly reduce weight to encourage selection
             if (from.IsCritical || to.IsCritical)
             {
                 priorityMultiplier *= 0.5; // 50% reduction for critical connections
             }
-            
+
             // High-population areas: reduce weight to ensure good connectivity
             if ((from.Population ?? 0) > 350000 || (to.Population ?? 0) > 350000)
             {
                 priorityMultiplier *= 0.7; // 30% reduction for major population centers
             }
-            
-            weight = weight * priorityMultiplier;
+
+            weight *= priorityMultiplier;
         }
 
         return weight;

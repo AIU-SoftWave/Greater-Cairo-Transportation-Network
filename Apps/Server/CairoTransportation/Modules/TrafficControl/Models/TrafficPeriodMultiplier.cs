@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace CairoTransportation.Models;
+namespace CairoTransportation.Modules.TrafficControl.Models;
 
 [Table("traffic_period_multipliers")]
 public class TrafficPeriodMultiplier

@@ -1,15 +1,16 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services.Graph;
-using CairoTransportation.Services.Routing.Contracts;
+using CairoTransportation.Modules.Routing.Services.Contracts;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace CairoTransportation.Services.Routing;
+namespace CairoTransportation.Modules.Routing.Services;
 
 public class AStarService(
-    IGraphService graphService, 
-    IMemoryCache cache, 
+    IGraphService graphService,
+    IMemoryCache cache,
     IAStarPathFinder planner,
     ISimulationService simulationService,
     AlgorithmExecutionMetrics metrics) : IAStarService
@@ -27,35 +28,35 @@ public class AStarService(
         }
 
         // 2. Load the network graph
-        Graph.Graph g = await graphService.GetGraphAsync();
-        
+        Graph g = await graphService.GetGraphAsync();
+
         // 3. Execute A* search algorithm
         ShortestPathResultDto data = planner.FindShortestPath(g, from, to);
-        
+
         if (data.Found)
         {
             data.EstimatedTravelTimeMinutes = data.TotalDistance * 1.0;
         }
 
-        var trace = metrics.Complete();
+        AlgorithmTraceDto trace = metrics.Complete();
         simulationService.RecordMetrics("A*", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);
 
         // Enable emergency preemption for the calculated path
         if (data.Found)
         {
-            foreach (var road in data.PathRoads)
+            foreach (ShortestPathRoadDto road in data.PathRoads)
             {
                 await simulationService.SetEmergencyPreemptionAsync(road.Id, true);
             }
         }
 
-        var res = new AlgorithmResponseDto<ShortestPathResultDto> 
-        { 
-            AlgorithmName = "A*", 
-            Success = data.Found, 
-            Message = data.Found ? "Path found." : "No path.", 
-            Trace = trace, 
-            Data = data 
+        var res = new AlgorithmResponseDto<ShortestPathResultDto>
+        {
+            AlgorithmName = "A*",
+            Success = data.Found,
+            Message = data.Found ? "Path found." : "No path.",
+            Trace = trace,
+            Data = data
         };
 
         // 4. Cache result if successful
@@ -78,10 +79,10 @@ public class AStarService(
         }
 
         var m = new AlgorithmExecutionMetrics();
-        
+
         // 2. Load the network graph
-        Graph.Graph g = await graphService.GetGraphAsync();
-        
+        Graph g = await graphService.GetGraphAsync();
+
         // 3. Execute A* search for nearest critical facility
         ShortestPathResultDto data = planner.FindNearestMedicalFacility(g, from);
 
@@ -91,13 +92,13 @@ public class AStarService(
             data.EstimatedTravelTimeMinutes = data.TotalDistance * 0.75;
         }
 
-        var res = new AlgorithmResponseDto<ShortestPathResultDto> 
-        { 
-            AlgorithmName = "A* Nearest Medical", 
-            Success = data.Found, 
-            Message = data.Found ? "Facility found." : "No reachable facility.", 
-            Trace = m.Complete(), 
-            Data = data 
+        var res = new AlgorithmResponseDto<ShortestPathResultDto>
+        {
+            AlgorithmName = "A* Nearest Medical",
+            Success = data.Found,
+            Message = data.Found ? "Facility found." : "No reachable facility.",
+            Trace = m.Complete(),
+            Data = data
         };
 
         // 4. Cache result

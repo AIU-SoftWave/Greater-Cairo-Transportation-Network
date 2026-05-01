@@ -1,6 +1,6 @@
-using CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
+using CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
 
-namespace CairoTransportation.Algorithms.DynamicProgramming.Contracts;
+namespace CairoTransportation.Utils.Algorithms.DynamicProgramming.Contracts;
 
 public interface IResourceAllocationScheduler
 {

@@ -1,4 +1,4 @@
-namespace CairoTransportation.Services.Algorithms.TransitScheduling.DTOs;
+namespace CairoTransportation.Modules.TransitScheduling.Services.TransitScheduling.DTOs;
 
 /// <summary>
 /// Result DTO for transit scheduling optimization.

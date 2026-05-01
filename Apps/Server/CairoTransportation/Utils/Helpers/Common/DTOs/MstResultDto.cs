@@ -1,6 +1,4 @@
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-
-namespace CairoTransportation.Services.Algorithms.Mst.DTOs;
+namespace CairoTransportation.Utils.Helpers.Common.DTOs;
 
 public class MstResultDto
 {

@@ -1,11 +1,10 @@
-using CairoTransportation.Algorithms.ShortestPath.Contracts;
-using CairoTransportation.Services.Algorithms.Common.DTOs;
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Modules.Simulation.Services;
+using CairoTransportation.Utils.Algorithms.ShortestPath.Contracts;
+using CairoTransportation.Utils.Helpers.Common.DTOs;
+using CairoTransportation.Utils.Helpers.Common.Instrumentation;
+using CairoTransportation.Utils.Helpers.Graph;
 
-using CairoTransportation.Services.Algorithms.Common.Instrumentation;
-using CairoTransportation.Services;
-
-namespace CairoTransportation.Algorithms.ShortestPath;
+namespace CairoTransportation.Utils.Algorithms.ShortestPath;
 
 public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulationService simulationService) : ITimeVaryingRoutePlanner
 {
@@ -70,7 +69,7 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
 
 
                 string neighbor = edge.ToNodeId;
-                
+
                 // Weight Calculation: Base Distance * Traffic Penalty Factor
                 double trafficFactor = GetTrafficAdjustment(edge, trafficByRoadId, periodMultiplier);
                 double adjustedDist = edge.Distance * trafficFactor;
@@ -94,24 +93,26 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
             return new ShortestPathResultDto { FromNodeId = fromNodeId, ToNodeId = toNodeId, Found = false };
         }
 
-        var nodePath = new List<string>(); 
+        var nodePath = new List<string>();
         var roadPath = new List<long>();
         string pathCurr = toNodeId;
         nodePath.Add(pathCurr);
-        while (previousNode.TryGetValue(pathCurr, out string? prev)) { roadPath.Add(previousRoad[pathCurr]); nodePath.Add(prev); pathCurr = prev; }
-        nodePath.Reverse(); roadPath.Reverse();
+        while (previousNode.TryGetValue(pathCurr, out string? prev))
+        { roadPath.Add(previousRoad[pathCurr]); nodePath.Add(prev); pathCurr = prev; }
+        nodePath.Reverse();
+        roadPath.Reverse();
 
         double physicalDistance = roadPath.Sum(id => graph.EdgeIndex[id].Distance);
 
-        return new ShortestPathResultDto 
-        { 
-            FromNodeId = fromNodeId, 
-            ToNodeId = toNodeId, 
-            Found = true, 
-            TotalDistance = physicalDistance, 
+        return new ShortestPathResultDto
+        {
+            FromNodeId = fromNodeId,
+            ToNodeId = toNodeId,
+            Found = true,
+            TotalDistance = physicalDistance,
             EstimatedTravelTimeMinutes = distances[toNodeId], // In our model, Cost = Time
-            PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(), 
-            PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList() 
+            PathNodes = nodePath.Select(id => MapNode(graph.NodeIndex[id])).ToList(),
+            PathRoads = roadPath.Select(id => MapRoad(graph.EdgeIndex[id])).ToList()
         };
     }
 
@@ -120,10 +121,10 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
     {
         long roadId = Math.Abs(edge.Id);
         int flow = trafficByRoadId.TryGetValue(roadId, out int f) ? f : 0;
-        
+
         // Ratio = current flow vs maximum capacity
         double ratio = (double)flow / Math.Max(edge.Capacity, 1);
-        
+
         // Weather Penalty
         double weatherPenalty = simulationService.GetWeather() switch
         {

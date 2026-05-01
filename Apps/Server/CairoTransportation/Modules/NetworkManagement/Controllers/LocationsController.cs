@@ -1,8 +1,8 @@
-using CairoTransportation.Models;
-using CairoTransportation.Services;
+using CairoTransportation.Modules.NetworkManagement.Models;
+using CairoTransportation.Modules.NetworkManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.NetworkManagement.Controllers;
 
 /// <summary>
 /// Provides access to location data such as neighborhoods and facilities.

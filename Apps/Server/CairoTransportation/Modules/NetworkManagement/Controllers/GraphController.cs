@@ -1,7 +1,7 @@
-using CairoTransportation.Services.Graph;
+using CairoTransportation.Utils.Helpers.Graph;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CairoTransportation.Controllers;
+namespace CairoTransportation.Modules.NetworkManagement.Controllers;
 
 /// <summary>
 /// Provides the graph view of the transportation network for algorithm services.
