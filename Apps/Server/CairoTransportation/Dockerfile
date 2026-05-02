@@ -1,22 +1,17 @@
-## Backend Dockerfile (CairoTransportation API)
-# ---------------------------------------------------
-# Build Stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-# Copy csproj and restore as distinct layer for better caching
-COPY CairoTransportation.csproj ./
-RUN dotnet restore
-# Copy everything else and build
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish --no-restore
+COPY ["CairoTransportation.csproj", "./"]
+RUN dotnet restore "CairoTransportation.csproj"
+COPY . .
+WORKDIR "/src/."
+RUN dotnet build "CairoTransportation.csproj" -c Release -o /app/build
+RUN dotnet publish "CairoTransportation.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Runtime Stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM base AS final
 WORKDIR /app
-# Create non-root user for security
-RUN useradd -m -s /bin/bash appuser && chown -R appuser /app
-USER appuser
 COPY --from=build /app/publish .
-EXPOSE 80
-ENV ASPNETCORE_URLS=http://+:80
 ENTRYPOINT ["dotnet", "CairoTransportation.dll"]
