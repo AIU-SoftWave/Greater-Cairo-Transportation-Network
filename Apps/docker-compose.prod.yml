@@ -2,6 +2,7 @@ name: cairo-transportation
 
 services:
   client:
+    container_name: gcts-client
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -17,6 +18,7 @@ services:
       - cairo-internal
 
   api:
+    container_name: gct-api
     build:
       context: ./Server/CairoTransportation
       dockerfile: Dockerfile
