@@ -6,7 +6,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: https://gctsapi.abosaleh.site
+        NEXT_PUBLIC_API_BASE_URL: https://gcts-api.abosaleh.site
     environment:
       - NODE_ENV=production
     depends_on:
