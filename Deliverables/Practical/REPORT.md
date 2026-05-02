@@ -1809,14 +1809,21 @@ The frontend provides a real-time "Control Center" for Cairo:
 
 ## 11. Potential Improvements and Future Work
 
-### 11.1 AI-Driven Traffic Prediction (Implemented)
+### 11.1 ML-Enhanced Traffic Prediction (Implemented)
 
-The system now includes ML-based traffic prediction using Gradient Boosting. Future enhancements could include:
+The system includes ML-based traffic prediction using Gradient Boosting (R² = 0.94). The current implementation provides:
+- Pre-computed congestion predictions for all roads and time periods
+- Toggle in Time-Varying routing to enable/disable ML predictions
+- Visual road coloring based on predicted congestion
+
+### 11.2 Future Enhancements
+
+Future enhancements could include:
 - LSTM or GNN (Graph Neural Networks) to predict traffic 15 minutes ahead
 - Real-time model retraining with live traffic data
 - Integration with external data sources (weather events, holidays, concerts)
 
-### 11.2 Multimodal Routing
+### 11.3 Multimodal Routing
 
 Developing a "Super-Graph" where nodes represent transfers. A user could find a path that includes 10 minutes of driving, a 15-minute Metro ride, and a 5-minute walk.
 
