@@ -37,6 +37,9 @@ interface AlgorithmControlsProps {
   // Animation settings
   animationSettings?: AnimationSettings;
   onAnimationSettingsChange?: (settings: AnimationSettings) => void;
+  // Time-varying ML toggle
+  useMlPredictions?: boolean;
+  onUseMlPredictionsChange?: (useMl: boolean) => void;
 }
 
 export default function AlgorithmControls({
@@ -66,6 +69,8 @@ export default function AlgorithmControls({
   onCompareAlgoBChange,
   animationSettings = { enabled: true, speed: 1 },
   onAnimationSettingsChange,
+  useMlPredictions = true,
+  onUseMlPredictionsChange,
 }: AlgorithmControlsProps) {
   return (
     <>
@@ -86,6 +91,19 @@ export default function AlgorithmControls({
               </option>
             ))}
           </select>
+          
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="useMlPredictions"
+              checked={useMlPredictions ?? true}
+              onChange={(e) => onUseMlPredictionsChange?.(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <label htmlFor="useMlPredictions" className="text-xs text-gray-700">
+              Use ML Predictions
+            </label>
+          </div>
         </div>
       )}
 

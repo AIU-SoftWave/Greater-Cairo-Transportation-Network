@@ -14,5 +14,5 @@ public interface ITimeVaryingDijkstraService
     /// <param name="fromNodeId">Starting location identifier.</param>
     /// <param name="toNodeId">Destination location identifier.</param>
     /// <param name="period">The time period to analyze (MORNING, EVENING, etc.).</param>
-    Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId, string period);
+    Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string fromNodeId, string toNodeId, string period, bool useMl = true);
 }

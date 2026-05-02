@@ -13,7 +13,9 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
         string fromNodeId,
         string toNodeId,
         Dictionary<long, int> trafficByRoadId,
-        double periodMultiplier)
+        double periodMultiplier,
+        Dictionary<(long RoadId, string Period), double>? mlPredictions = null,
+        string? period = null)
     {
         // 1. Basic validation
         if (!graph.NodeIndex.ContainsKey(fromNodeId) || !graph.NodeIndex.ContainsKey(toNodeId))
@@ -71,7 +73,7 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
                 string neighbor = edge.ToNodeId;
 
                 // Weight Calculation: Base Distance * Traffic Penalty Factor
-                double trafficFactor = GetTrafficAdjustment(edge, trafficByRoadId, periodMultiplier);
+                double trafficFactor = GetTrafficAdjustment(edge, trafficByRoadId, periodMultiplier, mlPredictions, period);
                 double adjustedDist = edge.Distance * trafficFactor;
                 double newDist = distances[curr] + adjustedDist;
 
@@ -117,13 +119,15 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
     }
 
     // Logic: If road is congested, increase its "effective distance" so the algorithm avoids it
-    private double GetTrafficAdjustment(GraphEdge edge, Dictionary<long, int> trafficByRoadId, double multiplier)
+    private double GetTrafficAdjustment(
+        GraphEdge edge,
+        Dictionary<long, int> trafficByRoadId,
+        double multiplier,
+        Dictionary<(long RoadId, string Period), double>? mlPredictions,
+        string? period)
     {
         long roadId = Math.Abs(edge.Id);
         int flow = trafficByRoadId.TryGetValue(roadId, out int f) ? f : 0;
-
-        // Ratio = current flow vs maximum capacity
-        double ratio = (double)flow / Math.Max(edge.Capacity, 1);
 
         // Weather Penalty
         double weatherPenalty = simulationService.GetWeather() switch
@@ -133,26 +137,35 @@ public class TimeVaryingRoutePlanner(AlgorithmExecutionMetrics metrics, ISimulat
             _ => 1.0
         };
 
-        // Return a penalty multiplier based on traffic density levels
-        if (ratio <= 0.75)
+        // Use ML-predicted congestion if available
+        if (mlPredictions != null && !string.IsNullOrEmpty(period))
         {
-            return multiplier * weatherPenalty;       // Light traffic
+            string normalizedPeriod = period.Trim().ToUpperInvariant();
+            if (mlPredictions.TryGetValue((roadId, normalizedPeriod), out double mlCongestion))
+            {
+                return mlCongestion * weatherPenalty;
+            }
         }
 
+        // Fallback to flow-based calculation
+        double ratio = (double)flow / Math.Max(edge.Capacity, 1);
+
+        if (ratio <= 0.75)
+        {
+            return multiplier * weatherPenalty;
+        }
 
         if (ratio <= 1.0)
         {
-            return multiplier * 1.1 * weatherPenalty; // Noticeable traffic
+            return multiplier * 1.1 * weatherPenalty;
         }
-
 
         if (ratio <= 1.25)
         {
-            return multiplier * 1.2 * weatherPenalty; // Heavy traffic
+            return multiplier * 1.2 * weatherPenalty;
         }
 
-
-        return multiplier * 1.35 * weatherPenalty;                   // Extreme congestion
+        return multiplier * 1.35 * weatherPenalty;
     }
 
     private static ShortestPathNodeDto MapNode(GraphNode n) => new() { Id = n.Id, Name = n.Name, Type = n.Type, X = n.X, Y = n.Y, Population = n.Population, IsCritical = n.IsCritical };

@@ -50,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<IGraphService, GraphService>();
         services.AddSingleton<ISimulationService, SimulationService>();
+        services.AddSingleton<IMlPredictionService, MlPredictionService>();
 
         // Pure Algorithm Layer
         services.AddScoped<IDijkstraRoutePlanner, DijkstraRoutePlanner>();

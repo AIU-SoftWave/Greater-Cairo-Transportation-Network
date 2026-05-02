@@ -34,6 +34,9 @@ import {
   setWeather,
   PerformanceMetric,
 } from "@/services/simulation";
+import { apiFetch } from "@/services/api";
+import { getTrafficByPeriod } from "@/services/traffic/trafficMonitoring";
+import type { TrafficFlow } from "@/types";
 
 import AlgorithmSelector from "./AlgorithmSelector";
 import AlgorithmControls from "./AlgorithmControls";
@@ -42,6 +45,7 @@ import ResultsDashboard from "./ResultsDashboard";
 import PerformanceMetricsModal from "./PerformanceMetricsModal";
 import MapCanvas from "./MapCanvas";
 import CompareResultsPanel from "./CompareResultsPanel";
+import { type MlPrediction } from "./MlCongestionPanel";
 import {
   COMPARE_ALGORITHMS,
   type AlgorithmType,
@@ -63,6 +67,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
   const [pathDistance, setPathDistance] = useState<number | null>(null);
   const [algorithm, setAlgorithm] = useState<AlgorithmType>("dijkstra");
   const [period, setPeriod] = useState<string>("morning");
+  const [useMlPredictions, setUseMlPredictions] = useState<boolean>(true);
   const [budget, setBudget] = useState<number>(50);
   const [response, setResponse] =
     useState<AlgorithmResponse<ShortestPathResultDto> | null>(null);
@@ -113,6 +118,14 @@ function MapInner({ nodes, edges }: MapViewProps) {
     },
   );
 
+  // ML predictions state
+  const [mlPredictions, setMlPredictions] = useState<MlPrediction[]>([]);
+  const [mlPredictionsLoading, setMlPredictionsLoading] = useState(true);
+  const [mlPredictionsError, setMlPredictionsError] = useState<string | null>(null);
+
+  // Traffic flow state for time-varying algorithm
+  const [trafficFlow, setTrafficFlow] = useState<TrafficFlow[]>([]);
+
   // Fetch MST and Simulation data on component load
   useEffect(() => {
     getCheapestNetwork().then((res) => {
@@ -133,7 +146,23 @@ function MapInner({ nodes, edges }: MapViewProps) {
     });
 
     getClosedRoads().then(setClosedRoadIds);
+
+    // Fetch ML predictions
+    apiFetch<MlPrediction[]>("ml-predictions")
+      .then(setMlPredictions)
+      .catch((err) => setMlPredictionsError(err.message))
+      .finally(() => setMlPredictionsLoading(false));
+
+    // Fetch traffic flow for default period
+    getTrafficByPeriod(period).then(setTrafficFlow).catch(() => {});
   }, []);
+
+  // Fetch traffic flow when period changes for time-varying algorithm
+  useEffect(() => {
+    if (algorithm === "time-varying") {
+      getTrafficByPeriod(period).then(setTrafficFlow).catch(() => {});
+    }
+  }, [period, algorithm]);
 
   // Fetch shortest path based on selected algorithm
   useEffect(() => {
@@ -160,7 +189,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
             res = await getEmergencyRoute(startId, endId);
             break;
           case "time-varying":
-            res = await getTimeVaryingShortestPath(startId, endId, period);
+            res = await getTimeVaryingShortestPath(startId, endId, period, useMlPredictions);
             break;
           case "dijkstra":
           default:
@@ -192,7 +221,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [startId, endId, algorithm, period, weather]);
+  }, [startId, endId, algorithm, period, weather, useMlPredictions]);
 
   // Fetch compare mode dual routes
   useEffect(() => {
@@ -221,7 +250,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
             case "astar":
               return await getEmergencyRoute(startId, endId);
             case "time-varying":
-              return await getTimeVaryingShortestPath(startId, endId, period);
+              return await getTimeVaryingShortestPath(startId, endId, period, useMlPredictions);
             case "dijkstra":
             default:
               return await getShortestPath(startId, endId);
@@ -263,7 +292,7 @@ function MapInner({ nodes, edges }: MapViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [startId, endId, algorithm, compareAlgoA, compareAlgoB, period, weather]);
+  }, [startId, endId, algorithm, compareAlgoA, compareAlgoB, period, weather, useMlPredictions]);
 
   const handleCalculateMaintenance = async () => {
     setLoading(true);
@@ -637,6 +666,8 @@ function MapInner({ nodes, edges }: MapViewProps) {
           onCompareAlgoBChange={setCompareAlgoB}
           animationSettings={animationSettings}
           onAnimationSettingsChange={setAnimationSettings}
+          useMlPredictions={useMlPredictions}
+          onUseMlPredictionsChange={setUseMlPredictions}
         />
 
         {/* Compare Results Panel */}
@@ -720,6 +751,10 @@ function MapInner({ nodes, edges }: MapViewProps) {
         endId={endId}
         maintenanceResponse={maintenanceResponse}
         signalResponse={signalResponse}
+        mlPredictions={mlPredictions}
+        trafficFlow={trafficFlow}
+        useMlPredictions={useMlPredictions}
+        period={period}
         onRoadClick={handleRoadClick}
         onMarkerClick={handleMarkerClick}
         onSignalMarkerClick={handleSignalMarkerClick}

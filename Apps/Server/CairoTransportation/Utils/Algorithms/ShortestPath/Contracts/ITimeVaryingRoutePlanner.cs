@@ -16,5 +16,7 @@ public interface ITimeVaryingRoutePlanner
         string fromNodeId,
         string toNodeId,
         Dictionary<long, int> trafficByRoadId,
-        double periodMultiplier);
+        double periodMultiplier,
+        Dictionary<(long RoadId, string Period), double>? mlPredictions = null,
+        string? period = null);
 }

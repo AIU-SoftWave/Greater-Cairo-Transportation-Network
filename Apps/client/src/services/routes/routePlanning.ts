@@ -6,7 +6,7 @@ export async function getShortestPath(from: string, to: string): Promise<Algorit
   return apiFetch<AlgorithmResponse<ShortestPathResultDto>>(`route-planning/shortest-path?${params}`);
 }
 
-export async function getTimeVaryingShortestPath(from: string, to: string, period: string): Promise<AlgorithmResponse<ShortestPathResultDto>> {
-  const params = new URLSearchParams({ from, to, period });
+export async function getTimeVaryingShortestPath(from: string, to: string, period: string, useMl: boolean = true): Promise<AlgorithmResponse<ShortestPathResultDto>> {
+  const params = new URLSearchParams({ from, to, period, useMl: useMl.toString() });
   return apiFetch<AlgorithmResponse<ShortestPathResultDto>>(`route-planning/time-route?${params}`);
 }

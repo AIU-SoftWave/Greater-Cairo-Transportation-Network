@@ -57,7 +57,7 @@ public class AlgorithmsController(
     /// <param name="period">Traffic period configured in database multipliers table.</param>
     /// <returns>A traffic-aware shortest path result with standardized trace metrics.</returns>
     [HttpGet("time-route")]
-    public async Task<IActionResult> GetTimeVaryingShortestPath([FromQuery] string from, [FromQuery] string to, [FromQuery] string period)
+    public async Task<IActionResult> GetTimeVaryingShortestPath([FromQuery] string from, [FromQuery] string to, [FromQuery] string period, [FromQuery] bool useMl = true)
     {
         if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to) || string.IsNullOrWhiteSpace(period))
         {
@@ -92,7 +92,7 @@ public class AlgorithmsController(
             });
         }
 
-        AlgorithmResponseDto<ShortestPathResultDto> result = await timeVaryingDijkstraService.FindShortestPathAsync(from, to, normalizedPeriod);
+        AlgorithmResponseDto<ShortestPathResultDto> result = await timeVaryingDijkstraService.FindShortestPathAsync(from, to, normalizedPeriod, useMl);
         return result.Success ? Ok(result) : NotFound(result);
     }
 }

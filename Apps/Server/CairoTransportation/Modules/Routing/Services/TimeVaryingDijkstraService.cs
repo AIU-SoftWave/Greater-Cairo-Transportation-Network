@@ -12,11 +12,12 @@ namespace CairoTransportation.Modules.Routing.Services;
 public class TimeVaryingDijkstraService(
     IGraphService graphService,
     ITrafficService trafficService,
+    IMlPredictionService mlPredictionService,
     ITimeVaryingRoutePlanner planner,
     ISimulationService simulationService,
     AlgorithmExecutionMetrics metrics) : ITimeVaryingDijkstraService
 {
-    public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string from, string to, string period)
+    public async Task<AlgorithmResponseDto<ShortestPathResultDto>> FindShortestPathAsync(string from, string to, string period, bool useMl = true)
     {
         // 1. Load city graph and traffic metadata
         Graph graph = await graphService.GetGraphAsync();
@@ -32,8 +33,20 @@ public class TimeVaryingDijkstraService(
             .GroupBy(x => x.RoadId)
             .ToDictionary(g => g.Key, g => g.Max(x => x.Flow));
 
-        // 3. Execute traffic-aware route planning
-        ShortestPathResultDto data = planner.FindShortestPath(graph, from, to, traffic, periodMultiplier.Multiplier);
+        // 3. Load ML predictions for the specified period (only if useMl is true)
+        Dictionary<(long RoadId, string Period), double>? mlPredictions = useMl 
+            ? await mlPredictionService.GetCongestionMapAsync() 
+            : null;
+
+        // 4. Execute traffic-aware route planning with ML predictions
+        ShortestPathResultDto data = planner.FindShortestPath(
+            graph,
+            from,
+            to,
+            traffic,
+            periodMultiplier.Multiplier,
+            mlPredictions,
+            period);
 
         AlgorithmTraceDto trace = metrics.Complete();
         simulationService.RecordMetrics("Time-Varying Dijkstra", trace.ExecutionTimeMs, trace.VisitedNodes, trace.ExpandedNodes);

@@ -9,6 +9,7 @@ import type {
   AlgorithmResponse,
   MaintenancePlanningResultDto,
   TrafficSignalResultDto,
+  TrafficFlow,
 } from "@/types";
 import type {
   AlgorithmType,
@@ -16,6 +17,7 @@ import type {
   AnimationSettings,
 } from "./types";
 import { isRoadSelectedForMaintenance as checkRoadSelectedForMaintenance } from "./utils";
+import type { MlPrediction } from "./MlCongestionPanel";
 
 // Dynamically import Leaflet components only on client side
 const MapContainer = dynamic(
@@ -72,6 +74,10 @@ interface MapCanvasProps {
   endId: string | null;
   maintenanceResponse: AlgorithmResponse<MaintenancePlanningResultDto> | null;
   signalResponse: AlgorithmResponse<TrafficSignalResultDto> | null;
+  mlPredictions: MlPrediction[];
+  trafficFlow: TrafficFlow[];
+  useMlPredictions: boolean;
+  period: string;
   onRoadClick: (edge: Road) => void;
   onMarkerClick: (nodeId: string) => void;
   onSignalMarkerClick: (node: Node, signalData: IntersectionSignal) => void;
@@ -101,6 +107,14 @@ function getIntersectionSeverityColor(maxCongestion: number): string {
   return "#3b82f6";
 }
 
+// Get ML prediction congestion color
+function getMlCongestionColor(congestion: number): string {
+  if (congestion >= 1.5) return "#ef4444";
+  if (congestion >= 1.0) return "#f97316";
+  if (congestion >= 0.7) return "#eab308";
+  return "#22c55e";
+}
+
 export default function MapCanvas({
   nodes,
   nodeLookup,
@@ -116,6 +130,10 @@ export default function MapCanvas({
   endId,
   maintenanceResponse,
   signalResponse,
+  mlPredictions,
+  trafficFlow,
+  useMlPredictions,
+  period,
   onRoadClick,
   onMarkerClick,
   onSignalMarkerClick,
@@ -167,6 +185,30 @@ export default function MapCanvas({
       }),
     };
   }, [leaflet]);
+
+  // ML predictions lookup by road ID for current period
+  const mlPredictionMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    const normalizedPeriod = period.toUpperCase();
+    mlPredictions
+      .filter((p) => p.period.toUpperCase() === normalizedPeriod)
+      .forEach((p) => {
+        map[p.road_id] = p.predicted_congestion;
+      });
+    return map;
+  }, [mlPredictions, period]);
+
+  // Traffic flow lookup by road ID for current period
+  const trafficFlowMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    const normalizedPeriod = period.toUpperCase();
+    trafficFlow
+      .filter((t) => t.period.toUpperCase() === normalizedPeriod)
+      .forEach((t) => {
+        map[t.roadId] = t.flow;
+      });
+    return map;
+  }, [trafficFlow, period]);
 
   const getMarkerIcon = (id: string) => {
     if (!icons) return undefined;
@@ -274,6 +316,31 @@ export default function MapCanvas({
           color = "#9ca3af";
           weight = 2;
           opacity = 0.4;
+        } else if (algorithm === "time-varying") {
+          if (useMlPredictions) {
+            const mlCongestion = mlPredictionMap[Math.abs(edge.id)];
+            if (mlCongestion !== undefined) {
+              color = getMlCongestionColor(mlCongestion);
+              weight = 4;
+              opacity = 0.9;
+            } else {
+              color = "#d1d5db";
+              weight = 1;
+              opacity = 0.3;
+            }
+          } else {
+            const flow = trafficFlowMap[Math.abs(edge.id)];
+            if (flow !== undefined) {
+              const normalizedFlow = (flow / 5500) * 100;
+              color = getRoadCongestionColor(normalizedFlow);
+              weight = 4;
+              opacity = 0.9;
+            } else {
+              color = "#d1d5db";
+              weight = 1;
+              opacity = 0.3;
+            }
+          }
         }
 
         // Override for closed roads
