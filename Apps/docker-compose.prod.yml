@@ -18,7 +18,7 @@ services:
       - cairo-internal
 
   api:
-    container_name: gct-api
+    container_name: gcts-api
     build:
       context: ./Server/CairoTransportation
       dockerfile: Dockerfile
