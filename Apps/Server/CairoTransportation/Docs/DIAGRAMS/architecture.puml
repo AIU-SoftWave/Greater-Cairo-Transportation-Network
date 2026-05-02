@@ -1,13 +1,96 @@
-@startuml
+@startuml Architecture - Component Diagram
 skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam componentBorderColor #2C3E50
+skinparam arrowColor #3498DB
 
-package "CairoTransportation" {
-  [Program.cs] --> [Controllers]
-  [Controllers] --> [Services]
-  [Services] --> [TransportationDbContext]
-  [TransportationDbContext] --> [SQLite]
-  [Program.cs] --> [DatabaseSeeder]
-  [Program.cs] --> [Swagger/OpenAPI]
+title Greater Cairo Transportation Network - System Architecture
+
+package "Frontend - Next.js 16" as Frontend {
+    [pages]
+    [components]
+    [services/api.ts]
+    [utils]
+    [types]
 }
+
+package "Backend - ASP.NET Core 10" as Backend {
+    package "API Layer" {
+        [LocationsController]
+        [RoadsController]
+        [AlgorithmsController]
+        [AStarController]
+        [MstController]
+        [RoutesController]
+        [TrafficController]
+        [TrafficSignalController]
+        [MaintenancePlanningController]
+        [TransitSchedulingController]
+        [SimulationController]
+        [MlPredictionsController]
+    }
+    
+    package "Services" {
+        package "Routing" {
+            [DijkstraService]
+            [AStarService]
+            [TimeVaryingDijkstraService]
+        }
+        
+        package "Traffic" {
+            [TrafficService]
+            [TrafficSignalService]
+        }
+        
+        package "Network" {
+            [LocationService]
+            [RoadService]
+            [GraphService]
+        }
+        
+        package "Maintenance" {
+            [MaintenancePlanningService]
+        }
+        
+        package "Transit" {
+            [TransitSchedulingService]
+        }
+        
+        package "Simulation" {
+            [SimulationService]
+        }
+        
+        package "ML" {
+            [MlPredictionService]
+        }
+    }
+    
+    package "Data Layer" {
+        [TransportationDbContext]
+        [DatabaseSeeder]
+        [Migrations]
+    }
+    
+    package "Utils" {
+        [AlgorithmResponseDto]
+        [AlgorithmTraceDto]
+        [IMemoryCache]
+    }
+}
+
+package "Infrastructure" {
+    database "SQLite Database" as SQLite
+    folder "File Storage" as Files {
+        [TablesData.sql]
+        [predictions.json]
+    }
+}
+
+Frontend --> Backend : HTTP/REST JSON
+Backend --> Services : Business Logic
+Services --> "GraphService" : GetGraph()
+Services --> "TransportationDbContext" : EF Core
+"TransportationDbContext" --> SQLite : CRUD Operations
+DatabaseSeeder --> Files : Seed Data
 
 @enduml

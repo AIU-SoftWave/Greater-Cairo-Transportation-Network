@@ -1,72 +1,116 @@
 @startuml graph-service-architecture
+allowmixing
+title Graph Service Architecture
 
-!define BGCOLOR #E8F4F8
-!define ACCENT #2E86AB
+' ================== THEME ==================
+skinparam backgroundColor #F7FBFC
+skinparam shadowing true
+skinparam roundcorner 15
 
-skinparam backgroundColor BGCOLOR
+skinparam package {
+    BorderColor #2E86AB
+    FontStyle bold
+}
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #2E86AB
+}
+
+skinparam interface {
+    BackgroundColor #EAF6FB
+    BorderColor #1B4F72
+}
+
+skinparam rectangle {
+    BackgroundColor #E8F8F5
+    BorderColor #1ABC9C
+}
+
+skinparam database {
+    BackgroundColor #FEF5E7
+    BorderColor #D68910
+}
+
 skinparam note {
     BackgroundColor #FFF9E6
     BorderColor #CC8800
 }
 
-package "Algorithm Layer" {
-    [MST Service] as mst
-    [Dijkstra Service] as dijkstra
-    [A* Service] as astar
-    [Time-Aware Service] as timeaware
-    [DP Service] as dp
-    [Greedy Service] as greedy
+' ================== ALGORITHM LAYER ==================
+package "Algorithm Layer" #EAF6FB {
+    rectangle "MST" as mst
+    rectangle "Dijkstra" as dijkstra
+    rectangle "A* Search" as astar
+    rectangle "Time-Aware" as timeaware
+    rectangle "Dynamic Programming" as dp
+    rectangle "Greedy" as greedy
 }
 
-package "Graph Service Layer" {
-    interface "IGraphService" as igraph {
-        GetGraphAsync()
-        GetGraphWithTrafficAsync(period)
-        GetGraphWithPlannedRoadsAsync()
-        GetSubgraphByBoundsAsync(bounds)
-        GetCriticalSubgraphAsync()
-        GetNodeAsync(id)
-        GetOutgoingEdgesAsync(id)
-        GetIncomingEdgesAsync(id)
-        GetEdgeAsync(from, to)
+' ================== GRAPH SERVICE LAYER ==================
+package "Graph Service Layer" #FDFEFE {
+
+    class "IGraphService" as igraph <<interface>> {
+        + GetGraphAsync()
+        + GetGraphWithTrafficAsync()
+        + GetGraphWithPlannedRoadsAsync()
+        + GetSubgraphByBoundsAsync()
+        + GetCriticalSubgraphAsync()
+        + GetNodeAsync()
+        + GetOutgoingEdgesAsync()
+        + GetIncomingEdgesAsync()
+        + GetEdgeAsync()
     }
 
     class GraphService {
         - dbContext
-        - BuildGraphAsync()
-        - ConvertRoadsToEdgesAsync()
+        --
+        + BuildGraphAsync()
+        + ConvertRoadsToEdgesAsync()
     }
 
     class Graph {
-        - Nodes: List<GraphNode>
-        - Edges: List<GraphEdge>
-        - AdjacencyList: Dict<id, List<edgeIds>>
-        - NodeIndex: Dict<id, GraphNode>
-        - EdgeIndex: Dict<id, GraphEdge>
+        - Nodes
+        - Edges
+        - AdjacencyList
+        - NodeIndex
+        - EdgeIndex
     }
 
     class GraphNode {
-        - Id: string
-        - Name: string
-        - X, Y: double
-        - Population, IsCritical
+        - Id
+        - Name
+        - X
+        - Y
+        - Population
+        - IsCritical
     }
 
     class GraphEdge {
-        - Id, FromNodeId, ToNodeId
-        - Distance, Capacity, Condition
-        - IsExisting, ConstructionCost
-        - CurrentTraffic, MaintenancePriority
+        - Id
+        - FromNodeId
+        - ToNodeId
+        - Distance
+        - Capacity
+        - Condition
+        - IsExisting
+        - ConstructionCost
+        - CurrentTraffic
+        - MaintenancePriority
     }
 }
 
-package "Data Layer" {
-    [LocationService] as locServ
-    [RoadService] as roadServ
-    [TrafficService] as traffServ
+' ================== DATA LAYER ==================
+package "Data Layer" #FEF9E7 {
+    rectangle "LocationService" as locServ
+    rectangle "RoadService" as roadServ
+    rectangle "TrafficService" as traffServ
     database "SQLite DB" as db
 }
 
+' ================== RELATIONSHIPS ==================
+
+' Algorithm -> Graph Service
 mst --> igraph
 dijkstra --> igraph
 astar --> igraph
@@ -74,12 +118,15 @@ timeaware --> igraph
 dp --> igraph
 greedy --> igraph
 
+' Interface implementation
 igraph <|.. GraphService
 
+' Graph structure
 GraphService --> Graph
 Graph *-- GraphNode
 Graph *-- GraphEdge
 
+' Data connections
 GraphService --> locServ
 GraphService --> roadServ
 GraphService --> traffServ
@@ -88,21 +135,28 @@ locServ --> db
 roadServ --> db
 traffServ --> db
 
-note on link : All algorithms\ndepend on shared\ngraph service
+' ================== NOTES ==================
+note top of igraph
+    Unified abstraction layer
+    for all graph algorithms
+end note
 
 note right of GraphService
-    Efficient assembly of:
-    - Nodes from locations
-    - Edges from roads
-    - Metadata from maintenance
-    - Traffic from periods
+    Builds graph from:
+    - Locations -> Nodes
+    - Roads -> Edges
+    - Traffic -> Weights
 end note
 
 note right of Graph
-    O(1) lookups via:
-    - AdjacencyList for neighbors
-    - NodeIndex for nodes
-    - EdgeIndex for edges
+    Optimized structure:
+    - O(1) Node lookup
+    - Fast adjacency traversal
+end note
+
+note bottom
+    All algorithms depend on a shared graph model
+    ensuring consistency and scalability
 end note
 
 @enduml

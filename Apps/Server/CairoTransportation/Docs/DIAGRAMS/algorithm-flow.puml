@@ -1,0 +1,79 @@
+@startuml Algorithm Flowchart - Dijkstra Example
+skinparam backgroundColor #FEFEFE
+skinparam activityBackgroundColor #ECF0F1
+skinparam activityBorderColor #2C3E50
+skinparam arrowColor #3498DB
+
+title Dijkstra's Shortest Path Algorithm Flow
+
+start
+:User clicks "Find Route";
+:Select Start Location;
+:Select End Location;
+:Choose Algorithm;
+
+if (Algorithm) then (Dijkstra)
+    :Initialize distance map;
+    :Set start node distance = 0;
+    :Insert start node in Priority Queue;
+    
+    while (Priority Queue not empty) is (Yes)
+        :Extract minimum distance node;
+        if (node == destination) then (Yes)
+            :Reconstruct path;
+            :Return shortest path;
+            stop
+        else (No)
+            :For each neighbor;
+            :Calculate new distance;
+            if (new_distance < existing) then (Yes)
+                :Update distance;
+                :Push to Priority Queue;
+            endif
+        endif
+    endwhile
+    
+else if (Algorithm) then (A*)
+    :Initialize with heuristic;
+    :Priority Queue = f(n) = g(n) + h(n);
+    
+    while (Queue not empty) is (Yes)
+        :Extract node with lowest f(n);
+        if (node == destination) then (Yes)
+            :Return path with reconstruct;
+            stop
+        else (No)
+            :Expand neighbors;
+            :Calculate g(n) and f(n);
+            :Push to Queue if better;
+        endif
+    endwhile
+    
+else if (Algorithm) then (Time-Varying)
+    :Load traffic multipliers;
+    :Check ML predictions toggle;
+    
+    while (Queue not empty) is (Yes)
+        :Extract minimum;
+        :Calculate dynamic weight;
+        
+        if (ML Predictions ON) then (Yes)
+            :Add congestion factor;
+        else (No)
+            :Use static multiplier;
+        endif
+        
+        :Apply edge relaxation;
+        
+        if (destination reached) then (Yes)
+            :Return time-aware path;
+            stop
+        endif
+    endwhile
+endif
+
+:Display route on map;
+:Show algorithm trace metrics;
+
+stop
+@enduml

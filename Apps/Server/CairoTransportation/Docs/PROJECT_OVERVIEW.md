@@ -7,8 +7,9 @@
 4. [Data Schemas](#4-data-schemas)
 5. [API Reference](#5-api-reference)
 6. [Algorithm Implementation Checklist](#6-algorithm-implementation-checklist)
-7. [How to Run](#7-how-to-run)
-8. [Design Decisions](#8-design-decisions)
+7. [Visual Diagrams](#7-visual-diagrams)
+8. [How to Run](#8-how-to-run)
+9. [Design Decisions](#9-design-decisions)
 
 ---
 
@@ -32,6 +33,7 @@ This project implements a **REST API** backed by a **Next.js interactive map** t
 | 5 | 0/1 Knapsack DP (road maintenance) | Dynamic Programming |
 | 6 | Vehicle Allocation DP (transit scheduling) | Dynamic Programming |
 | 7 | Greedy Traffic Signal Timing | Greedy Algorithm |
+| 8 | ML Predictions (Gradient Boosting) | Machine Learning |
 
 ---
 
@@ -113,24 +115,116 @@ Greater-Cairo-Transportation-Network/
 | Map | React-Leaflet | 4.x |
 | Testing (client) | Jest | 29.x |
 
-### 3.2 Modular Monolith
+![System Architecture Diagram](DIAGRAMS/PlantUMLout/Architecture%20-%20Component%20Diagram.png)
 
+**Figure 3.1:** System Architecture - Shows the relationship between Frontend, Backend, Services, and Data Layer
+
+### 3.2 Modular Monolith Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["Frontend - Next.js 16"]
+        UI[User Interface]
+        MAP[Leaflet Map]
+        API[API Client]
+    end
+
+    subgraph Backend["Backend - .NET 10"]
+        subgraph API["API Layer"]
+            CTRL[Controllers]
+        end
+        
+        subgraph Services["Business Logic"]
+            ROUTING[Routing Services]
+            TRAFFIC[Traffic Services]
+            MAINT[Maintenance Services]
+            TRANSIT[Transit Services]
+            NETWORK[Network Services]
+            ML[ML Predictions]
+        end
+        
+        subgraph Shared["Shared Infrastructure"]
+            GRAPH[GraphService]
+            CACHE[IMemoryCache]
+        end
+        
+        subgraph Data["Data Layer"]
+            EF[Entity Framework Core]
+            DB[(SQLite Database)]
+            SEED[Database Seeder]
+        end
+    end
+
+    Client -->|HTTP/REST| Backend
+    CTRL --> ROUTING & TRAFFIC & MAINT & TRANSIT & NETWORK & ML
+    ROUTING & TRAFFIC & MAINT & TRANSIT & NETWORK --> GRAPH
+    GRAPH --> CACHE
+    all Services --> EF
+    EF --> DB
+    EF --> SEED
 ```
-HTTP Request
-     │
-     ▼
-┌─────────────────┐   calls   ┌──────────────────┐   queries  ┌──────────────┐
-│   Controller    │──────────►│    Service        │───────────►│  EF Core     │
-│  (REST layer)   │           │  (algorithm /     │            │  (SQLite)    │
-└─────────────────┘           │   business logic) │            └──────────────┘
-                              └──────────────────┘
-                                       │ shared graph needed?
-                                       ▼
-                              ┌──────────────────┐
-                              │  GraphService     │
-                              │  + IMemoryCache   │  ← memoizes graph 30 s
-                              └──────────────────┘
+
+### 3.3 Service Module Dependency Graph
+
+```mermaid
+flowchart LR
+    subgraph Modules
+        direction TB
+        NET[NetworkManagement]
+        ROUT[Routing]
+        TRAF[TrafficControl]
+        MAINT[MaintenancePlanning]
+        TRANS[TransitScheduling]
+        SIM[Simulation]
+    end
+    
+    subgraph Shared
+        GS[GraphService]
+        CACHE[MemoryCache]
+    end
+    
+    NET --> GS
+    ROUT --> GS
+    TRAF --> GS
+    GS --> CACHE
+    ROUT --> TRAF
+    SIM --> NET
+    SIM --> TRAF
 ```
+
+### 3.4 Request Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Client as Next.js Client
+    participant API as ASP.NET API
+    participant Ctrl as Controller
+    participant Svc as Service
+    participant Graph as GraphService
+    participant DB as SQLite
+
+    Client->>API: GET /api/route-planning/shortest-path?from=L1&to=L5
+    API->>Ctrl: Request
+    Ctrl->>Svc: Call Routing Service
+    Svc->>Graph: GetGraph()
+    Graph->>Graph: Check Cache
+    alt Cache Hit
+        Graph-->>Svc: Return Cached Graph
+    else Cache Miss
+        Graph->>DB: Query Roads & Locations
+        DB-->>Graph: Graph Data
+        Graph-->>Svc: Build & Cache Graph
+    end
+    Svc->>Graph: Run Dijkstra Algorithm
+    Graph-->>Svc: Shortest Path Result
+Svc-->>Ctrl: AlgorithmResponseDto
+    Ctrl-->>API: JSON Response
+    API-->>Client: { success: true, data: {...} }
+```
+
+![API Flow Diagram](DIAGRAMS/PlantUMLout/api-flow.png)
+
+**Figure 3.4:** API Request Flow - Visual representation of HTTP request processing through the system
 
 ### 3.3 Response Envelope
 
@@ -155,6 +249,10 @@ Every algorithm endpoint returns an `AlgorithmResponseDto<T>`:
 ## 4. Data Schemas
 
 All data lives in a single **SQLite** file, auto-created and seeded at startup from `Data/TablesData.sql`.
+
+![Entity Relationship Diagram](DIAGRAMS/PlantUMLout/Data%20Model%20-%20Entity%20Relationship%20Diagram.png)
+
+**Figure 4.1:** Database ERD - All entities and their relationships
 
 ### 4.1 locations
 
@@ -322,16 +420,82 @@ All data lives in a single **SQLite** file, auto-created and seeded at startup f
 |---|-----------|----------|--------|
 | 8 | **Greedy Traffic Signal Timing** | `GET /api/traffic-signals` | ✅ Implemented |
 
+### 6.5 Machine Learning
+
+| # | Algorithm | Endpoint | Status |
+|---|-----------|----------|--------|
+| 9 | **ML Traffic Predictions** (Gradient Boosting) | `GET /api/ml-predictions` | ✅ Implemented |
+
+![ML Predictions Workflow](DIAGRAMS/PlantUMLout/ML%20Predictions%20Workflow.png)
+
+**Figure 6.5:** ML Traffic Prediction - Shows how traffic congestion predictions are generated and integrated with Time-Varying Dijkstra routing
+
+### 6.6 Algorithm Flow Diagrams
+
+```mermaid
+flowchart LR
+    subgraph Input
+        START[Start Location]
+        END[End Location]
+        PERIOD[Time Period]
+    end
+    
+    subgraph Algorithms
+        DIJK[Dijkstra]
+        ASTAR[A*]
+        TVD[Time-Varying]
+        MST[Prim's MST]
+        KNAP[0/1 Knapsack]
+        TRANSIT[Vehicle DP]
+        GREEDY[Greedy Signals]
+        ML[ML Predictions]
+    end
+    
+    subgraph Output
+        ROUTE[Route Path]
+        METRICS[Execution Metrics]
+        VIS[Visualization]
+    end
+    
+    START & PERIOD --> DIJK & ASTAR & TVD
+    END --> DIJK & ASTAR & TVD
+    DIJK & ASTAR & TVD --> ROUTE
+    ROUTE --> VIS
+    DIJK & ASTAR & TVD --> METRICS
+    MST --> ROUTE
+    KNAP --> ROUTE
+    TRANSIT --> ROUTE
+    GREEDY --> ROUTE
+    ML --> TVD
+```
+
 ---
 
-## 7. How to Run
+## 7. Visual Diagrams
+
+The following diagrams provide visual representations of the system's architecture, data model, algorithms, and deployment:
+
+| Diagram | File | Description |
+|---------|------|-------------|
+| System Architecture | [PlantUMLout/Architecture - Component Diagram.png](DIAGRAMS/PlantUMLout/Architecture%20-%20Component%20Diagram.png) | High-level component architecture showing frontend, backend, services, and data layer |
+| Deployment Pipeline | [PlantUMLout/Deployment Diagram - CI-CD Pipeline.png](DIAGRAMS/PlantUMLout/Deployment%20Diagram%20-%20CI-CD%20Pipeline.png) | CI/CD pipeline from GitHub to VPS with Docker and Cloudflare |
+| Data Model (ERD) | [PlantUMLout/Data Model - Entity Relationship Diagram.png](DIAGRAMS/PlantUMLout/Data%20Model%20-%20Entity%20Relationship%20Diagram.png) | Database schema with all entities and relationships |
+| Algorithm Map | [PlantUMLout/algorithm-map.png](DIAGRAMS/PlantUMLout/algorithm-map.png) | How algorithm modules fit together |
+| Graph Service | [PlantUMLout/graph-service-architecture.png](DIAGRAMS/PlantUMLout/graph-service-architecture.png) | Shared graph infrastructure dependencies |
+| Algorithm Flow | [PlantUMLout/Algorithm Flowchart - Dijkstra Example.png](DIAGRAMS/PlantUMLout/Algorithm%20Flowchart%20-%20Dijkstra%20Example.png) | Dijkstra algorithm execution steps |
+| API Flow | [PlantUMLout/api-flow.png](DIAGRAMS/PlantUMLout/api-flow.png) | HTTP request processing through the system |
+| ML Predictions | [PlantUMLout/ML Predictions Workflow.png](DIAGRAMS/PlantUMLout/ML%20Predictions%20Workflow.png) | Machine learning prediction workflow |
+
+---
+
+## 8. How to Run
 
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Node.js 20+](https://nodejs.org/) + npm
 
-### 7.1 Start the API server
+### 8.1 Start the API server
 
 ```bash
 cd Apps/Server/CairoTransportation
@@ -342,7 +506,7 @@ The API starts on `http://localhost:5028`. Swagger UI is available at `http://lo
 
 The database is created automatically, migrations are applied, and seed data is inserted on first run.
 
-### 7.2 Start the frontend
+### 8.2 Start the frontend
 
 ```bash
 cd Apps/client
@@ -352,7 +516,7 @@ npm run dev
 
 Open `http://localhost:3000` in your browser to view the interactive Cairo map.
 
-### 7.3 Run client tests
+### 8.3 Run client tests
 
 ```bash
 cd Apps/client
@@ -361,7 +525,7 @@ npm test
 
 ---
 
-## 8. Design Decisions
+## 9. Design Decisions
 
 ### 8.1 .NET 10 / ASP.NET Core instead of Spring Boot
 

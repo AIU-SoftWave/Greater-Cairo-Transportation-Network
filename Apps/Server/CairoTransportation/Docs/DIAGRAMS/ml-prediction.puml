@@ -1,0 +1,89 @@
+@startuml ML Predictions Workflow
+skinparam backgroundColor #FEFEFE
+skinparam activityBackgroundColor #ECF0F1
+skinparam activityBorderColor #2C3E50
+skinparam arrowColor #3498DB
+
+title Machine Learning Traffic Congestion Prediction Workflow
+
+skinparam sequence {
+  ActorBackgroundColor #FFEFD5
+  ParticipantBackgroundColor #E8F8F5
+  DatabaseBackgroundColor #D4E6F1
+}
+
+actor User
+participant "Frontend" as FE
+participant "API Controller" as API
+participant "ML Service" as ML
+database "predictions.json" as PredDB
+
+== Data Preparation Phase ==
+
+note right of ML
+  Training Data:
+  - 722 records
+  - Features: road_id, period, 
+    historical_flow, time_of_day,
+    day_of_week, weather
+  - Target: congestion_level (0-2)
+end note
+
+note right of ML
+  Model: Gradient Boosting
+  - n_estimators: 100
+  - max_depth: 6
+  - learning_rate: 0.1
+  - R² Score: 0.94
+end note
+
+== Prediction Phase ==
+
+User -> FE : Enable "Use ML Predictions"
+FE -> API : GET /api/ml-predictions?period=MORNING
+
+alt With Time Period
+    API -> ML : GetPredictions(period)
+else Without Period
+    API -> ML : GetAllPredictions()
+end
+
+ML -> PredDB : Load prediction data
+
+alt Cache Available
+    ML -> ML : Return cached predictions
+else
+    PredDB -->> ML : Load 722 prediction records
+    ML -> ML : Apply model inference
+end
+
+ML --> API : List<MlPredictionDto>
+API --> FE : { predictions: [...] }
+
+note right of FE
+  Display:
+  - Roads colored by congestion
+  - Red: >= 1.5 (high)
+  - Orange: >= 1.0 (medium)
+  - Yellow: >= 0.7 (low-medium)
+  - Green: < 0.7 (low)
+end note
+
+== Integration with Time-Varying Dijkstra ==
+
+User -> FE : Select "Time-Varying Route"
+FE -> API : GET /api/route-planning/time-route?from=L1&to=L5&useMl=true
+
+API -> ML : GetPredictions(period)
+API -> ML : GetGraph()
+
+loop For each edge in Dijkstra
+    ML -> ML : Apply congestion weight
+    note right of ML
+      Weight = distance * (1 + congestion_factor * predicted_congestion)
+    end note
+end
+
+API --> FE : Route with ML-optimized weights
+
+@enduml

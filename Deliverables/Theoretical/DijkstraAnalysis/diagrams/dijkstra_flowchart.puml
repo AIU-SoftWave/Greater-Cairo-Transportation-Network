@@ -1,0 +1,84 @@
+@startuml DijkstraFlowchart
+skinparam backgroundColor #FAFAFA
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1565C0
+skinparam arrowColor #1565C0
+
+title Dijkstra's Algorithm – Main Control Flow (Cairo Implementation)
+
+start
+
+:Validate fromNodeId & toNodeId
+exist in graph.NodeIndex;
+note right: O(1) Dictionary lookup
+
+if (Node exists?) then (❌ No)
+  :Return Found = false;
+  stop
+else (✅ Yes)
+  if (fromNodeId == toNodeId?) then (Yes)
+    :Return distance = 0, single-node path;
+    stop
+  else (No)
+    
+    **INIT DATA STRUCTURES**
+    dist[s] = 0, dist[v!=s] = infinity
+    visited = {}
+    prev_node = {}, prev_road = {}
+    PQ <-- (s, 0)
+    metrics.MarkDiscovered(s);
+    
+    while (PQ empty?) is (Yes - no path)
+      :Return Found = false, inf distance;
+      stop
+    else (No)
+      :u ← PQ.Dequeue();
+      note right: Extract minimum O(log E)
+      
+      if (u already in visited?) then (Yes - stale entry)
+      else (No)
+        :visited.Add(u)
+        metrics.MarkExpanded();
+        note right: O(1) HashSet insertion
+        
+        if (u == toNodeId?) then (**EARLY TERMINATION** [OK])
+          :Reconstruct path via prev_node/prev_road;
+          note right: O(V) backward traversal
+          
+          :Walk backward: target -> source
+          Build nodePath[] and roadPath[];
+          
+          :Reverse both lists
+          Restore source-target order;
+          
+          :Map GraphNode to ShortestPathNodeDto
+          Map GraphEdge to ShortestPathRoadDto;
+          
+          :Return ShortestPathResultDto
+          {dist, PathNodes[], PathRoads[]};
+          stop
+        else (No - expand)
+          :Enumerate edges via AdjacencyList[u];
+          
+          repeat
+            :newDist = dist[u] + edge.Distance;
+            note right: Relaxation formula
+            
+            if (newDist < dist[v]?) then (Yes - RELAX! [OK])
+              :dist[v] = newDist
+              prev_node[v] = u
+              prev_road[v] = edge.Id
+              PQ.Enqueue(v, newDist)
+              metrics.MarkDiscovered(v);
+              note right: Lazy insert, no decrease-key
+            else (No)
+            endif
+          repeat while (more neighbors) is (Yes)
+          ->No;
+        endif
+      endif
+    endwhile
+  endif
+endif
+
+@enduml

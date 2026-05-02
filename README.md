@@ -13,7 +13,8 @@ This project successfully fulfills all course requirements by integrating the fo
 5.  **0/1 Knapsack (Dynamic Programming):** Allocates a finite road maintenance budget to the most critical roads to maximize priority utility.
 6.  **Bounded Knapsack (Dynamic Programming):** Schedules and allocates transit vehicles across metro and bus lines to maximize passenger coverage.
 7.  **Greedy Algorithm (Traffic Signals):** Real-time optimization of intersection green-light cycles based on live traffic flow.
-8.  **Simulation Framework:** Supports real-time road closures (accidents), weather penalties (Rain/Storm), and emergency preemption.
+8.  **ML Predictions (Gradient Boosting):** Traffic congestion forecasting using machine learning model (R²=0.94) trained on historical data for road congestion prediction.
+9.  **Simulation Framework:** Supports real-time road closures (accidents), weather penalties (Rain/Storm), and emergency preemption.
 
 ---
 
@@ -23,6 +24,10 @@ The project is divided into two main components:
 
 - **Backend:** ASP.NET Core 10 REST API with Entity Framework Core and SQLite.
 - **Frontend:** Next.js 16 (React 19) web application with interactive Leaflet mapping.
+
+![System Architecture Diagram](Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Architecture%20-%20Component%20Diagram.png)
+
+**Figure:** Component Architecture showing frontend, backend services, and data layer
 
 ---
 
@@ -77,6 +82,39 @@ The database is automatically created and seeded with Cairo geographical and tra
     npm run dev
     ```
 4.  Open `http://localhost:3000`.
+
+---
+
+## ☁️ Deployment
+
+The application is deployed to a production VPS with automated CI/CD via GitHub Actions.
+
+- **Frontend:** https://gcts.abosaleh.site
+- **API:** https://gcts-api.abosaleh.site
+
+![Deployment Diagram - CI/CD Pipeline](Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Deployment%20Diagram%20-%20CI-CD%20Pipeline.png)
+
+**Figure:** Production deployment architecture with GitHub Actions, Docker, and Cloudflare tunnel
+
+### Auto-Deploy Setup
+
+The project uses GitHub Actions to automatically deploy on every push to `main`:
+
+1.  **Configure GitHub Secrets:**
+    - `VPS_HOST` - Server IP/hostname
+    - `VPS_USER` - SSH username
+    - `VPS_SSH_KEY` - Private SSH key
+
+2.  **Workflow:** `.github/workflows/deploy.yml` triggers on push to main, SSHs into VPS, pulls latest code, rebuilds Docker containers.
+
+### Local Production Build
+
+To build for production locally:
+
+```bash
+cd Apps
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ---
 

@@ -1,22 +1,110 @@
-@startuml
+@startuml Data Model - Entity Relationship Diagram
 hide methods
 skinparam classAttributeIconSize 0
+skinparam backgroundColor #FEFEFE
+skinparam entityBackgroundColor #ECF0F1
+skinparam arrowColor #3498DB
 
-class Location
-class Road
-class TrafficFlow
-class TransportRoute
-class RouteStop
-class TransportDemand
-class RoadMaintenance
+title Greater Cairo Transportation Network - Database Schema
 
-Location "1" <-- "*" Road : FromLocation
-Location "1" <-- "*" Road : ToLocation
-Road "1" <-- "*" TrafficFlow
-TransportRoute "1" <-- "*" RouteStop
-Location "1" <-- "*" RouteStop
-Location "1" <-- "*" TransportDemand : From
-Location "1" <-- "*" TransportDemand : To
-Road "1" <-- "0..1" RoadMaintenance
+entity "Location" as Location {
+    * id : TEXT <<PK>>
+    * name : TEXT
+    * type : TEXT
+    * category : TEXT
+    * population : INT
+    * x : REAL
+    * y : REAL
+    * is_critical : INT
+}
+
+entity "Road" as Road {
+    * id : INT <<PK>>
+    * from_location_id : TEXT <<FK>>
+    * to_location_id : TEXT <<FK>>
+    * distance : REAL
+    * capacity : INT
+    * condition : INT
+    * is_existing : INT
+    * is_two_way : INT
+    * construction_cost : REAL
+}
+
+entity "TrafficPeriodMultiplier" as Period {
+    * period : TEXT <<PK>>
+    * multiplier : REAL
+}
+
+entity "TrafficFlow" as TrafficFlow {
+    * id : INT <<PK>>
+    * road_id : INT <<FK>>
+    * period : TEXT <<FK>>
+    * flow : INT
+}
+
+entity "TransportRoute" as Route {
+    * id : TEXT <<PK>>
+    * type : TEXT
+    * daily_passengers : INT
+    * vehicles_assigned : INT
+    * capacity_per_unit : INT
+}
+
+entity "RouteStop" as Stop {
+    * route_id : TEXT <<FK>>
+    * location_id : TEXT <<FK>>
+    * stop_order : INT
+}
+
+entity "TransportDemand" as Demand {
+    * id : INT <<PK>>
+    * from_location_id : TEXT <<FK>>
+    * to_location_id : TEXT <<FK>>
+    * daily_passengers : INT
+}
+
+entity "RoadMaintenance" as Maintenance {
+    * road_id : INT <<PK, FK>>
+    * priority : INT
+    * estimated_cost : REAL
+}
+
+entity "MlPrediction" as MlPred {
+    * road_id : INT <<PK>>
+    * period : TEXT
+    * predicted_congestion : REAL
+    * confidence : REAL
+    * model_version : TEXT
+}
+
+Location "1" --> "*" Road : from_location
+Location "1" --> "*" Road : to_location
+Road "1" --> "*" TrafficFlow
+TrafficFlow --> Period
+TransportRoute "1" --> "*" Stop
+Location "1" --> "*" Stop
+Location "1" --> "*" Demand : from_location
+Location "1" --> "*" Demand : to_location
+Road "1" --> "0..1" Maintenance
+Road "1" --> "*" MlPred
+
+note right of Location
+  35 locations:
+  - 21 neighborhoods
+  - 14 facilities (hospitals, airports)
+end note
+
+note right of Road
+  74 roads:
+  - 53 existing
+  - 21 potential (MST)
+end note
+
+note right of Period
+  Time periods:
+  - MORNING (07:00-09:00)
+  - EVENING (16:00-19:00)
+  - NIGHT (other)
+end note
 
 @enduml

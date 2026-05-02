@@ -10,44 +10,72 @@ skinparam note {
     BorderColor #F9A825
 }
 
-title Dijkstra — Internal Data Structures & Memory Layout\n(Space Complexity: O(V + E) total)
+title Dijkstra's Algorithm — Internal Data Structures & Memory Layout\nSpace Complexity Analysis: O(V + E) Total
 
-package "O(V) Structures — one slot per node" {
-    rectangle "distances[ ]\nDictionary<string, double>\n\nStores the shortest known distance\nfrom source s to every node.\nInitialised: dist[s]=0, all others ∞" as DIST
-    rectangle "visited\nHashSet<string>\n\nBit-set of finalised nodes.\nA node enters here exactly once\n→ guarantees termination." as VIS
-    rectangle "previousNode[ ]\nDictionary<string, string>\n\nStores the node predecessor on\nthe current best path.\nUsed for path reconstruction." as PREV_N
-    rectangle "previousRoad[ ]\nDictionary<string, long>\n\nStores the edge ID predecessor.\nPairs with previousNode[ ] to\nreconstruct full road sequence." as PREV_R
+package "O(V) Structures — One Slot Per Node (35 nodes)" {
+    rectangle "distances[ ]\nDictionary<string, double>\n\n- dist[s] = 0 (source)\n- dist[v!=s] = INF initially\n- Updated during relaxation\n- Final value = delta(s,v) upon termination" as DIST
+    
+    rectangle "visited\nHashSet<string>\n\n• Finalized nodes set (S in proof)\n• Node enters exactly once\n• Guards against stale PQ entries\n• O(1) average lookup/add" as VIS
+    
+    rectangle "previousNode[ ]\nDictionary<string, string>\n\n• Predecessor node on shortest path\n• Forms shortest-path tree rooted at s\n• Walked backward during reconstruction\n• Space: O(V)" as PREV_N
+    
+    rectangle "previousRoad[ ]\nDictionary<string, long>\n\n• Edge ID predecessor (not just node)\n• Handles parallel edges ambiguity\n• Pairs with previousNode[ ]\n• Space: O(V)" as PREV_R
 }
 
-package "Priority Queue — O(E) entries in worst case" {
-    rectangle "queue\nPriorityQueue<string, double>\n(Binary Min-Heap)\n\nHolds (nodeId, tentativeDist) pairs.\nDequeue = extract-min in O(log E).\nMay hold stale entries → checked\nagainst visited on dequeue." as PQ
+package "Priority Queue — Lazy Min-Heap" {
+    rectangle "queue\nPriorityQueue<string, double>\n(Binary Min-Heap via .NET)\n\n• Holds (nodeId, tentativeDist) pairs\n• Extract-min in O(log E)\n• Lazy deletion pattern:\n  - Push new entry on relaxation\n  - Skip stale entries via visited check\n• Max size: O(E) worst case" as PQ
 }
 
-package "Read-only input — O(V + E)" {
-    rectangle "graph.NodeIndex\nDictionary<string, GraphNode>" as NI
-    rectangle "graph.AdjacencyList\nDictionary<string, List<long>>" as ADJ
-    rectangle "graph.EdgeIndex\nDictionary<long, GraphEdge>" as EI
+package "Read-only Input — Pre-built Graph (O(V + E))" {
+    rectangle "graph.NodeIndex\nDictionary<string, GraphNode>\n\n• O(1) node lookup by ID\n• Used for validation\n• Read-only during algorithm" as NI
+    
+    rectangle "graph.AdjacencyList\nDictionary<string, List<long>>\n\n- O(1) neighbor enumeration\n- Each node -> list of edge IDs\n- Encodes directed graph topology\n- Total entries across all lists = E" as ADJ
+    
+    rectangle "graph.EdgeIndex\nDictionary<long, GraphEdge>\n\n• O(1) edge lookup by ID\n• Provides weight (Distance)\n• Read-only during algorithm" as EI
 }
 
 DIST -[hidden]-> VIS
 VIS  -[hidden]-> PREV_N
 PREV_N -[hidden]-> PREV_R
+PREV_R -[hidden]-> PQ
+
+note bottom of DIST
+  **Example (Maadi - Heliopolis):**
+  Initial: dist[Maadi]=0, all others INF
+  After relax: dist[Downtown]=7.2
+  After relax: dist[Heliopolis]=11.2
+  Final: dist[Heliopolis]=delta(Maadi,Heliopolis)
+end note
 
 note bottom of PQ
-  Stale-entry pattern:
-  When dist[v] is improved, we push a NEW
-  entry into the heap rather than decrease-key.
-  Old entries are silently skipped via the
-  `visited` check on dequeue.
-  This trades heap size (up to O(E)) for
-  implementation simplicity — no decrease-key needed.
+  **Lazy Deletion Pattern:**
+  When dist[v] improves, we push NEW entry
+  rather than decrease-key. Old (stale) entries
+  are silently skipped via the visited check.
+  
+  Trade-off: O(E) heap size vs O(1) simplicity
+  (no decrease-key operation needed)
+  
+  Cairo network: ~120 edges -> max heap size ~120
 end note
 
 note bottom of ADJ
-  Adjacency list encodes
-  the graph topology.
-  Each lookup: O(1) average.
-  Total edge traversal: O(E).
+  **Cairo Network Topology:**
+  • 35 locations (nodes)
+  • ~120 roads (edges)
+  • Average degree: ~6.9 edges/node
+  • Directed: both directions stored separately
+end note
+
+note bottom of NI
+  **O(1) Lookup Guarantee:**
+  Dictionary<string, GraphNode> uses
+  hash-based indexing -> average O(1) lookup
+  
+  Example: NodeIndex["L1"] -> GraphNode{
+    Id="L1", Name="Maadi", 
+    X=31.25, Y=30.05, ...
+  }
 end note
 
 @enduml

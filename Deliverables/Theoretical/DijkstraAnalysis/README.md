@@ -52,6 +52,12 @@ Given a source node `s`, it finds the shortest (minimum-weight) path from `s` to
 - **Game AI** — Pathfinding on tile maps
 - **Telecommunications** — Minimum-latency network paths
 
+### System Context in Cairo Transportation Network
+
+![System Architecture](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Architecture%20-%20Component%20Diagram.png)
+
+**Figure:** Dijkstra operates within the Routing Services layer, using the shared GraphService infrastructure
+
 ---
 ---
 
@@ -127,7 +133,8 @@ function Dijkstra(G, s, t):
     return dist[t], path
 ```
 
-> **See diagram:** `diagrams/dijkstra_flowchart.mmd` — full annotated control-flow diagram
+> **See diagram:** `diagrams/dijkstra_flowchart.puml` — full annotated control-flow diagram  
+> **See also:** `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Algorithm%20Flowchart%20-%20Dijkstra%20Example.png` — alternative visual flowchart
 
 ---
 ---
@@ -341,7 +348,8 @@ metrics.MarkExpanded();               // called when a node is dequeued and proc
 These hooks enable **live performance comparison** in the UI (see Scenario 1 in `TESTING.md`).  
 They add O(1) work per operation — no asymptotic impact.
 
-> **See diagram:** `diagrams/class_diagram.puml` — full class hierarchy and dependency graph
+> **See diagram:** `diagrams/class_diagram.puml` — full class hierarchy and dependency graph  
+> **See also:** `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/graph-service-architecture.png` — GraphService architecture showing algorithm dependencies
 
 ---
 ---
@@ -664,25 +672,34 @@ public class DijkstraRoutePlanner(AlgorithmExecutionMetrics metrics) : IDijkstra
 
 ## Appendix B — Diagrams Index
 
+### Local Diagrams (in `diagrams/`)
+
 All diagram source files are in `diagrams/`. Render before use:
 
 | File | Type | Tool | Content | Used In |
 |---|---|---|---|---|
-| `dijkstra_flowchart.mmd` | Mermaid | `mmdc -i file.mmd -o file.png` | Full algorithm control flow | Slide 2 |
-| `relaxation_example.mmd` | Mermaid | `mmdc -i file.mmd -o file.png` | Before/after relaxation step | Slide 2 & 3 |
-| `complexity_comparison.mmd` | Mermaid | `mmdc -i file.mmd -o file.png` | Algorithm complexity bar chart | Slide 4 & 7 |
-| `performance_comparison.mmd` | Mermaid | `mmdc -i file.mmd -o file.png` | Dijkstra vs A\* nodes expanded | Slide 6 |
+| `dijkstra_flowchart.puml` | PlantUML | `plantuml file.puml` | Full algorithm control flow with Cairo details | Slide 2 |
+| `relaxation_example.puml` | PlantUML | `plantuml file.puml` | Before/after relaxation step with Cairo example | Slide 2 & 3 |
+| `complexity_comparison.puml` | PlantUML | `plantuml file.puml` | Algorithm complexity bar chart | Slide 4 & 7 |
+| `performance_comparison.puml` | PlantUML | `plantuml file.puml` | Dijkstra vs A* nodes expanded | Slide 6 |
 | `class_diagram.puml` | PlantUML | `plantuml file.puml` | Class hierarchy & dependencies | Slide 5 |
 | `data_structures.puml` | PlantUML | `plantuml file.puml` | Memory layout of data structures | Slide 4 |
 | `correctness_proof_sequence.puml` | PlantUML | `plantuml file.puml` | Induction proof as sequence | Slide 3 |
 
+### Shared Project Diagrams (in `PlantUMLout/`)
+
+These diagrams are shared across the entire project and can be referenced here:
+
+| File | Location | Content | Relevant To |
+|---|---|---|---|
+| `Algorithm Flowchart - Dijkstra Example.png` | `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/` | Alternative Dijkstra flowchart | Slide 2 |
+| `graph-service-architecture.png` | `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/` | GraphService dependencies | Slide 5 |
+| `Architecture - Component Diagram.png` | `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/` | System architecture overview | Slide 1 |
+| `Data Model - Entity Relationship Diagram.png` | `../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/` | Database schema | Appendix A |
+
 ### Rendering Commands
 
 ```bash
-# Mermaid (requires @mermaid-js/mermaid-cli)
-npm install -g @mermaid-js/mermaid-cli
-for f in diagrams/*.mmd; do mmdc -i "$f" -o "${f%.mmd}.png"; done
-
 # PlantUML (requires Java + plantuml.jar)
 for f in diagrams/*.puml; do plantuml "$f"; done
 ```

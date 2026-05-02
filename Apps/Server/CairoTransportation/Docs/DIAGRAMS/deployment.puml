@@ -1,0 +1,71 @@
+@startuml Deployment Diagram - CI-CD Pipeline
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam componentBorderColor #2C3E50
+skinparam arrowColor #3498DB
+skinparam nodeBackgroundColor #ECF0F1
+skinparam databaseBackgroundColor #E8F8F5
+
+title Greater Cairo Transportation Network - Deployment Architecture
+
+actor Developer as "Developer"
+node "GitHub" as GitHub {
+    component "Repository" as Repo
+    component "Actions" as Actions
+    component "Secrets" as Secrets
+}
+
+node "VPS Production Server" as VPS {
+    node "Docker Engine" as Docker {
+        component "Frontend Container\n(Next.js 16)" as FE_Container
+        component "Backend Container\n(.NET 10)" as BE_Container
+        component "Cloudflared Tunnel" as Cloudflared
+        
+        node "cloudflared-net" as Net_Ext
+        node "cairo-internal" as Net_Int
+    }
+}
+
+node "Cloudflare" as Cloudflare {
+    component "Tunnel Service" as Tunnel
+    component "HTTPS Proxy" as HTTPS
+    component "DNS" as DNS
+}
+
+cloud "Internet" as Internet
+
+Developer --> Repo : git push main
+Repo --> Actions : trigger workflow
+Actions --> Secrets : read credentials
+Actions --> VPS : SSH deploy
+
+FE_Container ..> Net_Int
+BE_Container ..> Net_Int
+Cloudflared ..> Net_Ext
+
+VPS --> Internet : HTTPS
+Cloudflared --> Cloudflare : Tunnel
+Cloudflare --> Tunnel : Connect
+Tunnel --> HTTPS : Route
+DNS --> HTTPS : Domain\n(gcts.abosaleh.site)
+
+note right of FE_Container
+  Port: 3000 (internal)
+  Build: pnpm + Next.js
+  Env: NEXT_PUBLIC_API_BASE_URL
+end note
+
+note right of BE_Container
+  Port: 8080 (internal)
+  Build: .NET 10
+  Runtime: ASP.NET Core
+end note
+
+note right of Cloudflared
+  Provides:
+  - HTTPS termination
+  - Public URL
+  - No port forwarding needed
+end note
+
+@enduml

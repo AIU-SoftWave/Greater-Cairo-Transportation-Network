@@ -11,6 +11,7 @@ This project is a beginner-friendly ASP.NET Core + EF Core application for the G
 - [Core Docs](CORE/README.md)
 - [Plans](Plans/README.md)
 - [Diagrams](DIAGRAMS/README.md)
+- [Deployment Guide](DEPLOYMENT.md)
 
 ## What this project currently includes
 

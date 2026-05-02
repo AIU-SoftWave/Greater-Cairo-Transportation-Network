@@ -1,0 +1,60 @@
+@startuml RelaxationExample
+skinparam backgroundColor #FAFAFA
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+skinparam note {
+    BackgroundColor #FFF9C4
+    BorderColor #F9A825
+}
+
+title Dijkstra's Relaxation Step — Cairo Network Example
+
+package "BEFORE: Initial State" {
+    component "s = Maadi\nd[s] = 0\nvisited = {s}" as S1
+    component "u = Downtown\nd[u] = 7.2 km\nvisited = {s, u}" as U1
+    component "v = Heliopolis\nd[v] = infinity\nprev: nil" as V1
+    
+    S1 --> "Road R1: 3.5 km"
+    U1 .right.> "Road R2: 4.0 km\ncapacity=800"
+    S1 .down.> "Direct: 12.5 km\n(via Nasr City)"
+}
+
+package "RELAXATION PROCESS\nRelax(u, v)" {
+    component "d[v] > d[u] + w(u,v)\nINF > 7.2 + 4.0 = 11.2\nINF > 11.2 [OK] - UPDATE!" as FORMULA
+}
+
+package "AFTER: Updated State" {
+    component "s = Maadi\nd[s] = 0\nvisited = {s}" as S2
+    component "u = Downtown\nd[u] = 7.2 km\nvisited = {s, u}" as U2
+    component "v = Heliopolis\nd[v] = 11.2 km [OK]\nprev_node[v] = u\nprev_road[v] = R2" as V2
+    
+    S2 --> "Road R1: 3.5 km"
+    U2 --> "Road R2: 4.0 km\nnew best path! [OK]"
+    S2 .down.> "Direct: 12.5 km\n(no longer optimal)"
+}
+
+note bottom of FORMULA
+  **Relaxation Logic:**
+  For edge (u,v) with weight w(u,v):
+  if d[v] > d[u] + w(u,v):
+    d[v] = d[u] + w(u,v)
+    prev[v] = u
+  
+  Triangle inequality:
+  delta(s,v) <= delta(s,u) + w(u,v)
+end note
+
+note bottom of V2
+  **State After Relaxation:**
+  - d[v] updated: INF to 11.2 km
+  - prev_node[v] = u (Downtown)
+  - prev_road[v] = R2 (edge ID)
+  - New PQ entry: (v, 11.2)
+  
+  If later a shorter path found,
+  d[v] will be updated again.
+end note
+
+@enduml

@@ -32,22 +32,28 @@
    - 4.4 [Maintenance Planning Service](#44-maintenance-planning-service)
    - 4.5 [Transit Scheduling Service](#45-transit-scheduling-service)
    - 4.6 [Simulation & Chaos Engineering Service](#46-simulation--chaos-engineering-service)
-5. [Algorithm Implementations & Analyses](#5-algorithm-implementations--analyses)
-   - 5.1 [Dijkstra’s Shortest Path](#51-dijkstras-shortest-path)
-   - 5.2 [A\* Search (Emergency Routing)](#52-a-search-emergency-routing)
-   - 5.3 [Time-Varying Dijkstra (Traffic-Aware)](#53-time-varying-dijkstra-traffic-aware)
-   - 5.4 [Prim’s Minimum Spanning Tree](#54-prims-minimum-spanning-tree)
-   - 5.5 [0/1 Knapsack DP (Maintenance)](#55-01-knapsack-dp-maintenance)
-   - 5.6 [Bounded Knapsack DP (Transit Scheduling)](#56-bounded-knapsack-dp-transit-scheduling)
-   - 5.7 [Greedy Signal Optimization](#57-greedy-signal-optimization)
-6. [Complexity Analysis Summary](#6-complexity-analysis-summary)
-7. [Performance Evaluation & Results](#7-performance-evaluation--results)
-8. [Visualization and User Interface](#8-visualization-and-user-interface)
-9. [Requirement Coverage Checklist](#9-requirement-coverage-checklist)
-10. [Challenges and Technical Solutions](#10-challenges-and-technical-solutions)
-11. [Potential Improvements and Future Work](#11-potential-improvements-and-future-work)
-12. [References](#12-references)
-13. [Appendices](#13-appendices)
+5. [CI/CD Pipeline & Deployment](#5-cicd-pipeline--deployment)
+   - 5.1 [GitHub Actions Workflow](#51-github-actions-workflow)
+   - 5.2 [Docker Production Architecture](#52-docker-production-architecture)
+   - 5.3 [Docker Compose Production Setup](#53-docker-compose-production-setup)
+   - 5.4 [Deployment Process](#54-deployment-process)
+   - 5.5 [Production URL & Access](#55-production-url--access)
+ 6. [Algorithm Implementations & Analyses](#6-algorithm-implementations--analyses)
+    - 6.1 [Dijkstra's Shortest Path](#51-dijkstras-shortest-path)
+    - 6.2 [A\* Search (Emergency Routing)](#52-a-search-emergency-routing)
+    - 6.3 [Time-Varying Dijkstra (Traffic-Aware)](#53-time-varying-dijkstra-traffic-aware)
+    - 6.4 [Prim's Minimum Spanning Tree](#54-prims-minimum-spanning-tree)
+    - 6.5 [0/1 Knapsack DP (Maintenance)](#55-01-knapsack-dp-maintenance)
+    - 6.6 [Bounded Knapsack DP (Transit Scheduling)](#56-bounded-knapsack-dp-transit-scheduling)
+    - 6.7 [Greedy Signal Optimization](#57-greedy-signal-optimization)
+ 7. [Complexity Analysis Summary](#6-complexity-analysis-summary)
+ 8. [Performance Evaluation & Results](#7-performance-evaluation--results)
+ 9. [Visualization and User Interface](#8-visualization-and-user-interface)
+ 10. [Requirement Coverage Checklist](#9-requirement-coverage-checklist)
+ 11. [Challenges and Technical Solutions](#10-challenges-and-technical-solutions)
+ 12. [Potential Improvements and Future Work](#11-potential-improvements-and-future-work)
+ 13. [References](#12-references)
+ 14. [Appendices](#13-appendices)
     - [Appendix A – API Reference](#appendix-a--api-reference)
     - [Appendix B – Dataset Summary](#appendix-b--dataset-summary)
 
@@ -223,42 +229,9 @@ The Greater Cairo Transportation Network Optimization System implements a **laye
 
 The system is organized into four primary layers:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         PRESENTATION LAYER                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Next.js    │  │   React      │  │   Leaflet    │  │   Tailwind   │   │
-│  │   (Pages)    │  │   (Hooks)    │  │   (Map)      │  │   (Styles)   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                         APPLICATION LAYER                              │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │           ASP.NET Core 10 REST API Controllers                    │   │
-│  │  • AlgorithmsController  • AStarController  • MstController      │   │
-│  │  • MaintenanceController  • TransitController  • SignalController│   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                         DOMAIN LAYER                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Routing    │  │   Traffic    │  │  Maintenance │  │   Transit    │   │
-│  │   Services   │  │   Services   │  │   Services   │  │   Services   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Algorithm  │  │   Graph      │  │  Simulation  │  │   Traffic    │   │
-│  │   Core       │  │   Service    │  │   Service    │  │   Service    │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                         DATA LAYER                                       │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
-│  │   Entity         │  │   Transportation │  │   IMemoryCache   │         │
-│  │   Framework      │  │   DbContext      │  │   (.NET)         │         │
-│  │   Core 10        │  │   (SQLite)       │  │                  │         │
-│  └──────────────────┘  └──────────────────┘  └──────────────────┘         │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                     SQLite Database (File-based)                  │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+![System Architecture Diagram](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Architecture%20-%20Component%20Diagram.png)
+
+**Figure 3.1:** Component Architecture - Shows the relationship between Frontend (Next.js), Backend (.NET 10), Services, and Data Layer
 
 #### 3.1.2 Technology Stack
 
@@ -558,6 +531,10 @@ erDiagram
         int daily_passengers "Trip demand"
     }
 ```
+
+![Entity Relationship Diagram](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Data%20Model%20-%20Entity%20Relationship%20Diagram.png)
+
+**Figure 3.2:** Database ERD - Visual representation of all entities and their relationships
 
 #### 3.3.2 Table Specifications
 
@@ -1253,9 +1230,174 @@ public void RecordMetrics(string algorithmName, long executionTimeMs,
 
 <div style="page-break-after: always;"></div>
 
-## 5. Algorithm Implementations & Analyses
+## 5. CI/CD Pipeline & Deployment
 
-### 5.1 Dijkstra’s Shortest Path
+The project implements a fully automated continuous integration and deployment pipeline using GitHub Actions, Docker, and SSH-based deployment to a production VPS.
+
+![Deployment Diagram - CI/CD Pipeline](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Deployment%20Diagram%20-%20CI-CD%20Pipeline.png)
+
+**Figure 5.1:** Deployment Architecture - Shows CI/CD pipeline from GitHub to VPS with Docker containers and Cloudflare tunnel
+
+### 5.1 GitHub Actions Workflow
+
+The auto-deployment workflow is defined in `.github/workflows/deploy.yml` and triggers automatically on every push to the `main` branch:
+
+```yaml
+name: Auto Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/abosaleh/MyProjects/Greater-Cairo-Transportation-Network
+            git fetch origin
+            git reset --hard origin/main
+            docker compose -f Apps/docker-compose.prod.yml up -d --build
+```
+
+**Required GitHub Secrets:**
+- `VPS_HOST` - Server hostname or IP address
+- `VPS_USER` - SSH username for deployment
+- `VPS_SSH_KEY` - Private SSH key for authentication
+
+### 5.2 Docker Production Architecture
+
+The system uses multi-stage Docker builds for both the backend and frontend to minimize image size and improve security.
+
+#### Backend (.NET 10) - `Apps/Server/CairoTransportation/Dockerfile`
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY ["CairoTransportation.csproj", "./"]
+RUN dotnet restore
+COPY . .
+RUN dotnet build -c Release -o /app/build
+RUN dotnet publish -c Release -o /app/publish
+
+FROM base AS final
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "CairoTransportation.dll"]
+```
+
+#### Frontend (Next.js 16) - `Apps/client/Dockerfile`
+```dockerfile
+FROM node:20-alpine AS builder
+ARG NEXT_PUBLIC_API_BASE_URL
+RUN npm install -g pnpm
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+COPY . .
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+RUN pnpm build
+
+FROM node:20-alpine
+WORKDIR /app
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NODE_ENV=production
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+CMD ["node", "node_modules/next/dist/bin/next", "start"]
+```
+
+### 5.3 Docker Compose Production Setup
+
+The production deployment uses Docker Compose to orchestrate multiple containers:
+
+```yaml
+# Apps/docker-compose.prod.yml
+name: cairo-transportation
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://gcts-api.abosaleh.site
+    networks:
+      - cloudflared-net
+      - cairo-internal
+
+  api:
+    build:
+      context: ./Server/CairoTransportation
+      dockerfile: Dockerfile
+    networks:
+      - cloudflared-net
+      - cairo-internal
+
+networks:
+  cloudflared-net:
+    external: true
+  cairo-internal:
+    driver: bridge
+```
+
+**Network Architecture:**
+- **cloudflared-net**: External network connected to Cloudflare tunnel for HTTPS access
+- **cairo-internal**: Internal bridge network for container-to-container communication
+
+### 5.4 Deployment Process
+
+The deployment process follows these steps:
+
+1. **Code Push**: Developer pushes changes to `main` branch
+2. **GitHub Actions Trigger**: Workflow starts automatically
+3. **SSH Connection**: Actions connect to VPS using stored credentials
+4. **Code Update**: VPS pulls latest code from GitHub
+5. **Container Rebuild**: Docker rebuilds images with new code
+6. **Service Restart**: Containers are recreated with new images
+7. **Health Check**: Deployment verifies both services are running
+
+### 5.5 Production URL & Access
+
+The application is accessible at:
+
+- **Frontend**: https://gcts.abosaleh.site
+- **API**: https://gcts-api.abosaleh.site
+
+Access is provided through Cloudflare's tunnel service (cloudflared), which creates a secure HTTPS tunnel to the internal Docker network without requiring traditional port forwarding.
+
+---
+
+## 6. Algorithm Implementations & Analyses
+
+The system implements eight core algorithms spanning graph search, dynamic programming, greedy approaches, and machine learning. The following diagrams illustrate the algorithm relationships and execution flows.
+
+![Algorithm Map - How algorithms fit together](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/algorithm-map.png)
+
+**Figure 6.1:** Algorithm Module Relationships - Shows how all algorithms connect to the shared GraphService
+
+![Graph Service Architecture - Foundation for all routing algorithms](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/graph-service-architecture.png)
+
+**Figure 6.2:** Graph Service Architecture - Detailed view of the shared graph infrastructure that all algorithms depend on
+
+![Algorithm Flowchart - Dijkstra Example](../../Apps/Server/CairoTransportation/Docs/DIAGRAMS/PlantUMLout/Algorithm%20Flowchart%20-%20Dijkstra%20Example.png)
+
+**Figure 6.3:** Dijkstra Algorithm Flow - Step-by-step execution of the shortest path algorithm
+
+### 5.1 Dijkstra's Shortest Path
 
 **Goal**: Global shortest distance between two points in a static network.
 
