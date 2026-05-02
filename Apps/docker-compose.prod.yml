@@ -6,10 +6,9 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_BASE_URL: https://gcts-api.abosaleh.site
     environment:
       - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://api:80
     depends_on:
       - api
     restart: unless-stopped
@@ -24,6 +23,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "8080:80"
     restart: unless-stopped
     networks:
       - cloudflared-net
