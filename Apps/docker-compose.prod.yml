@@ -24,8 +24,6 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_URLS=http://+:80
-    ports:
-      - "8080:80"
     restart: unless-stopped
     networks:
       - cloudflared-net
