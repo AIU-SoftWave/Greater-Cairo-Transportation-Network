@@ -1323,21 +1323,25 @@ graph LR
 
 ### 5.3 Time-Varying Dijkstra (Traffic-Aware)
 
-**Goal**: Minimize travel _time_ by dynamically adjusting road weights based on current traffic conditions and weather.
+**Goal**: Minimize travel _time_ by dynamically adjusting road weights based on current traffic conditions, weather, and ML-based congestion predictions.
 
 **How it works on the data**:
 This is an evolution of Dijkstra where the "weight" of a road isn't just its length, but a "cost" calculated at runtime.
 
 1. The algorithm fetches the **Base Distance**.
 2. It identifies the **Time Period** (Morning/Evening/Night) and applies the database multiplier (e.g., 1.25x for Evening).
-3. It checks the **Congestion Ratio** (Current Flow / Road Capacity) from our traffic monitoring data. If a road is over capacity, it adds a "Gridlock Penalty" (up to 1.35x).
-4. It checks the **Simulation Weather** state (Rain adds 30%, Storm adds 80%).
+3. It checks the **ML Prediction** - if available, uses pre-computed Gradient Boosting model predictions for the period (R² = 0.94).
+4. Falls back to **Congestion Ratio** (Current Flow / Road Capacity) from traffic monitoring data if no ML prediction exists. If a road is over capacity, it adds a "Gridlock Penalty" (up to 1.35x).
+5. It checks the **Simulation Weather** state (Rain adds 30%, Storm adds 80%).
+
+**ML Integration**:
+The system uses a **Gradient Boosting** machine learning model trained on historical traffic patterns. Predictions are stored in `predictions.json` with 722 records covering all roads and periods. The algorithm has a toggle in the UI to enable/disable ML predictions, allowing users to compare ML-enhanced routes versus traditional flow-based routing.
 
 **Detailed Explanation**:
-The weight of an edge $e$ at time $t$ is defined as $w'(e, t) = dist(e) \times PeriodMultiplier \times CongestionPenalty$. Because these multipliers are always $\ge 1$, the weights remain positive, ensuring the algorithm remains optimal.
+The weight of an edge $e$ at time $t$ is defined as $w'(e, t) = dist(e) \times PeriodMultiplier \times CongestionPenalty$. When ML predictions are enabled, the ML congestion value directly replaces the flow-based penalty, providing smarter routing based on learned traffic patterns.
 
 **Why used**:
-Cairo's traffic is notoriously inconsistent. A route that is best at 3:00 AM is rarely the best at 5:00 PM. This algorithm was used to solve the "Congestion Paradox," where the shortest physical path is the slowest. It provides users with the "Smartest" path, potentially saving 20-30 minutes of travel time.
+Cairo's traffic is notoriously inconsistent. A route that is best at 3:00 AM is rarely the best at 5:00 PM. This algorithm was used to solve the "Congestion Paradox," where the shortest physical path is the slowest. It provides users with the "Smartest" path, potentially saving 20-30 minutes of travel time. The ML integration makes it "future-aware" by using trained predictions rather than just historical flow data.
 
 ---
 
@@ -1805,9 +1809,12 @@ The frontend provides a real-time "Control Center" for Cairo:
 
 ## 11. Potential Improvements and Future Work
 
-### 11.1 AI-Driven Traffic Prediction
+### 11.1 AI-Driven Traffic Prediction (Implemented)
 
-Integration of LSTM or GNN (Graph Neural Networks) to predict traffic 15 minutes ahead, allowing the Time-Varying Dijkstra to "look into the future."
+The system now includes ML-based traffic prediction using Gradient Boosting. Future enhancements could include:
+- LSTM or GNN (Graph Neural Networks) to predict traffic 15 minutes ahead
+- Real-time model retraining with live traffic data
+- Integration with external data sources (weather events, holidays, concerts)
 
 ### 11.2 Multimodal Routing
 
